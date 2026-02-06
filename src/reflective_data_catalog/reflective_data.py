@@ -1,0 +1,173 @@
+from flexibleSoruces import FlexibleSourceConfig
+
+DEFAULT_FLEXIBLE_SOURCES = [
+    # CESM2-WACCM
+    FlexibleSourceConfig(
+        name='cesm2_waccm_g6_1p5k_hilla',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
+        pattern='{base}/{ensamble}/{table_path}',
+        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensamble}.cam.h1.{variable}.*.nc',
+        table_mapping={
+            'ADAY': 'ADAY',
+            'AMON': 'AMON',
+            'LDAY': 'LDAY',
+            'LMON': 'LMON',
+            'ODAY': 'ODAY',
+            'OMON': 'OMON',
+
+        },
+        default_table='ADAY',
+        default_variable='T',
+        default_ensemble='r1',
+        driver='netcdf',
+        combine_files='by_coords',
+        concat_dim='time',
+        description='CESM2-WACCM6 G6-1.5K-HiLLA experiment'
+    ),
+    FlexibleSourceConfig(
+        name='cesm2_waccm_historical',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/HISTORICAL',
+        pattern='{base}/{ensamble}/{table_path}',
+        filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensamble}.pop.h.{variable}.*.nc',
+        table_mapping={
+            'OMON': 'OMON',
+        },
+        default_table='OMON',
+        default_variable='TEMP',
+        default_ensemble='r1',
+        driver='netcdf',
+        combine_files='by_coords',
+        concat_dim='time',
+        description='CESM2-WACCM6 HISTORICAL experiment'
+    ),
+    #TODO: Need to convert ensamble to `001`, `002`, `003` for r1, r2, r3
+    FlexibleSourceConfig(
+        name='cesm2_waccm_ssp245',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/SSP245',
+        pattern='{base}/{ensamble}/{table_path}',
+        filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensamble}.pop.h.{variable}.*.nc',
+        table_mapping={
+            'OMON': 'OMON',
+        },
+        default_table='OMON',
+        default_variable='TEMP',
+        default_ensemble='r1',
+        driver='netcdf',
+        combine_files='by_coords',
+        concat_dim='time',
+        description='CESM2-WACCM6 SSP245 experiment'
+    ),
+    # CESM2-WACCM6
+    FlexibleSourceConfig(
+        name='cesm2_waccm6_g6_1p5k_hilla',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
+        pattern='{base}/{ensamble}/{table_path}',
+        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.001.cam.h0.{variable}.*.nc',
+        table_mapping={
+            'Amon': 'Amon',
+        },
+        default_table='AMON',
+        default_variable='T',
+        default_ensemble='r1',
+        driver='netcdf',
+        description='CESM2-WACCM6 G6-1.5K-HiLLA experiment'
+    ),
+    # E3SMv3
+    FlexibleSourceConfig(
+        name='e3smv3_g6_1p5k_hilla',
+        base='s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA',
+        pattern='{base}/{ensamble}/{table_path}/{variable}/gn/13112025',
+        filename_pattern='{variable}_*.nc',
+        table_mapping={
+            'Amon': 'Amon',
+            'Lmon': 'Lmon',
+            'Omon': 'Omon',
+        },
+        default_table='Amon',
+        default_variable='T',
+        default_ensemble='v3.LR.ssp245.g6_hilla.sai.0101',
+        driver='netcdf',
+        description='E3SMv3 G6-1.5K-HiLLA experiment'
+    ),
+    # MIROC-ES2H
+    FlexibleSourceConfig(
+        name='miroc_es2h_g6_1p5k_hilla',
+        base='s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA',
+        pattern='{base}/{table_path}',
+        filename_pattern='{variable}_*_{ensemble}.nc',
+        table_mapping={
+            'Mon': 'Mon',
+            'MAM3': 'MAM3',
+            'day': 'day',
+        },
+        default_table='Mon',
+        default_variable='SurfT',
+        default_ensemble='r01',
+        driver='netcdf',
+        description='MIROC-ES2H G6-1.5K-HiLLA experiment'
+    ),
+    FlexibleSourceConfig(
+        name='miroc_es2h_g6_1p5k_sai',
+        base='s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI',
+        pattern='{base}/{table_path}',
+        filename_pattern='{variable}_*_{ensemble}.nc',
+        table_mapping={
+            'Mon': 'Mon',
+            'MAM3': 'MAM3',
+            'day': 'day',
+        },
+        default_table='Mon',
+        default_variable='SurfT',
+        default_ensemble='r01',
+        driver='netcdf',
+        description='MIROC-ES2H G6-1.5K-SAI experiment'
+    ),
+    # UKESM1-1
+    FlexibleSourceConfig(
+        name='ukesm1_g6_1p5k_hilla',
+        base='s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA',
+        pattern='{base}/{ensemble}/{table_path}/{time}/{variable}',
+        filename_pattern='{variable}_{time}_UKESM1-1-LL_g6-1p5-hilla_{ensemble}_gn_*.nc',
+        table_mapping={
+            'ap5': 'ap5',
+            'ap6': 'ap6',
+            'ap8': 'ap8',
+            'apa': 'apa',
+            'apd': 'apd',
+            'apj': 'apj',
+            'apm': 'apm',
+            'onm': 'onm'
+        },
+        default_table='ap4',
+        default_variable='ua',
+        default_ensemble='r12i1p1f2',
+        driver='netcdf',
+        default_time='AERmon',
+        driver='netcdf',
+        combine_files='by_coords',
+        concat_dim='time',
+        description='UKESM1.1 G6-1.5K-HiLLA experiment'
+    ),
+    FlexibleSourceConfig(
+        name='ukesm1_ssp245',
+        base='s3://reflective-persistent-prod-large/UKESM1-1/SSP245',
+
+        pattern='{base}/{ensemble}/{table_path}/{time}/{variable}',
+        filename_pattern='{variable}_{time}_UKESM1-0-LL_ssp245_{ensemble}_gn_*.nc',
+        table_mapping={
+            'ap4': 'ap4',
+            'ap5': 'ap5',
+            'ap6': 'ap6',
+            'apm': 'apm',
+            'onm': 'onm'
+        },
+        default_table='ap4',
+        default_variable='mmrso4',
+        default_ensemble='r12i1p1f1',
+        default_time='AERmon',
+        driver='netcdf',
+        combine_files='by_coords',
+        concat_dim='time',
+        description='UKESM1.1 SSP245 experiment'
+    ),
+]

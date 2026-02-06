@@ -1,0 +1,28 @@
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Data files
+*.joblib
+*.nc
+dump.rdb
+*.ipynb
+*.npy
+*.pkl
+*.csv
