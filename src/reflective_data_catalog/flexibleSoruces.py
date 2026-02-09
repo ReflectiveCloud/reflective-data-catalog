@@ -352,12 +352,15 @@ class SourceDiscovery:
                     dir_path = self.config.build_directory_path(
                         ensemble=ensemble,
                         table=table_name,
-                        variable='*'  # Placeholder
+                        variable='PLACEHOLDER'
                     )
-                    # Remove variable part to get table directory
-                    dir_path = '/'.join(dir_path.replace('s3://', '').split('/')[:-1])
+                    s3_dir = dir_path.replace('s3://', '')
+                    # Only strip the last component if {variable} is in the pattern
+                    # (i.e. PLACEHOLDER appears in the built path)
+                    if 'PLACEHOLDER' in s3_dir:
+                        s3_dir = s3_dir.rsplit('/', 1)[0] if '/' in s3_dir else s3_dir
                     
-                    if self.fs.exists(dir_path):
+                    if self.fs.exists(s3_dir):
                         existing_tables.append(table_name)
                 except Exception:
                     pass
@@ -424,7 +427,6 @@ class SourceDiscovery:
         ensemble: Optional[str] = None,
         table: Optional[str] = None,
         variant: Optional[str] = None,
-        ensemble_id: Optional[str] = None,
         refresh: bool = False
     ) -> List[str]:
         """
@@ -438,8 +440,6 @@ class SourceDiscovery:
             Table to check (uses default if not specified)
         variant : str, optional
             Variant to check (uses default if not specified)
-        ensemble_id : str, optional
-            Ensemble ID to check (uses default if not specified)
         refresh : bool
             If True, bypass cache and rescan S3
         
@@ -449,60 +449,65 @@ class SourceDiscovery:
         """
         ensemble = ensemble or self.config.default_ensemble
         table = table or self.config.default_table
-        variant = variant or self.config.default_variant
-        ensemble_id = ensemble_id or self.config.ensemble_mapping.get(ensemble, ensemble)
+        variant = variant or self.config.default_variant or ''
         time = self.config.default_time or ''
-        cache_key = f'variables_{ensemble}_{table}'
+        ensemble_id = self.config.ensemble_mapping.get(ensemble, ensemble)
+        cache_key = f'variables_{ensemble}_{table}_{variant}'
         
         if not refresh and cache_key in self._cache:
             return self._cache[cache_key]
         
-        # Build directory path
-        dir_path = self.config.build_directory_path(
-            ensemble=ensemble,
-            table=table,
-            variant=variant,
-            variable='PLACEHOLDER'
-        )
-        # Remove the placeholder variable from path
-        dir_path = dir_path.rsplit('/', 1)[0] if 'PLACEHOLDER' in dir_path else dir_path
-        s3_path = dir_path.replace('s3://', '')
-        
-        print(f"Scanning for variables in: s3://{s3_path}/")
-        
         try:
-            # List all files in the directory
-            if self.config.filename_pattern:
-                # Build glob pattern to find all variables
-                # Replace {variable} with * to match any variable
-                glob_pattern = self.config.filename_pattern
-                glob_pattern = glob_pattern.replace('{variable}', '*')
-                glob_pattern = glob_pattern.format(
-                    table=table,
-                    ensemble=ensemble,
-                    ensemble_id=ensemble_id,
-                    variant=variant or '',
-                    time=time,
-                    variable='*'
-                )
-                
-                full_pattern = f"{s3_path}/{glob_pattern}"
-                print(f"Using pattern: s3://{full_pattern}")
-                
-                files = self.fs.glob(full_pattern)
-            else:
-                # Simple case: each variable is a file like variable.nc
-                files = self.fs.glob(f"{s3_path}/*.nc")
+            # Build full URL pattern with variable='*' to glob all variables
+            # This correctly handles {variable} in both directory and filename patterns
+            full_url = self.config.build_url(
+                ensemble=ensemble,
+                table=table,
+                variant=variant,
+                time=time,
+                variable='*'
+            )
+            s3_pattern = full_url.replace('s3://', '')
+            print(f"Scanning for variables with pattern: {s3_pattern}")
+            
+            files = self.fs.glob(s3_pattern)
+            print(f"Found {len(files)} files")
+            
+            if len(files) == 0:
+                # Try to help debug: check if the base directory exists
+                # Strip back to the first wildcard to check the parent path
+                static_prefix = s3_pattern.split('*')[0].rstrip('/')
+                # Go up one level from the wildcard
+                parent = static_prefix.rsplit('/', 1)[0] if '/' in static_prefix else static_prefix
+                try:
+                    contents = self.fs.ls(parent)
+                    print(f"Parent directory s3://{parent}/ has {len(contents)} items.")
+                    if contents:
+                        samples = [c.split('/')[-1] for c in contents[:3]]
+                        print(f"Sample items: {samples}")
+                except Exception:
+                    print(f"Parent directory not accessible: s3://{parent}/")
+                return [self.config.default_variable]
             
             # Extract variable names from filenames
             variables = set()
+            unmatched = []
             for f in files:
                 filename = f.split('/')[-1]
                 var_name = self._extract_variable_from_filename(
-                    filename, table, ensemble, variant or '', ensemble_id, time
+                    filename, table, ensemble, variant, ensemble_id, time
                 )
                 if var_name:
                     variables.add(var_name)
+                else:
+                    unmatched.append(filename)
+            
+            if unmatched and not variables:
+                print(f"Warning: Found {len(unmatched)} files but could not extract "
+                      f"variable names from any of them.")
+                print(f"Sample file: {unmatched[0]}")
+                print(f"Expected pattern: {self.config.filename_pattern}")
+                return [self.config.default_variable]
             
             variables = sorted(variables)
             self._cache[cache_key] = variables
