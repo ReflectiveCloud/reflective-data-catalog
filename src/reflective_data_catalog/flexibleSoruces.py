@@ -430,6 +430,7 @@ class SourceDiscovery:
         """
         ensemble = ensemble or self.config.default_ensemble
         table = table or self.config.default_table
+        variant = variant or self.config.default_variant
         cache_key = f'variables_{ensemble}_{table}'
         
         if not refresh and cache_key in self._cache:
@@ -439,6 +440,7 @@ class SourceDiscovery:
         dir_path = self.config.build_directory_path(
             ensemble=ensemble,
             table=table,
+            variant=variant,
             variable='PLACEHOLDER'
         )
         # Remove the placeholder variable from path
@@ -457,6 +459,7 @@ class SourceDiscovery:
                 glob_pattern = glob_pattern.format(
                     table=table,
                     ensemble=ensemble,
+                    variant=variant,
                     variable='*'
                 )
                 
