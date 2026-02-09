@@ -478,7 +478,7 @@ class SourceDiscovery:
             variables = set()
             for f in files:
                 filename = f.split('/')[-1]
-                var_name = self._extract_variable_from_filename(filename, table, ensemble)
+                var_name = self._extract_variable_from_filename(filename, table, ensemble, variant)
                 if var_name:
                     variables.add(var_name)
             
@@ -494,7 +494,8 @@ class SourceDiscovery:
         self, 
         filename: str, 
         table: str, 
-        ensemble: str
+        ensemble: str,
+        variant: str
     ) -> Optional[str]:
         """
         Extract variable name from a filename based on the pattern
@@ -507,6 +508,8 @@ class SourceDiscovery:
             Current table name
         ensemble : str
             Current ensemble member
+        variant : str, optional
+            Current variant
         
         Returns:
         --------
@@ -534,6 +537,7 @@ class SourceDiscovery:
         pattern = pattern.replace('{variable}', r'(?P<variable>[^.]+)')
         pattern = pattern.replace('{table}', re.escape(table))
         pattern = pattern.replace('{ensemble}', re.escape(ensemble))
+        pattern = pattern.replace('{variant}', re.escape(variant))
         
         try:
             match = re.match(pattern, filename)
