@@ -433,6 +433,8 @@ class SourceDiscovery:
             Table to check (uses default if not specified)
         variant : str, optional
             Variant to check (uses default if not specified)
+        ensemble_id : str, optional
+            Ensemble ID to check (uses default if not specified)
         refresh : bool
             If True, bypass cache and rescan S3
         
@@ -443,6 +445,7 @@ class SourceDiscovery:
         ensemble = ensemble or self.config.default_ensemble
         table = table or self.config.default_table
         variant = variant or self.config.default_variant
+        ensemble_id = ensemble_id or self.config.ensemble_mapping.get(ensemble, ensemble)
         cache_key = f'variables_{ensemble}_{table}'
         
         if not refresh and cache_key in self._cache:
@@ -453,6 +456,7 @@ class SourceDiscovery:
             ensemble=ensemble,
             table=table,
             variant=variant,
+            ensemble_id=ensemble_id,
             variable='PLACEHOLDER'
         )
         # Remove the placeholder variable from path
@@ -472,6 +476,7 @@ class SourceDiscovery:
                     table=table,
                     ensemble=ensemble,
                     variant=variant,
+                    ensemble_id=ensemble_id,
                     variable='*'
                 )
                 
@@ -487,7 +492,7 @@ class SourceDiscovery:
             variables = set()
             for f in files:
                 filename = f.split('/')[-1]
-                var_name = self._extract_variable_from_filename(filename, table, ensemble, variant)
+                var_name = self._extract_variable_from_filename(filename, table, ensemble, variant, ensemble_id)
                 if var_name:
                     variables.add(var_name)
             
@@ -504,7 +509,8 @@ class SourceDiscovery:
         filename: str, 
         table: str, 
         ensemble: str,
-        variant: str
+        variant: str,
+        ensemble_id: str
     ) -> Optional[str]:
         """
         Extract variable name from a filename based on the pattern
@@ -519,6 +525,8 @@ class SourceDiscovery:
             Current ensemble member
         variant : str, optional
             Current variant
+        ensemble_id : str
+            Current ensemble ID
         
         Returns:
         --------
@@ -547,6 +555,7 @@ class SourceDiscovery:
         pattern = pattern.replace('{table}', re.escape(table))
         pattern = pattern.replace('{ensemble}', re.escape(ensemble))
         pattern = pattern.replace('{variant}', re.escape(variant))
+        pattern = pattern.replace('{ensemble_id}', re.escape(ensemble_id))
         
         try:
             match = re.match(pattern, filename)
