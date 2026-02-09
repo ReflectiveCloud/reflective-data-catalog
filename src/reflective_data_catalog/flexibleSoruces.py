@@ -58,6 +58,7 @@ class FlexibleSourceConfig:
     default_variable: str = 'tas'
     default_ensemble: str = 'r1i1p1f1'
     default_time: Optional[str] = None
+    default_variant: Optional[str] = None
     driver: str = 'netcdf'
     combine_files: str = 'by_coords'
     concat_dim: str = 'time'
@@ -73,6 +74,8 @@ class FlexibleSourceConfig:
         }
         if self.default_time is not None:
             d['time'] = self.default_time
+        if self.default_variant is not None:
+            d['variant'] = self.default_variant
         return d
     
     @property
@@ -114,6 +117,7 @@ class FlexibleSourceConfig:
         table_path = self.table_mapping.get(table, table)
         
         time = kwargs.get('time', self.default_time or '')
+        variant = kwargs.get('variant', self.default_variant or '')
         
         # Build directory path
         return self.pattern.format(
@@ -122,7 +126,8 @@ class FlexibleSourceConfig:
             table_path=table_path,
             variable=variable,
             table=table,
-            time=time
+            time=time,
+            variant=variant
         )
     
     def build_filename_glob(self, **kwargs) -> str:
@@ -148,13 +153,15 @@ class FlexibleSourceConfig:
         ensemble = kwargs.get('ensemble', kwargs.get('ensemble_member', self.default_ensemble))
         
         time = kwargs.get('time', self.default_time or '')
+        variant = kwargs.get('variant', self.default_variant or '')
         
         # Replace placeholders but keep wildcards
         return self.filename_pattern.format(
             variable=variable,
             table=table,
             ensemble=ensemble,
-            time=time
+            time=time,
+            variant=variant
         )
     
     def build_url(self, **kwargs) -> str:
@@ -900,6 +907,7 @@ class FlexibleSource:
         
         lines = [
             f"<FlexibleSource: {self._config.name}>",
+            f"  Description: {self._config.description}",
             f"  Parameters: {params_str}" if params_str else "  Parameters: (defaults)",
             f"  Driver: {self._config.driver}",
             f"  Multi-file: {self._config.is_multi_file}",
