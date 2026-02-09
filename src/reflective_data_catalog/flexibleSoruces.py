@@ -373,12 +373,16 @@ class SourceDiscovery:
         # Build path up to table level
         try:
             # Replace known values
+            ensemble_id = self.config.ensemble_mapping.get(ensemble, ensemble)
             partial_path = pattern.format(
                 base=self.config.base,
                 ensemble=ensemble,
+                ensemble_id=ensemble_id,
                 table_path='*',
                 table='*',
-                variable='*'
+                variable='*',
+                time=self.config.default_time or '*',
+                variant=self.config.default_variant or '*'
             )
             # Find parent of table
             parts = partial_path.replace('s3://', '').split('/')
@@ -420,6 +424,7 @@ class SourceDiscovery:
         ensemble: Optional[str] = None,
         table: Optional[str] = None,
         variant: Optional[str] = None,
+        ensemble_id: Optional[str] = None,
         refresh: bool = False
     ) -> List[str]:
         """
@@ -446,6 +451,7 @@ class SourceDiscovery:
         table = table or self.config.default_table
         variant = variant or self.config.default_variant
         ensemble_id = ensemble_id or self.config.ensemble_mapping.get(ensemble, ensemble)
+        time = self.config.default_time or ''
         cache_key = f'variables_{ensemble}_{table}'
         
         if not refresh and cache_key in self._cache:
@@ -456,7 +462,6 @@ class SourceDiscovery:
             ensemble=ensemble,
             table=table,
             variant=variant,
-            ensemble_id=ensemble_id,
             variable='PLACEHOLDER'
         )
         # Remove the placeholder variable from path
@@ -475,8 +480,9 @@ class SourceDiscovery:
                 glob_pattern = glob_pattern.format(
                     table=table,
                     ensemble=ensemble,
-                    variant=variant,
                     ensemble_id=ensemble_id,
+                    variant=variant or '',
+                    time=time,
                     variable='*'
                 )
                 
@@ -492,7 +498,9 @@ class SourceDiscovery:
             variables = set()
             for f in files:
                 filename = f.split('/')[-1]
-                var_name = self._extract_variable_from_filename(filename, table, ensemble, variant, ensemble_id)
+                var_name = self._extract_variable_from_filename(
+                    filename, table, ensemble, variant or '', ensemble_id, time
+                )
                 if var_name:
                     variables.add(var_name)
             
@@ -510,7 +518,8 @@ class SourceDiscovery:
         table: str, 
         ensemble: str,
         variant: str,
-        ensemble_id: str
+        ensemble_id: str,
+        time: str = ''
     ) -> Optional[str]:
         """
         Extract variable name from a filename based on the pattern
@@ -523,10 +532,12 @@ class SourceDiscovery:
             Current table name
         ensemble : str
             Current ensemble member
-        variant : str, optional
+        variant : str
             Current variant
         ensemble_id : str
             Current ensemble ID
+        time : str
+            Current time/frequency identifier
         
         Returns:
         --------
@@ -554,8 +565,9 @@ class SourceDiscovery:
         pattern = pattern.replace('{variable}', r'(?P<variable>[^.]+)')
         pattern = pattern.replace('{table}', re.escape(table))
         pattern = pattern.replace('{ensemble}', re.escape(ensemble))
-        pattern = pattern.replace('{variant}', re.escape(variant))
         pattern = pattern.replace('{ensemble_id}', re.escape(ensemble_id))
+        pattern = pattern.replace('{variant}', re.escape(variant))
+        pattern = pattern.replace('{time}', re.escape(time))
         
         try:
             match = re.match(pattern, filename)
@@ -893,6 +905,7 @@ class FlexibleSource:
         self, 
         ensemble: Optional[str] = None,
         table: Optional[str] = None,
+        variant: Optional[str] = None,
         refresh: bool = False
     ) -> List[str]:
         """
@@ -904,6 +917,8 @@ class FlexibleSource:
             Check for specific ensemble (uses current/default if not specified)
         table : str, optional
             Check for specific table (uses current/default if not specified)
+        variant : str, optional
+            Check for specific variant (uses current/default if not specified)
         refresh : bool
             If True, rescan S3 (bypass cache)
         
@@ -913,7 +928,8 @@ class FlexibleSource:
         """
         ens = ensemble or self._kwargs.get('ensemble', self._config.default_ensemble)
         tbl = table or self._kwargs.get('table', self._config.default_table)
-        return self._discover.list_variables(ensemble=ens, table=tbl, refresh=refresh)
+        var = variant or self._kwargs.get('variant', self._config.default_variant)
+        return self._discover.list_variables(ensemble=ens, table=tbl, variant=var, refresh=refresh)
     
     def discover(self, refresh: bool = False):
         """
