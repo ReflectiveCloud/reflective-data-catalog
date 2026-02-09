@@ -410,6 +410,7 @@ class SourceDiscovery:
         self, 
         ensemble: Optional[str] = None,
         table: Optional[str] = None,
+        variant: Optional[str] = None,
         refresh: bool = False
     ) -> List[str]:
         """
@@ -421,6 +422,8 @@ class SourceDiscovery:
             Ensemble to check (uses default if not specified)
         table : str, optional
             Table to check (uses default if not specified)
+        variant : str, optional
+            Variant to check (uses default if not specified)
         refresh : bool
             If True, bypass cache and rescan S3
         
