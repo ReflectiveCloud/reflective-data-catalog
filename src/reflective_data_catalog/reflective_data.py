@@ -5,8 +5,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
     FlexibleSourceConfig(
         name='cesm2_waccm_g6_1p5k_hilla',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
-        pattern='{base}/{ensamble}/{table_path}',
-        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensamble}.cam.h1.{variable}.*.nc',
+        pattern='{base}/{ensemble}/{table_path}',
+        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble}.cam.h1.{variable}.*.nc',
         table_mapping={
             'ADAY': 'ADAY',
             'AMON': 'AMON',
@@ -27,8 +27,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
     FlexibleSourceConfig(
         name='cesm2_waccm_historical',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/HISTORICAL',
-        pattern='{base}/{ensamble}/{table_path}',
-        filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensamble}.pop.h.{variable}.*.nc',
+        pattern='{base}/{ensemble}/{table_path}',
+        filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble}.pop.h.{variable}.*.nc',
         table_mapping={
             'OMON': 'OMON',
         },
@@ -44,8 +44,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
     FlexibleSourceConfig(
         name='cesm2_waccm_ssp245',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/SSP245',
-        pattern='{base}/{ensamble}/{table_path}',
-        filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensamble}.pop.h.{variable}.*.nc',
+        pattern='{base}/{ensemble}/{table_path}',
+        filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble}.pop.h.{variable}.*.nc',
         table_mapping={
             'OMON': 'OMON',
         },
@@ -61,7 +61,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
     FlexibleSourceConfig(
         name='cesm2_waccm6_g6_1p5k_hilla',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
-        pattern='{base}/{ensamble}/{table_path}',
+        pattern='{base}/{ensemble}/{table_path}',
         filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.001.cam.h0.{variable}.*.nc',
         table_mapping={
             'Amon': 'Amon',
@@ -76,7 +76,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
     FlexibleSourceConfig(
         name='e3smv3_g6_1p5k_hilla',
         base='s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA',
-        pattern='{base}/{ensamble}/{table_path}/{variable}/gn/13112025',
+        pattern='{base}/{ensemble}/{table_path}/{variable}/gn/13112025',
         filename_pattern='{variable}_*.nc',
         table_mapping={
             'Amon': 'Amon',
