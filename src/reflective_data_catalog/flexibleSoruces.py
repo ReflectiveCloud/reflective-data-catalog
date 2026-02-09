@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
-from src.reflective_data_catalog.reflective_data import DEFAULT_FLEXIBLE_SOURCES
 
 @dataclass(frozen=True)
 class FlexibleSourceConfig:
@@ -58,6 +57,7 @@ class FlexibleSourceConfig:
     default_table: str = 'Amon'
     default_variable: str = 'tas'
     default_ensemble: str = 'r1i1p1f1'
+    default_time: Optional[str] = None
     driver: str = 'netcdf'
     combine_files: str = 'by_coords'
     concat_dim: str = 'time'
@@ -66,11 +66,14 @@ class FlexibleSourceConfig:
     @property
     def defaults(self) -> Dict[str, str]:
         """Get defaults as a dictionary for compatibility"""
-        return {
+        d = {
             'table': self.default_table,
             'variable': self.default_variable,
-            'ensemble': self.default_ensemble
+            'ensemble': self.default_ensemble,
         }
+        if self.default_time is not None:
+            d['time'] = self.default_time
+        return d
     
     @property
     def available_tables(self) -> List[str]:
@@ -110,13 +113,16 @@ class FlexibleSourceConfig:
         # Map table to path
         table_path = self.table_mapping.get(table, table)
         
+        time = kwargs.get('time', self.default_time or '')
+        
         # Build directory path
         return self.pattern.format(
             base=self.base,
             ensemble=ensemble,
             table_path=table_path,
             variable=variable,
-            table=table
+            table=table,
+            time=time
         )
     
     def build_filename_glob(self, **kwargs) -> str:
@@ -141,11 +147,14 @@ class FlexibleSourceConfig:
         variable = kwargs.get('variable', self.default_variable)
         ensemble = kwargs.get('ensemble', kwargs.get('ensemble_member', self.default_ensemble))
         
+        time = kwargs.get('time', self.default_time or '')
+        
         # Replace placeholders but keep wildcards
         return self.filename_pattern.format(
             variable=variable,
             table=table,
-            ensemble=ensemble
+            ensemble=ensemble,
+            time=time
         )
     
     def build_url(self, **kwargs) -> str:

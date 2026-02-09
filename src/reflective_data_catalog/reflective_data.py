@@ -1,4 +1,4 @@
-from flexibleSoruces import FlexibleSourceConfig
+from .flexibleSoruces import FlexibleSourceConfig
 
 DEFAULT_FLEXIBLE_SOURCES = [
     # CESM2-WACCM
@@ -143,7 +143,6 @@ DEFAULT_FLEXIBLE_SOURCES = [
         default_ensemble='r12i1p1f2',
         driver='netcdf',
         default_time='AERmon',
-        driver='netcdf',
         combine_files='by_coords',
         concat_dim='time',
         description='UKESM1.1 G6-1.5K-HiLLA experiment'

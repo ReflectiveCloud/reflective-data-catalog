@@ -26,3 +26,19 @@ dump.rdb
 *.npy
 *.pkl
 *.csv
+
+# Python packages
+**/__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.eggs
+*.eggs.zip
+*.eggs.tar.gz
+*.eggs.tar.bz2
+*.eggs.tar.xz
+*.eggs.tar.lzma
+*.eggs.tar.lz
+*.eggs.tar.zst
+*.eggs.tar.zstd
+*.eggs.tar.zstd.tar.gz

@@ -1,6 +1,6 @@
-from src.reflective_data_catalog.esgf import ESGFHelper
-from src.reflective_data_catalog.flexibleSoruces import FlexibleSourceRegistry, FlexibleSourceConfig, FlexibleSource, SourceDiscovery
-from src.reflective_data_catalog.reflective_data import DEFAULT_FLEXIBLE_SOURCES
+from .esgf import ESGFHelper
+from .flexibleSoruces import FlexibleSourceRegistry, FlexibleSourceConfig, FlexibleSource, SourceDiscovery
+from .reflective_data import DEFAULT_FLEXIBLE_SOURCES
 
 from typing import List, Dict, Optional
 import intake
@@ -32,14 +32,14 @@ class ReflectiveCatalog:
     ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
     """
     
-    def __init__(self, catalog_path: str = '/shared/catalogs/climate_catalog.yaml'):
+    def __init__(self, catalog_path: str = './data-catalog.yaml'):
         """
         Initialize unified catalog
         
         Parameters:
         -----------
         catalog_path : str
-            Path to the main intake YAML catalog
+            Path to the intake YAML catalog
         """
         self._catalog_path = catalog_path
         self._intake_cat = None
@@ -956,7 +956,7 @@ class ReflectiveCatalog:
         """
         if source_name is None:
             print("""
-UNIFIED CLIMATE DATA CATALOG
+Reflective DATA CATALOG
 =============================
 
 All sources use the same interface:
@@ -966,9 +966,10 @@ All sources use the same interface:
 
 QUICK START:
 -----------
-    from climate_catalog import catalog
+    from reflective_data_catalog import ReflectiveCatalog
     
     # List all sources
+    catalog = ReflectiveCatalog()
     catalog.list_sources()
     
     # Search for data
