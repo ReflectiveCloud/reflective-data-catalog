@@ -54,6 +54,7 @@ class FlexibleSourceConfig:
     pattern: str
     filename_pattern: Optional[str] = None
     table_mapping: Dict[str, str] = field(default_factory=dict)
+    ensemble_mapping: Dict[str, str] = field(default_factory=dict)
     default_table: str = 'Amon'
     default_variable: str = 'tas'
     default_ensemble: str = 'r1i1p1f1'
@@ -119,10 +120,14 @@ class FlexibleSourceConfig:
         time = kwargs.get('time', self.default_time or '')
         variant = kwargs.get('variant', self.default_variant or '')
         
+        # Map ensemble to ID for filenames (e.g. r1 -> 001)
+        ensemble_id = self.ensemble_mapping.get(ensemble, ensemble)
+        
         # Build directory path
         return self.pattern.format(
             base=self.base,
             ensemble=ensemble,
+            ensemble_id=ensemble_id,
             table_path=table_path,
             variable=variable,
             table=table,
@@ -155,11 +160,15 @@ class FlexibleSourceConfig:
         time = kwargs.get('time', self.default_time or '')
         variant = kwargs.get('variant', self.default_variant or '')
         
+        # Map ensemble to ID for filenames (e.g. r1 -> 001)
+        ensemble_id = self.ensemble_mapping.get(ensemble, ensemble)
+        
         # Replace placeholders but keep wildcards
         return self.filename_pattern.format(
             variable=variable,
             table=table,
             ensemble=ensemble,
+            ensemble_id=ensemble_id,
             time=time,
             variant=variant
         )

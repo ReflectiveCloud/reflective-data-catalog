@@ -6,7 +6,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name='cesm2_waccm_g6_1p5k_hilla',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
         pattern='{base}/{ensemble}/{table_path}',
-        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble}.cam.h1.{variable}.*.nc',
+        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.h1.{variable}.*.nc',
+        ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
         table_mapping={
             'ADAY': 'ADAY',
             'AMON': 'AMON',
@@ -28,7 +29,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name='cesm2_waccm_historical',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/HISTORICAL',
         pattern='{base}/{ensemble}/{table_path}',
-        filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble}.pop.h.{variable}.*.nc',
+        filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble_id}.pop.h.{variable}.*.nc',
+        ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
         table_mapping={
             'OMON': 'OMON',
         },
@@ -40,12 +42,12 @@ DEFAULT_FLEXIBLE_SOURCES = [
         concat_dim='time',
         description='CESM2-WACCM6 HISTORICAL experiment'
     ),
-    #TODO: Need to convert ensamble to `001`, `002`, `003` for r1, r2, r3
     FlexibleSourceConfig(
         name='cesm2_waccm_ssp245',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/SSP245',
         pattern='{base}/{ensemble}/{table_path}',
-        filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble}.pop.h.{variable}.*.nc',
+        filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble_id}.pop.h.{variable}.*.nc',
+        ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
         table_mapping={
             'OMON': 'OMON',
         },
@@ -62,7 +64,8 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name='cesm2_waccm6_g6_1p5k_hilla',
         base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
         pattern='{base}/{ensemble}/{table_path}',
-        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.001.cam.h0.{variable}.*.nc',
+        filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.h0.{variable}.*.nc',
+        ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
         table_mapping={
             'Amon': 'Amon',
         },
