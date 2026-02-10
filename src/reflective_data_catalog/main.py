@@ -32,7 +32,7 @@ class ReflectiveCatalog:
     ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
     """
     
-    def __init__(self, catalog_path: str = './data-catalog.yaml'):
+    def __init__(self, catalog_path: str = './src/reflective_data_catalog/data-catalog.yaml'):
         """
         Initialize unified catalog
         
