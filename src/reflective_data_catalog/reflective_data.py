@@ -4,7 +4,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
     # CESM2-WACCM
     FlexibleSourceConfig(
         name='cesm2_waccm_g6_1p5k_hilla',
-        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5K-HiLLA',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5K-HiLLA',
         pattern='{base}/{ensemble}/{table_path}',
         filename_pattern='b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.h1.{variable}.*.nc',
         ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
@@ -27,7 +27,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
     ),
     FlexibleSourceConfig(
         name='cesm2_waccm_historical',
-        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/HISTORICAL',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM/HISTORICAL',
         pattern='{base}/{ensemble}/{table_path}',
         filename_pattern='b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble_id}.pop.h.{variable}.*.nc',
         ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
