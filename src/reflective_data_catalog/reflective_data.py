@@ -44,7 +44,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
     ),
     FlexibleSourceConfig(
         name='cesm2_waccm_ssp245',
-        base='s3://reflective-persistent-prod-large/CESM2-WACCM6/SSP245',
+        base='s3://reflective-persistent-prod-large/CESM2-WACCM/SSP245',
         pattern='{base}/{ensemble}/{table_path}',
         filename_pattern='b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble_id}.pop.h.{variable}.*.nc',
         ensemble_mapping={'r1': '001', 'r2': '002', 'r3': '003'},
