@@ -477,6 +477,31 @@ class ReflectiveCatalog:
         except Exception as e:
             print(f"\n  (Could not load intake catalog: {e})")
 
+        # ESM Catalog (Google Cloud CMIP6/GeoMIP) — always shown
+        print("\n" + "-" * 80)
+        print("GOOGLE CLOUD CMIP6/GeoMIP (via catalog.esm / catalog.geomip_cloud)")
+        print("-" * 80)
+
+        print("\n  ESM Catalog (catalog.esm):")
+        print(
+            "    catalog.esm.search(experiment_id=['G6sulfur','ssp245'], "
+            "variable_id='tas', table_id='Amon')"
+        )
+        print("    catalog.esm.load(experiment_id='G6sulfur', variable_id='tas')")
+        print("    catalog.esm.list_experiments(activity_id='GeoMIP')")
+        print("    catalog.esm.list_models(experiment_id='G6sulfur')")
+        print("    catalog.esm.list_variables(experiment_id='G6sulfur')")
+
+        print("\n  GeoMIP Cloud Helper (catalog.geomip_cloud):")
+        print("    catalog.geomip_cloud.g6sulfur(variable='tas')")
+        print("    catalog.geomip_cloud.g6solar(variable='tas')")
+        print(
+            "    catalog.geomip_cloud.load_ensemble("
+            "experiments=['G6sulfur','ssp245','ssp585'])"
+        )
+        print("    catalog.geomip_cloud.list_models()")
+        print("    catalog.geomip_cloud.summary()")
+
         print("\n" + "=" * 80)
 
         # Add ESGF sources if requested
@@ -494,30 +519,6 @@ class ReflectiveCatalog:
 
             print("\nDirect search:")
             print("  catalog.esgf.search(project='CMIP6', experiment_id='...')")
-
-            print("\n" + "-" * 80)
-            print("GOOGLE CLOUD CMIP6/GeoMIP (via catalog.esm / catalog.geomip_cloud)")
-            print("-" * 80)
-
-            print("\nESM Catalog (catalog.esm):")
-            print(
-                "  catalog.esm.search(experiment_id=['G6sulfur','ssp245'], "
-                "variable_id='tas', table_id='Amon')"
-            )
-            print("  catalog.esm.load(experiment_id='G6sulfur', variable_id='tas')")
-            print("  catalog.esm.list_experiments(activity_id='GeoMIP')")
-            print("  catalog.esm.list_models(experiment_id='G6sulfur')")
-            print("  catalog.esm.list_variables(experiment_id='G6sulfur')")
-
-            print("\nGeoMIP Cloud Helper (catalog.geomip_cloud):")
-            print("  catalog.geomip_cloud.g6sulfur(variable='tas')")
-            print("  catalog.geomip_cloud.g6solar(variable='tas')")
-            print(
-                "  catalog.geomip_cloud.load_ensemble("
-                "experiments=['G6sulfur','ssp245','ssp585'])"
-            )
-            print("  catalog.geomip_cloud.list_models()")
-            print("  catalog.geomip_cloud.summary()")
 
             print("\n" + "=" * 80)
 
