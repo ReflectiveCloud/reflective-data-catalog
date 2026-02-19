@@ -1,11 +1,12 @@
 # Reflective Data Catalog
 
+[![Reflective](https://img.shields.io/badge/reflective.org-blue?logo=data:image/svg+xml;base64,&label=🌍)](https://reflective.org)
 [![CI](https://img.shields.io/github/actions/workflow/status/ReflectiveCloud/reflective-data-catalog/tests.yml?branch=main&label=CI)](https://github.com/ReflectiveCloud/reflective-data-catalog/actions)
 [![codecov](https://img.shields.io/codecov/c/github/ReflectiveCloud/reflective-data-catalog?label=coverage)](https://codecov.io/gh/ReflectiveCloud/reflective-data-catalog)
 [![License: GPL-3.0](https://img.shields.io/github/license/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/reflective-data-catalog?label=version)](https://pypi.org/project/reflective-data-catalog/)
 [![Last Commit](https://img.shields.io/github/last-commit/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/commits/main)
-[![Reflective](https://img.shields.io/badge/reflective.org-blue?logo=data:image/svg+xml;base64,&label=🌍)](https://reflective.org)
+
 
 Reflective's unified Python interface for accessing SAI (Stratospheric Aerosol Injection) climate model data across cloud providers (S3, GCS, Azure, Cloudflare R2).
 
@@ -28,13 +29,13 @@ pip install -e ".[dev]"
 ```python
 from reflective_data_catalog import ReflectiveCatalog
 
-catalog = ReflectiveCatalog()
+rdc = ReflectiveCatalog()
 
 # Load a dataset lazily with dask
-ds = catalog.cesm2_waccm_g6_1p5k_hilla(variable='T').to_dask()
+ds = rdc.cesm2_waccm_g6_1p5k_hilla(variable='T').to_dask()
 
 # Load a dataset into memory
-ds = catalog.miroc_es2h_g6_1p5k_sai(variable='SurfT').read()
+ds = rdc.miroc_es2h_g6_1p5k_sai(variable='SurfT').read()
 ```
 
 ## Available Sources
@@ -59,14 +60,14 @@ Each source accepts keyword arguments to select the table, variable, ensemble me
 
 ```python
 # Specify variable, table, and ensemble
-ds = catalog.cesm2_waccm_g6_1p5k_hilla(
+ds = rdc.cesm2_waccm_g6_1p5k_hilla(
     variable='T',
     table='AMON',
     ensemble='r2'
 ).to_dask()
 
 # MIROC sources support a variant parameter
-ds = catalog.miroc_es2h_g6_1p5k_hilla(
+ds = rdc.miroc_es2h_g6_1p5k_hilla(
     variable='SurfT',
     variant='G6-1.5K-SAI',
     ensemble='r01'
@@ -78,7 +79,7 @@ ds = catalog.miroc_es2h_g6_1p5k_hilla(
 Each source provides discovery methods to explore what data is available:
 
 ```python
-source = catalog.ukesm1_g6_1p5k_hilla()
+source = rdc.ukesm1_g6_1p5k_hilla()
 
 # List available variables, ensembles, or tables
 source.list_variables()
@@ -95,7 +96,7 @@ Access cloud-optimized Zarr data from the Google Cloud CMIP6 catalog:
 
 ```python
 # Search and load in one step
-datasets = catalog.esm.load(
+datasets = rdc.esm.load(
     experiment_id=['G6sulfur', 'ssp245', 'ssp585'],
     variable_id='tas',
     table_id='Amon',
@@ -103,21 +104,21 @@ datasets = catalog.esm.load(
 )
 
 # Or use the GeoMIP convenience helper
-datasets = catalog.geomip_cloud.load_ensemble(
+datasets = rdc.geomip_cloud.load_ensemble(
     experiments=['G6sulfur', 'ssp245', 'ssp585'],
     variable='tas',
 )
 
 # Quick single-experiment load
-ds_dict = catalog.geomip_cloud.g6sulfur(variable='tas')
+ds_dict = rdc.geomip_cloud.g6sulfur(variable='tas')
 
 # Explore what's available
-catalog.geomip_cloud.list_models()
-catalog.geomip_cloud.list_variables(experiment_id='G6sulfur')
-catalog.geomip_cloud.summary()
+rdc.geomip_cloud.list_models()
+rdc.geomip_cloud.list_variables(experiment_id='G6sulfur')
+rdc.geomip_cloud.summary()
 
 # Advanced: direct search then load
-subset = catalog.esm.search(
+subset = rdc.esm.search(
     experiment_id='G6sulfur',
     variable_id=['tas', 'pr'],
     table_id='Amon',
@@ -130,7 +131,7 @@ datasets = subset.to_dataset_dict()
 The catalog also provides access to ESGF (Earth System Grid Federation) data:
 
 ```python
-ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
+ds = rdc.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
 ```
 
 ## Running Tests
