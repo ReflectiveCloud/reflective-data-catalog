@@ -537,82 +537,297 @@ class ReflectiveCatalog:
         for tag in sorted(all_tags):
             print(f"  - {tag}")
 
-    def search(self, term: str) -> list[str]:
+    def search(
+        self,
+        term: str | None = None,
+        variable: str | None = None,
+        tag: str | None = None,
+    ) -> list[str]:
         """
-        Search catalog by name, description, or tags
+        Search catalog by name/description, variable, or tag.
+
+        All criteria are combined with AND logic — a source must match
+        every specified filter to be included.
 
         Parameters:
         -----------
-        term : str
-            Search term (case-insensitive)
+        term : str, optional
+            Free-text search (case-insensitive) matched against source
+            name, description, tags, and driver.
+        variable : str, optional
+            Filter to sources whose default variable matches, or whose
+            filename pattern / config could serve this variable name.
+            Case-insensitive.
+        tag : str, optional
+            Filter to intake catalog sources that have this tag.
+            Case-insensitive.
 
         Returns:
         --------
-        list : Matching source names
+        list[str] : Matching source names
+
+        Examples:
+        ---------
+        catalog.search(term='ukesm')           # name / description match
+        catalog.search(variable='tas')          # sources with 'tas'
+        catalog.search(tag='SAI')               # intake sources tagged 'SAI'
+        catalog.search(term='cesm', tag='SAI')  # combined filters
         """
-        term = term.lower()
-        matches = []
+        term_lower = term.lower() if term else None
+        var_lower = variable.lower() if variable else None
+        tag_lower = tag.lower() if tag else None
 
-        print("=" * 80)
-        print(f"SEARCH RESULTS: '{term}'")
-        print("=" * 80)
+        matches: list[str] = []
+        match_details: list[tuple[str, str, str]] = []  # (name, kind, desc)
 
+        # ---- helper ----
+        def _text_match(text: str) -> bool:
+            """Check if term matches a piece of text."""
+            return term_lower is not None and term_lower in text.lower()
+
+        # -----------------------------------------------------------------
         # Search flexible registry
+        # -----------------------------------------------------------------
         for name, config in self._flexible_registry.items():
-            if term in name.lower():
-                matches.append(name)
-                print(f"\n{name} [flexible]")
-                if config.description:
-                    print(f"  {config.description}")
+            # --- term filter ---
+            if term_lower is not None:
+                haystack = " ".join(
+                    filter(
+                        None,
+                        [
+                            name,
+                            config.description,
+                            config.driver,
+                            config.default_variable,
+                            config.default_table,
+                            config.default_ensemble,
+                        ],
+                    )
+                )
+                if term_lower not in haystack.lower():
+                    continue
+
+            # --- variable filter ---
+            if var_lower is not None and config.default_variable.lower() != var_lower:
                 continue
 
-            if config.description and term in config.description.lower():
-                matches.append(name)
-                print(f"\n{name} [flexible]")
-                print(f"  {config.description}")
+            # --- tag filter (flexible sources don't have tags, skip) ---
+            if tag_lower is not None:
+                continue
 
+            matches.append(name)
+            match_details.append((name, "flexible", config.description or ""))
+
+        # -----------------------------------------------------------------
         # Search intake catalog
+        # -----------------------------------------------------------------
         try:
             cat = self._get_intake_catalog()
 
-            for name in cat:
-                if name in matches:
+            for entry_name in cat:
+                if entry_name in matches:
                     continue
 
-                entry = cat._entries[name]
+                entry = cat._entries[entry_name]
+                desc = (
+                    entry._description
+                    if hasattr(entry, "_description")
+                    else ""
+                )
+                metadata = (
+                    entry._metadata if hasattr(entry, "_metadata") else {}
+                )
+                tags = metadata.get("tags", [])
+                drv = (
+                    entry._driver if hasattr(entry, "_driver") else ""
+                )
 
-                if term in name.lower():
-                    matches.append(name)
-                    desc = entry._description if hasattr(entry, "_description") else ""
-                    print(f"\n{name} [intake]")
-                    if desc:
-                        print(f"  {desc[:70]}...")
-                    continue
-
-                if hasattr(entry, "_description"):
-                    if term in entry._description.lower():
-                        matches.append(name)
-                        print(f"\n{name} [intake]")
-                        print(f"  {entry._description[:70]}...")
+                # --- term filter ---
+                if term_lower is not None:
+                    haystack = " ".join(
+                        [entry_name, desc, drv, *tags]
+                    ).lower()
+                    if term_lower not in haystack:
                         continue
 
-                metadata = entry._metadata if hasattr(entry, "_metadata") else {}
-                tags = metadata.get("tags", [])
-                if any(term in tag.lower() for tag in tags):
-                    matches.append(name)
-                    desc = entry._description if hasattr(entry, "_description") else ""
-                    print(f"\n{name} [intake]")
-                    if desc:
-                        print(f"  {desc[:70]}...")
+                # --- variable filter ---
+                if var_lower is not None:
+                    # Check the variable parameter default on the entry
+                    entry_var = None
+                    if hasattr(entry, "_user_parameters"):
+                        var_param = entry._user_parameters.get("variable")
+                        if var_param and hasattr(var_param, "default"):
+                            entry_var = var_param.default
+                    if entry_var is None or entry_var.lower() != var_lower:
+                        continue
+
+                # --- tag filter ---
+                if tag_lower is not None and not any(
+                    tag_lower in t.lower() for t in tags
+                ):
+                    continue
+
+                matches.append(entry_name)
+                match_details.append(
+                    (entry_name, "intake", desc[:80] if desc else "")
+                )
 
         except Exception:
             pass
 
-        if not matches:
-            print(f"\nNo matches found for '{term}'")
+        # -----------------------------------------------------------------
+        # Search ESM catalog (Google Cloud CMIP6/GeoMIP)
+        # -----------------------------------------------------------------
+        try:
+            esm_df = self.esm.catalog.df
+
+            # Apply filters to the ESM DataFrame
+            filtered = esm_df
+
+            if term_lower is not None:
+                # Build a combined text column to search against
+                text_cols = [
+                    c
+                    for c in [
+                        "experiment_id",
+                        "source_id",
+                        "variable_id",
+                        "table_id",
+                        "activity_id",
+                        "institution_id",
+                    ]
+                    if c in filtered.columns
+                ]
+                mask = filtered[text_cols].apply(
+                    lambda row: term_lower
+                    in " ".join(str(v) for v in row).lower(),
+                    axis=1,
+                )
+                filtered = filtered[mask]
+
+            if var_lower is not None and "variable_id" in filtered.columns:
+                filtered = filtered[
+                    filtered["variable_id"].str.lower() == var_lower
+                ]
+
+            if len(filtered) > 0:
+                # Group matches by experiment+model for readable output
+                group_cols = [
+                    c
+                    for c in ["activity_id", "source_id", "experiment_id"]
+                    if c in filtered.columns
+                ]
+                if group_cols:
+                    groups = (
+                        filtered.groupby(group_cols)["variable_id"]
+                        .nunique()
+                        .reset_index()
+                    )
+                    groups.columns = [*group_cols, "n_variables"]
+
+                    for _, row in groups.iterrows():
+                        parts = [str(row[c]) for c in group_cols]
+                        esm_key = ".".join(parts)
+                        if esm_key not in matches:
+                            matches.append(esm_key)
+                            desc = (
+                                f"{row.get('source_id', '')} "
+                                f"{row.get('experiment_id', '')} — "
+                                f"{row['n_variables']} variable(s) on "
+                                "Google Cloud (Zarr)"
+                            )
+                            match_details.append((esm_key, "esm", desc))
+
+        except Exception:
+            # ESM catalog not loaded or not available (network required)
+            pass
+
+        # -----------------------------------------------------------------
+        # Search ESGF shortcut methods
+        # -----------------------------------------------------------------
+        esgf_entries = [
+            (
+                "esgf.geomip.g6sulfur",
+                "Load G6sulfur data from ESGF "
+                "(model, variable, table, member)",
+            ),
+            (
+                "esgf.geomip.g6solar",
+                "Load G6solar data from ESGF "
+                "(model, variable, table, member)",
+            ),
+            (
+                "esgf.ssp.ssp126",
+                "Load SSP1-2.6 scenario from ESGF "
+                "(model, variable, table, member)",
+            ),
+            (
+                "esgf.ssp.ssp245",
+                "Load SSP2-4.5 scenario from ESGF "
+                "(model, variable, table, member)",
+            ),
+            (
+                "esgf.ssp.ssp585",
+                "Load SSP5-8.5 scenario from ESGF "
+                "(model, variable, table, member)",
+            ),
+            (
+                "esgf.search",
+                "Direct ESGF search "
+                "(project, experiment_id, source_id, variable_id, ...)",
+            ),
+        ]
+
+        for esgf_name, esgf_desc in esgf_entries:
+            # tag filter doesn't apply to ESGF shortcuts
+            if tag_lower is not None:
+                continue
+
+            # variable filter: ESGF methods accept any variable, so
+            # only exclude if searching for a specific variable and the
+            # method name gives no indication of that variable
+            if var_lower is not None:
+                # ESGF methods accept arbitrary variables — include them
+                # only when there's no term filter or the term matches
+                if term_lower is not None and term_lower not in (
+                    esgf_name + " " + esgf_desc
+                ).lower():
+                    continue
+            elif term_lower is not None:
+                haystack = (esgf_name + " " + esgf_desc).lower()
+                if term_lower not in haystack:
+                    continue
+
+            if esgf_name not in matches:
+                matches.append(esgf_name)
+                match_details.append((esgf_name, "esgf", esgf_desc))
+
+        # -----------------------------------------------------------------
+        # Print results
+        # -----------------------------------------------------------------
+        filters = []
+        if term:
+            filters.append(f"term='{term}'")
+        if variable:
+            filters.append(f"variable='{variable}'")
+        if tag:
+            filters.append(f"tag='{tag}'")
+        filter_str = ", ".join(filters) if filters else "all"
+
+        print("=" * 80)
+        print(f"SEARCH RESULTS ({filter_str})")
+        print("=" * 80)
+
+        if match_details:
+            for src_name, kind, desc in match_details:
+                print(f"\n  {src_name}  [{kind}]")
+                if desc:
+                    print(f"    {desc}")
+        else:
+            print(f"\n  No matches found for {filter_str}")
 
         print("\n" + "=" * 80)
-        print(f"Found {len(matches)} matches")
+        print(f"Found {len(matches)} match(es)")
 
         return matches
 
