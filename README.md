@@ -1,6 +1,13 @@
 # Reflective Data Catalog
 
-Reflective's unified Python interface for accessing SAI (Stratospheric Aerosol Injection) climate model data across cloud providers (S3, GCS, Azure).
+[![CI](https://img.shields.io/github/actions/workflow/status/ReflectiveCloud/reflective-data-catalog/tests.yml?branch=main&label=CI)](https://github.com/ReflectiveCloud/reflective-data-catalog/actions)
+[![codecov](https://img.shields.io/codecov/c/github/ReflectiveCloud/reflective-data-catalog?label=coverage)](https://codecov.io/gh/ReflectiveCloud/reflective-data-catalog)
+[![License: GPL-3.0](https://img.shields.io/github/license/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/blob/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/reflective-data-catalog?label=version)](https://pypi.org/project/reflective-data-catalog/)
+[![Last Commit](https://img.shields.io/github/last-commit/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/commits/main)
+[![Reflective](https://img.shields.io/badge/reflective.org-blue?logo=data:image/svg+xml;base64,&label=🌍)](https://reflective.org)
+
+Reflective's unified Python interface for accessing SAI (Stratospheric Aerosol Injection) climate model data across cloud providers (S3, GCS, Azure, Cloudflare R2).
 
 ## Installation
 
@@ -11,7 +18,7 @@ pip install reflective-data-catalog
 For development:
 
 ```bash
-git clone https://github.com/yourusername/reflective-data-catalog.git
+git clone https://github.com/ReflectiveCloud/reflective-data-catalog.git
 cd reflective-data-catalog
 pip install -e ".[dev]"
 ```
@@ -125,6 +132,28 @@ The catalog also provides access to ESGF (Earth System Grid Federation) data:
 ```python
 ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
 ```
+
+## Running Tests
+
+Run the full test suite:
+
+```bash
+pytest
+```
+
+Run with coverage report:
+
+```bash
+pytest --cov=reflective_data_catalog --cov-report=term-missing
+```
+
+Run a specific test file:
+
+```bash
+pytest tests/test_flexible_sources.py
+```
+
+Tests mock all external services (S3, ESGF, intake-esm) so no network access or cloud credentials are required.
 
 ## Requirements
 

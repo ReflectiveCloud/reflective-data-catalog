@@ -7,7 +7,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 1. Fork and clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/reflective-data-catalog.git
+git clone https://github.com/ReflectiveCloud/reflective-data-catalog.git
 cd reflective-data-catalog
 ```
 
@@ -59,9 +59,33 @@ Key style rules:
 
 ## Running Tests
 
+Run the full test suite:
+
 ```bash
 pytest
 ```
+
+Run with coverage report:
+
+```bash
+pytest --cov=reflective_data_catalog --cov-report=term-missing
+```
+
+Run a specific test file or test:
+
+```bash
+pytest tests/test_flexible_sources.py
+pytest tests/test_catalog.py::TestSearch::test_search_by_term
+```
+
+All external services (S3, ESGF, intake-esm) are mocked in the test suite — no network access or cloud credentials are needed.
+
+### Writing Tests
+
+- Tests live in `tests/` and use [pytest](https://docs.pytest.org/).
+- Shared fixtures and mocks are in `tests/conftest.py`.
+- Mock any cloud or network calls; tests must run offline.
+- Aim for one test file per source module (e.g. `test_storage.py` for `storage.py`).
 
 ## Adding a New Data Source
 
@@ -70,7 +94,7 @@ To add a new flexible data source, create a `FlexibleSourceConfig` entry in `src
 ```python
 FlexibleSourceConfig(
     name='model_experiment',                    # Snake-case identifier
-    base='s3://bucket/path/to/data',            # Cloud storage base URL (s3://, gs://, az://)
+    base='s3://bucket/path/to/data',            # Cloud storage base URL (s3://, gs://, az://, r2://)
     pattern='{base}/{ensemble}/{table_path}',   # Directory pattern
     filename_pattern='{variable}.*.nc',         # Filename pattern
     table_mapping={'Amon': 'Amon'},             # Table name mapping
@@ -89,7 +113,7 @@ The source will automatically be available as `catalog.model_experiment()`.
 | Field | Description |
 |-------|-------------|
 | `name` | Unique snake_case identifier |
-| `base` | S3 base path |
+| `base` | Cloud storage base URL (`s3://`, `gs://`, `az://`, `r2://`) |
 | `pattern` | Directory path template with `{base}`, `{ensemble}`, `{table_path}`, `{variable}`, `{time}` placeholders |
 | `filename_pattern` | Filename template with `{variable}`, `{ensemble}`, `{variant}`, `{ensemble_id}`, `{time}`, and `*` wildcards |
 | `table_mapping` | Dict mapping table names to S3 directory names |
@@ -112,7 +136,17 @@ src/reflective_data_catalog/
 ├── main.py              # ReflectiveCatalog class
 ├── flexibleSoruces.py   # FlexibleSourceConfig, FlexibleSource, SourceDiscovery
 ├── reflective_data.py   # Default source configurations
-└── esgf.py              # ESGF data access helper
+├── esgf.py              # ESGF data access helper
+├── esm.py               # intake-esm Google Cloud CMIP6/GeoMIP access
+├── storage.py           # CloudFileSystem (obstore wrapper)
+└── help_text.py         # Help text utilities
+tests/
+├── conftest.py              # Shared fixtures and mocks
+├── test_flexible_sources.py # FlexibleSourceConfig, Registry, Discovery
+├── test_storage.py          # CloudFileSystem
+├── test_esgf.py             # ESGFHelper (mocked)
+├── test_esm.py              # ESMCatalog, GeoMIPCloudHelper (mocked)
+└── test_catalog.py          # ReflectiveCatalog integration
 ```
 
 ## Reporting Issues

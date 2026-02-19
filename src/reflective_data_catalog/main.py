@@ -420,7 +420,7 @@ class ReflectiveCatalog:
         # List flexible sources first
         if len(self._flexible_registry) > 0:
             print("\n" + "-" * 80)
-            print("FLEXIBLE SOURCES (NetCDF/Zarr on S3)")
+            print("FLEXIBLE SOURCES (NetCDF/Zarr on cloud storage)")
             print("-" * 80)
 
             for name, config in sorted(self._flexible_registry.items()):
@@ -927,7 +927,7 @@ class ReflectiveCatalog:
         source_name : str
             Name of the source
         discover : bool
-            If True, scan S3 to show actually available ensembles, tables,
+            If True, scan cloud storage to show actually available ensembles, tables,
             and variables (slower but more accurate)
         """
         try:
@@ -971,14 +971,14 @@ class ReflectiveCatalog:
                 else:
                     print(f"    Allowed: {allowed[:5]} ... ({len(allowed)} total)")
 
-        # If discover=True and this is a flexible source, scan S3
+        # If discover=True and this is a flexible source, scan cloud storage
         if discover and param_info.get("is_flexible"):
             config = self._flexible_registry.get(source_name)
             if config:
                 discovery = SourceDiscovery(config)
 
                 print("\n" + "-" * 40)
-                print("AVAILABLE DATA (from S3 scan):")
+                print("AVAILABLE DATA (from cloud storage scan):")
                 print("-" * 40)
 
                 # Ensembles
@@ -1037,7 +1037,7 @@ class ReflectiveCatalog:
 
         elif param_info.get("is_flexible") and not discover:
             print("\n" + "-" * 40)
-            print("TIP: Use discover=True to scan S3 for available data:")
+            print("TIP: Use discover=True to scan cloud storage for available data:")
             print(f"  catalog.show_parameters('{source_name}', discover=True)")
             print("-" * 40)
 

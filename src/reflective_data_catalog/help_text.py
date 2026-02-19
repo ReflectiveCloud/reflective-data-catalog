@@ -10,67 +10,84 @@ All sources use the same interface:
 QUICK START:
 -----------
     from reflective_data_catalog import ReflectiveCatalog
-    
+
     # List all sources
     catalog = ReflectiveCatalog()
     catalog.list_sources()
-    
+
     # Search for data
-    catalog.search('G6')
-    
+    catalog.search(term='G6')
+    catalog.search(variable='tas')
+
     # Get parameters for a source
     catalog.show_parameters('source_name')
-    
+
     # Load data
-    ds = catalog.ukesm1_g6_1p5k_hilla_flex(table='Amon', variable='tas').to_dask()
+    ds = catalog.ukesm1_g6_1p5k_hilla(table='ap5', variable='ua').to_dask()
 
 DISCOVERING AVAILABLE DATA:
 --------------------------
     # Get a source reference
-    source = catalog.cesm2_waccm_g6_1p5k_hilla_flex()
-    
-    # List what's available (scans S3)
+    source = catalog.cesm2_waccm_g6_1p5k_hilla()
+
+    # List what's available (scans cloud storage)
     source.list_ensembles()    # Available ensemble members
     source.list_tables()       # Available tables/frequencies
     source.list_variables()    # Available variables
-    
+
     # Full discovery summary
     source.discover()
 
 FLEXIBLE SOURCES:
 ----------------
     # These support any valid table/variable combination
-    ds = catalog.ukesm1_g6_1p5k_hilla_flex(
-        table='Amon',       # Amon, Aday, Lmon, Omon, etc.
-        variable='tas',     # Any variable in the table
-        ensemble='r1i1p1f2' # Ensemble member
+    ds = catalog.ukesm1_g6_1p5k_hilla(
+        table='ap5',        # Table / frequency
+        variable='ua',      # Any variable in the table
+        ensemble='r12i1p1f2' # Ensemble member
     ).to_dask()
 
-ADDING NEW SOURCES:
-------------------
-    # Single-file per variable
-    catalog.add_source(
-        name='my_source',
-        base='s3://bucket/path',
-        pattern='{base}/{ensemble}/{table_path}',
-        filename_pattern='{variable}.nc',
-        driver='netcdf'
+    # MIROC sources also support a variant parameter
+    ds = catalog.miroc_es2h_g6_1p5k_hilla(
+        variable='SurfT',
+        variant='baseline'  # or 'G6-1.5K-SAI'
+    ).to_dask()
+
+GOOGLE CLOUD CMIP6/GeoMIP (intake-esm):
+---------------------------------------
+    # Search and load cloud-optimized Zarr data
+    datasets = catalog.esm.load(
+        experiment_id=['G6sulfur', 'ssp245'],
+        variable_id='tas',
+        table_id='Amon',
     )
-    
-    # Multi-file timeseries (e.g., CESM output)
-    catalog.add_source(
-        name='my_cesm_source',
-        base='s3://bucket/cesm',
-        pattern='{base}/{ensemble}/atm/hist',
-        filename_pattern='model.h0.{variable}.*.nc',
-        combine_files='by_coords',
-        concat_dim='time'
+
+    # GeoMIP convenience helpers
+    ds = catalog.geomip_cloud.g6sulfur(variable='tas')
+    ds = catalog.geomip_cloud.load_ensemble(
+        experiments=['G6sulfur', 'ssp245', 'ssp585'],
+        variable='tas',
     )
+
+    # Explore what's available
+    catalog.geomip_cloud.list_models()
+    catalog.geomip_cloud.list_variables(experiment_id='G6sulfur')
+    catalog.geomip_cloud.summary()
 
 ESGF DATA:
 ---------
     ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
     ds = catalog.esgf.ssp.ssp245(model='UKESM1-0-LL', variable='tas')
+    catalog.esgf.search(project='CMIP6', experiment_id='G6sulfur')
+
+CLOUD STORAGE:
+-------------
+    Data is stored across S3, GCS, Azure, and Cloudflare R2.
+    The CloudFileSystem auto-detects the provider from the URL scheme:
+        s3://  -> AWS S3
+        gs://  -> Google Cloud Storage
+        az://  -> Azure Blob Storage
+        r2://  -> Cloudflare R2
 
 For help with a specific source:
     catalog.help('source_name')

@@ -1,18 +1,23 @@
 """
 Cloud-agnostic file system abstraction using obstore.
 
-Supports S3, GCS, Azure, HTTP, and local filesystems via URL scheme detection.
+Supports S3, GCS, Azure, Cloudflare R2, HTTP, and local filesystems
+via URL scheme detection.
 """
 
 from __future__ import annotations
 
 import fnmatch
 import io
+import os
 from typing import Any
 from urllib.parse import urlparse
 
 import obstore
-from obstore.store import from_url
+from obstore.store import S3Store, from_url
+
+# Cloudflare R2 endpoint template
+_R2_ENDPOINT = "https://{account_id}.r2.cloudflarestorage.com"
 
 
 class CloudFileSystem:
@@ -23,10 +28,16 @@ class CloudFileSystem:
         - s3://bucket/path   → AWS S3
         - gs://bucket/path   → Google Cloud Storage
         - az://container/... → Azure Blob Storage
+        - r2://bucket/path   → Cloudflare R2 (S3-compatible)
         - file:///path       → Local filesystem
         - http(s)://...      → HTTP
 
     All methods accept and return full URLs (e.g., "s3://bucket/path/file.nc").
+
+    For Cloudflare R2, provide your account ID via:
+        - The ``r2_account_id`` constructor argument, **or**
+        - The ``CLOUDFLARE_R2_ACCOUNT_ID`` (or ``CLOUDFLARE_ACCOUNT_ID``)
+          environment variable.
 
     Usage:
     ------
@@ -38,6 +49,9 @@ class CloudFileSystem:
         # Glob for files matching a pattern
         files = fs.glob("s3://bucket/path/*.nc")
 
+        # Cloudflare R2
+        files = fs.glob("r2://my-r2-bucket/data/*.nc")
+
         # Check if a path exists
         fs.exists("s3://bucket/path/file.nc")
 
@@ -46,18 +60,57 @@ class CloudFileSystem:
         data = f.read()
     """
 
-    def __init__(self, **kwargs: Any):
+    def __init__(self, *, r2_account_id: str | None = None, **kwargs: Any):
         """
         Initialize the filesystem.
 
         Parameters
         ----------
+        r2_account_id : str, optional
+            Cloudflare account ID used to build the R2 endpoint.
+            Falls back to the ``CLOUDFLARE_R2_ACCOUNT_ID`` or
+            ``CLOUDFLARE_ACCOUNT_ID`` environment variable.
         **kwargs : dict
             Additional arguments passed to obstore store constructors
             (e.g., config, client_options, retry_config).
         """
         self._store_kwargs = kwargs
         self._stores: dict[str, Any] = {}
+        self._r2_account_id = (
+            r2_account_id
+            or os.environ.get("CLOUDFLARE_R2_ACCOUNT_ID")
+            or os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        )
+
+    # ------------------------------------------------------------------
+    # R2 helpers
+    # ------------------------------------------------------------------
+
+    def _get_r2_endpoint(self) -> str:
+        """
+        Build the Cloudflare R2 S3-compatible endpoint URL.
+
+        Returns
+        -------
+        str
+            ``https://<account_id>.r2.cloudflarestorage.com``
+
+        Raises
+        ------
+        ValueError
+            If no account ID has been configured.
+        """
+        if not self._r2_account_id:
+            raise ValueError(
+                "Cloudflare R2 account ID is required for r2:// URLs. "
+                "Pass r2_account_id to CloudFileSystem() or set the "
+                "CLOUDFLARE_R2_ACCOUNT_ID environment variable."
+            )
+        return _R2_ENDPOINT.format(account_id=self._r2_account_id)
+
+    # ------------------------------------------------------------------
+    # URL parsing / store management
+    # ------------------------------------------------------------------
 
     def _parse_url(self, url: str) -> tuple[str, str, str]:
         """
@@ -92,6 +145,9 @@ class CloudFileSystem:
         """
         Get or create an obstore store for the given URL.
 
+        For ``r2://`` URLs the store is an ``S3Store`` pointed at the
+        Cloudflare R2 endpoint.
+
         Parameters
         ----------
         url : str
@@ -102,10 +158,22 @@ class CloudFileSystem:
         tuple[ObjectStore, str, str]
             (store, store_key, rel_path)
         """
-        store_key, _bucket, rel_path = self._parse_url(url)
+        store_key, bucket, rel_path = self._parse_url(url)
 
         if store_key not in self._stores:
-            self._stores[store_key] = from_url(store_key, **self._store_kwargs)
+            scheme = store_key.split("://")[0]
+            if scheme == "r2":
+                endpoint = self._get_r2_endpoint()
+                self._stores[store_key] = S3Store(
+                    bucket=bucket,
+                    endpoint=endpoint,
+                    region="auto",
+                    **self._store_kwargs,
+                )
+            else:
+                self._stores[store_key] = from_url(
+                    store_key, **self._store_kwargs
+                )
 
         return self._stores[store_key], store_key, rel_path
 
@@ -254,20 +322,3 @@ class CloudFileSystem:
         store, _store_key, rel_path = self._get_store(path)
         result = obstore.get(store, rel_path)
         return io.BytesIO(bytes(result.bytes()))
-
-    def read_bytes(self, path: str) -> bytes:
-        """
-        Read a file and return its contents as bytes.
-
-        Parameters
-        ----------
-        path : str
-            Path to the file (full URL or bare path).
-
-        Returns
-        -------
-        bytes
-        """
-        store, _store_key, rel_path = self._get_store(path)
-        result = obstore.get(store, rel_path)
-        return bytes(result.bytes())

@@ -10,7 +10,7 @@ class FlexibleSourceConfig:
     This dataclass defines the structure for accessing climate data
     stored in cloud storage with flexible table/variable combinations.
 
-    Supports S3, GCS, Azure, and other cloud providers via obstore.
+    Supports S3, GCS, Azure, Cloudflare R2, and other cloud providers via obstore.
 
     Attributes:
     -----------
@@ -18,7 +18,7 @@ class FlexibleSourceConfig:
         Unique identifier for this source (used as catalog.name())
     base : str
         Base cloud storage URL (e.g., 's3://bucket/model/experiment',
-        'gs://bucket/path', 'az://container/path')
+        'gs://bucket/path', 'az://container/path', 'r2://bucket/path')
     pattern : str
         URL pattern with placeholders: {base}, {ensemble}, {table_path}, {variable}
         This constructs the directory path.
@@ -217,12 +217,12 @@ class FlexibleSourceConfig:
         if not self.name:
             errors.append("name is required")
         if not self.base:
-            errors.append("base S3 path is required")
+            errors.append("base cloud storage URL is required")
         if not self.pattern:
             errors.append("URL pattern is required")
         if "://" not in self.base:
             errors.append(
-                "base must be a cloud storage URL (e.g., s3://, gs://, az://)"
+                "base must be a cloud storage URL (e.g., s3://, gs://, az://, r2://)"
             )
         if self.driver not in ("netcdf", "zarr"):
             errors.append(f"driver must be 'netcdf' or 'zarr', got '{self.driver}'")
@@ -253,7 +253,7 @@ class SourceDiscovery:
     This class provides methods to scan cloud storage and discover what
     variables, ensembles, and tables are actually available.
 
-    Supports S3, GCS, Azure, and other cloud providers via obstore.
+    Supports S3, GCS, Azure, Cloudflare R2, and other cloud providers via obstore.
     """
 
     def __init__(self, config: FlexibleSourceConfig):
@@ -618,7 +618,7 @@ class SourceDiscovery:
         Parameters:
         -----------
         refresh : bool
-            If True, bypass cache and rescan S3
+            If True, bypass cache and rescan cloud storage
 
         Returns:
         --------
@@ -660,7 +660,7 @@ class SourceDiscovery:
         Parameters:
         -----------
         refresh : bool
-            If True, bypass cache and rescan S3
+            If True, bypass cache and rescan cloud storage
         """
         print("=" * 80)
         print(f"SOURCE: {self.config.name}")
