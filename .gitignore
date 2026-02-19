@@ -42,3 +42,6 @@ dump.rdb
 *.eggs.tar.zst
 *.eggs.tar.zstd
 *.eggs.tar.zstd.tar.gz
+
+.ipynb_checkpoints/
+.ruff_cache/
