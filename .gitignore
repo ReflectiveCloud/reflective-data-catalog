@@ -28,8 +28,6 @@ dump.rdb
 *.csv
 
 # Python packages
-**/__pycache__/
-*.py[cod]
 *.egg-info/
 *.egg
 *.eggs
@@ -43,5 +41,5 @@ dump.rdb
 *.eggs.tar.zstd
 *.eggs.tar.zstd.tar.gz
 
-.ipynb_checkpoints/
+**/.ipynb_checkpoints/
 .ruff_cache/
