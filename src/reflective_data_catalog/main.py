@@ -396,7 +396,7 @@ class ReflectiveCatalog:
         self,
         tag: str | None = None,
         driver: str | None = None,
-        include_esgf: bool = False,
+        include_esgf: bool = True,
     ):
         """
         List all available data sources
