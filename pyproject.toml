@@ -2,10 +2,11 @@
 requires = ["setuptools>=61.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
-[setuptools-scm]
+[tool.setuptools_scm]
 
 [project]
 name = "reflective-data-catalog"
+dynamic = ["version"]
 authors = [
     {name = "John Orcutt", email = "john@reflective.org"},
     {name = "Alistair Duffey", email="alistair@reflective.org"}
