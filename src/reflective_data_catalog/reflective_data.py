@@ -1,4 +1,4 @@
-from .flexibleSoruces import FlexibleSourceConfig
+from .flexibleSources import FlexibleSourceConfig
 
 DEFAULT_FLEXIBLE_SOURCES = [
     # CESM2-WACCM
@@ -57,22 +57,6 @@ DEFAULT_FLEXIBLE_SOURCES = [
         combine_files="by_coords",
         concat_dim="time",
         description="CESM2-WACCM6 SSP245 experiment",
-    ),
-    # CESM2-WACCM6
-    FlexibleSourceConfig(
-        name="cesm2_waccm6_g6_1p5k_hilla",
-        base="s3://reflective-persistent-prod-large/CESM2-WACCM6/G6-1.5k-HiLLA",
-        pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.h0.{variable}.*.nc",
-        ensemble_mapping={"r1": "001", "r2": "002", "r3": "003"},
-        table_mapping={
-            "Amon": "Amon",
-        },
-        default_table="AMON",
-        default_variable="T",
-        default_ensemble="r1",
-        driver="netcdf",
-        description="(duplicate - to be removed) CESM2-WACCM6 G6-1.5K-HiLLA experiment",
     ),
     # E3SMv3
     FlexibleSourceConfig(

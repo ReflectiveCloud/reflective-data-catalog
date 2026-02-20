@@ -9,9 +9,9 @@ sources:
   # High-latitude injection (60°N/S at 15km) targeting 1.5K warming
   # ============================================================================
   
-  ukesm1_g6_1p5k_hilla:
+  ukesm1_g6_1p5k_hilla_zarr:
     driver: zarr
-    description: "UKESM1.1 G6-1.5K-HiLLA: SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    description: "UKESM1.1 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
     args:
       urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
       consolidated: true
@@ -25,7 +25,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -45,9 +45,9 @@ sources:
       s3_bucket: "s3://reflective-persistent-prod-large"
       tags: ["geoengineering", "SAI", "high-latitude", "UKESM1.1", "G6-1.5K-HiLLA", "feedback-control"]
   
-  cesm2_waccm_g6_1p5k_hilla:
+  cesm2_waccm_g6_1p5k_hilla_zarr:
     driver: zarr
-    description: "CESM2-WACCM G6-1.5K-HiLLA: SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    description: "CESM2-WACCM G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
     args:
       urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
       consolidated: true
@@ -61,7 +61,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -81,9 +81,9 @@ sources:
       s3_bucket: "s3://reflective-persistent-prod-large"
       tags: ["geoengineering", "SAI", "high-latitude", "CESM2-WACCM", "G6-1.5K-HiLLA", "feedback-control"]
   
-  e3smv3_g6_1p5k_hilla:
+  e3smv3_g6_1p5k_hilla_zarr:
     driver: zarr
-    description: "E3SMv3 G6-1.5K-HiLLA: SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    description: "E3SMv3 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
     args:
       urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble_member}}/{{table}}/{{variable}}.zarr"
       consolidated: true
@@ -97,7 +97,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -127,6 +127,10 @@ sources:
       xarray_kwargs:
         engine: netcdf4
     parameters:
+      table:
+        description: "CMIP6 table (Amon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -160,6 +164,10 @@ sources:
       xarray_kwargs:
         engine: netcdf4
     parameters:
+      table:
+        description: "CMIP6 table (Amon, Omon, day, etc.)"
+        type: str
+        default: "day"
       variable:
         description: "Climate variable name"
         type: str
@@ -185,6 +193,10 @@ sources:
       xarray_kwargs:
         engine: netcdf4
     parameters:
+      table:
+        description: "CMIP6 table (Mon, MAM3, day, etc.)"
+        type: str
+        default: "day"
       variable:
         description: "Climate variable name"
         type: str
@@ -202,7 +214,7 @@ sources:
       tags: ["MIROC", "SSP2-4.5"]
   
 
-  ukesm1_ssp245_(g6_1p5k_hilla):
+  ukesm1_ssp245_g6_1p5k_hilla:
     driver: zarr
     description: "UKESM1.1 SSP2-4.5 (RunIDs: udp-902,903,904), the reference case for G6-1.5K-HiLLA runs. This version of SSP2-4.5 has strat. het. chem. ON"
     args:
@@ -218,7 +230,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "day"
       variable:
         description: "Climate variable name"
         type: str
@@ -254,7 +266,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "day"
       variable:
         description: "Climate variable name"
         type: str
@@ -296,7 +308,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -334,7 +346,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -372,7 +384,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -404,6 +416,10 @@ sources:
       xarray_kwargs:
         engine: netcdf4
     parameters:
+      table:
+        description: "CMIP6 table (Mon, MAM3, day, etc.)"
+        type: str
+        default: "day"
       variable:
         description: "Climate variable name"
         type: str
@@ -443,7 +459,7 @@ sources:
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
-        default: "Amon"
+        default: "Aday"
       variable:
         description: "Climate variable name"
         type: str
@@ -469,8 +485,6 @@ sources:
       s3_bucket: "s3://reflective-persistent-prod-large"
       tags: ["geoengineering", "SAI", "GAUSS", "CESM2-WACCM", "multi-strategy", "multi-target", "feedback-control"]
 
-
-  
   # ============================================================================
   # ARISE-SAI Experiments
   # Multi-objective feedback control (GMT, hemispheric temp diff, pole-equator gradient)
@@ -481,8 +495,8 @@ sources:
     description: "ARISE-SAI 1.5°C: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
     args:
       urlpath: 
-      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{location}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.201501-206412.nc"
-      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{location}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.206501-210012.nc"
+      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.201501-206412.nc"
+      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.206501-210012.nc"
       combine: "nested"
       concat_dim: "time"
       xarray_kwargs:
@@ -496,8 +510,8 @@ sources:
         description: "Member identifier"
         type: str
         default: "001"
-      location: ## Probably a better name for this...
-        description: "Location identifier"
+      realm:
+        description: "Model realm (atm, glc, ice, lnd, ocn, rof)"
         type: str
         default: "atm"
       time_frequency:
@@ -508,11 +522,12 @@ sources:
         description: "Climate variable name"
         type: str
         default: "TREFHT"
+
   arise_sai_15:
     driver: netcdf
     description: "CESM2-WACCM ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
     args:
-      urlpath: "s3://ncar-cesm2-arise/ARISE-SAI-1.5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}/{{location}}/proc/tseries/{{time_frequency}}/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}.cam.h0.{{variable}}.*"
+      urlpath: "s3://ncar-cesm2-arise/ARISE-SAI-1.5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}.cam.h0.{{variable}}.*"
       consolidated: true
       storage_options:
         anon: true
@@ -525,10 +540,10 @@ sources:
       time_frequency:
         description: "Time frequency identifier"
         type: str
-        default: "month_1"
+        default: "day_5"
         allowed: ["month_1", "day_1", "day_5", "hour_1","year_1"]
-      location:
-        description: "Location identifier"
+      realm:
+        description: "Model realm (atm, glc, ice, lnd, ocn, rof)"
         type: str
         default: "atm"
         allowed: ["atm", "glc", "ice", "lnd", "ocn", "rof"]
@@ -557,7 +572,7 @@ sources:
     driver: netcdf
     description: "UKESM1.0 ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
     args:
-      urlpath: "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/{{member_id}}/{{value1}}/{{variable}}/gn/v20220325/*"
+      urlpath: "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/{{member_id}}/{{table_id}}/{{variable}}/gn/v20220325/*"
       consolidated: true
       storage_options:
         anon: true
@@ -571,11 +586,10 @@ sources:
         type: str
         default: "r1i1p1f2"
         allowed: ["r1i1p1f2","r2i1p1f2", "r3i1p1f2", "r4i1p1f2", "r8i1p1f2"]
-      value1:
-        description: "Value1 identifier"
+      table_id:
+        description: "CMIP6 table ID (e.g., day, Amon, Omon)"
         type: str
         default: "day"
-      
     metadata:
       model: "UKESM1.0"
       experiment: "ARISE-SAI"
@@ -597,7 +611,7 @@ sources:
     driver: netcdf
     description: "UKESM1.0 ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
     args:
-      urlpath: "s3://met-office-ukesm1-arise/CMIP6/ScenarioMIP/MOHC/UKESM1-0-LL/ssp245/{{member_id}}/{{value1}}/{{variable}}/gn/{{version}}/*"
+      urlpath: "s3://met-office-ukesm1-arise/CMIP6/ScenarioMIP/MOHC/UKESM1-0-LL/ssp245/{{member_id}}/{{table_id}}/{{variable}}/gn/{{version}}/*"
       consolidated: true
       storage_options:
         anon: true
@@ -607,8 +621,8 @@ sources:
         type: str
         default: "r1i1p1f2"
         allowed: ["r1i1p1f2","r2i1p1f2", "r3i1p1f2", "r4i1p1f2", "r8i1p1f2"]
-      value1:
-        description: "Value1 identifier"
+      table_id:
+        description: "CMIP6 table ID (e.g., day, Amon, Omon)"
         type: str
         default: "day"
       variable:
@@ -635,48 +649,4 @@ sources:
       hosted_on: "AWS, external - https://registry.opendata.aws/met-office-ukesm1-arise/"
       data_access: "public"
       tags: ["geoengineering", "SAI", "ARISE", "UKESM1.0", "multi-objective", "feedback-control", "public"]
-      
-  # ============================================================================
-  # G6sulfur/G6solar Experiments
-  # Equatorial injection or solar reduction under SSP5-8.5
-  # NOTE: Requires 'pip install intake-esm' to use this entry
-  # Comment out this section if you don't have intake-esm installed
-  # ============================================================================
   
-  geomip_esgf_all:
-    driver: esgf_search
-    description: "All GeoMIP experiments via ESGF with flexible parameter selection"
-    args:
-      query:
-        project: CMIP6
-        activity_id: GeoMIP
-      esgf_search_kwargs:
-        latest: true
-    parameters:
-      experiment_id:
-        description: "GeoMIP experiment"
-        type: str
-        default: "G6sulfur"
-        allowed: ["G6sulfur", "G6solar", "G1", "G6SST1", "G6SST2-sulfur", "G6SST2-solar"]
-      source_id:
-        description: "Model name"
-        type: str
-        default: "UKESM1-0-LL"
-      variable_id:
-        description: "Variable name"
-        type: str
-        default: "tas"
-      table_id:
-        description: "CMIP6 table"
-        type: str
-        default: "Amon"
-      variant_label:
-        description: "Ensemble member"
-        type: str
-        default: "r1i1p1f2"
-    metadata:
-      experiment: "GeoMIP"
-      activity_id: "GeoMIP"
-      paper: "https://gmd.copernicus.org/articles/8/3379/2015/gmd-8-3379-2015.html"
-      hosted_on: "ESGF"
-      tags: ["geoengineering", "GeoMIP", "ESGF", "CMIP6", "parameterized"]

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from reflective_data_catalog.flexibleSoruces import FlexibleSourceConfig
+from reflective_data_catalog.flexibleSources import FlexibleSourceConfig
 from reflective_data_catalog.main import ReflectiveCatalog
 
 # ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ class TestCatalogInit:
 
     def test_default_catalog_path(self):
         cat = _make_catalog()
-        assert cat._catalog_path.endswith("data-catalog.yaml")
+        assert str(cat._catalog_path).endswith("data-catalog.yaml")
 
     def test_custom_catalog_path(self):
         cat = _make_catalog(catalog_path="/tmp/custom.yaml")
@@ -73,7 +73,7 @@ class TestCatalogGetattr:
         assert callable(loader)
 
     def test_flexible_source_returns_flexible_source(self):
-        from reflective_data_catalog.flexibleSoruces import FlexibleSource
+        from reflective_data_catalog.flexibleSources import FlexibleSource
 
         cat = _make_catalog()
         source = cat.cesm2_waccm_g6_1p5k_hilla()

@@ -1,8 +1,8 @@
-import intake
+from pathlib import Path
 
 from .esgf import ESGFHelper
 from .esm import ESMCatalog, GeoMIPCloudHelper
-from .flexibleSoruces import (
+from .flexibleSources import (
     FlexibleSource,
     FlexibleSourceConfig,
     FlexibleSourceRegistry,
@@ -30,18 +30,27 @@ class ReflectiveCatalog:
     """
 
     def __init__(
-        self, catalog_path: str = "./src/reflective_data_catalog/data-catalog.yaml"
+        self,
+        catalog_path: Path = Path(__file__).parent / "data-catalog.yaml",
+        *,
+        r2_account_id: str | None = None,
     ):
         """
         Initialize unified catalog
 
         Parameters:
         -----------
-        catalog_path : str
+        catalog_path : Path
             Path to the intake YAML catalog
+        r2_account_id : str, optional
+            Cloudflare R2 account ID.  Falls back to the
+            ``CLOUDFLARE_R2_ACCOUNT_ID`` / ``CLOUDFLARE_ACCOUNT_ID``
+            environment variable when not provided.
         """
         self._catalog_path = catalog_path
         self._intake_cat = None
+        self._r2_account_id = r2_account_id
+        self._fs = None  # shared CloudFileSystem (lazy)
 
         # Initialize helpers
         self.esgf = ESGFHelper()
@@ -52,6 +61,15 @@ class ReflectiveCatalog:
         self._flexible_registry = FlexibleSourceRegistry()
         for config in DEFAULT_FLEXIBLE_SOURCES:
             self._flexible_registry.register(config)
+
+    @property
+    def fs(self):
+        """Shared :class:`CloudFileSystem` instance (lazy-initialized)."""
+        if self._fs is None:
+            from .storage import CloudFileSystem
+
+            self._fs = CloudFileSystem(r2_account_id=self._r2_account_id)
+        return self._fs
 
     def _load_flexible(self, config: FlexibleSourceConfig, lazy: bool = True, **kwargs):
         """
@@ -115,9 +133,7 @@ class ReflectiveCatalog:
         """
         import xarray as xr
 
-        from .storage import CloudFileSystem
-
-        fs = CloudFileSystem()
+        fs = self.fs
 
         # Find all matching files
         print(f"  Searching for files matching: {url_pattern}")
@@ -194,7 +210,7 @@ class ReflectiveCatalog:
                 # For zarr, load each and combine manually
                 datasets = []
                 for f in matching_files:
-                    ds = xr.open_zarr(f"s3://{f}", consolidated=True)
+                    ds = xr.open_zarr(f, consolidated=True)
                     datasets.append(ds)
 
                 combined = xr.concat(datasets, dim=config.concat_dim)
@@ -231,14 +247,12 @@ class ReflectiveCatalog:
         """
         import xarray as xr
 
-        from .storage import CloudFileSystem
-
         if driver == "zarr":
             # Zarr can open from URL directly via fsspec
-            return xr.open_zarr(f"s3://{url}", consolidated=True, **kwargs)
+            return xr.open_zarr(url, consolidated=True, **kwargs)
 
         elif driver == "netcdf":
-            fs = CloudFileSystem()
+            fs = self.fs
 
             try:
                 f = fs.open(url)
@@ -279,19 +293,21 @@ class ReflectiveCatalog:
         """
         import xarray as xr
 
-        from .storage import CloudFileSystem
-
         if driver == "zarr":
             # Zarr can open from URL directly via fsspec
-            return xr.open_zarr(f"s3://{url}", consolidated=True, **kwargs)
+            return xr.open_zarr(url, consolidated=True, **kwargs)
 
         elif driver == "netcdf":
-            fs = CloudFileSystem()
-
             try:
-                file_obj = fs.open(url)
+                # Use fsspec URL so xarray streams bytes via range
+                # requests instead of downloading the whole file.
+                fsspec_url, storage_opts = self.fs.fsspec_info(url)
                 ds = xr.open_dataset(
-                    file_obj, engine="h5netcdf", chunks="auto", **kwargs
+                    fsspec_url,
+                    engine="h5netcdf",
+                    chunks="auto",
+                    storage_options=storage_opts,
+                    **kwargs,
                 )
                 return ds
             except Exception as e:
@@ -306,6 +322,8 @@ class ReflectiveCatalog:
 
     def _get_intake_catalog(self):
         """Lazy load the intake catalog"""
+        import intake
+
         if self._intake_cat is None:
             try:
                 self._intake_cat = intake.open_catalog(self._catalog_path)
@@ -433,7 +451,7 @@ class ReflectiveCatalog:
                 print(f"    Driver: {config.driver}")
                 print(
                     f"    Defaults: table={config.default_table}, "
-                    f"variable={config.default_variable}, "
+                      f"variable={config.default_variable}, "
                     f"ensemble={config.default_ensemble}"
                 )
                 if config.available_tables:

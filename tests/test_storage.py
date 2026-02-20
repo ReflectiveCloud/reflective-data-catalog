@@ -96,8 +96,8 @@ class TestCloudFileSystem:
         results = fs.glob("s3://bucket/data/tas_*.nc")
 
         assert results == [
-            "bucket/data/tas_2020.nc",
-            "bucket/data/tas_2021.nc",
+            "s3://bucket/data/tas_2020.nc",
+            "s3://bucket/data/tas_2021.nc",
         ]
 
     @patch("reflective_data_catalog.storage.obstore")
@@ -116,7 +116,7 @@ class TestCloudFileSystem:
 
         fs = CloudFileSystem()
         items = fs.ls("s3://bucket/data/")
-        assert items == ["bucket/data/file1.nc", "bucket/data/file2.nc"]
+        assert items == ["s3://bucket/data/file1.nc", "s3://bucket/data/file2.nc"]
 
     @patch("reflective_data_catalog.storage.obstore")
     @patch("reflective_data_catalog.storage.from_url")
@@ -193,6 +193,42 @@ class TestCloudFileSystem:
         fs = CloudFileSystem()
         with pytest.raises(ValueError, match="Only 'rb'"):
             fs.open("s3://bucket/data/file.nc", mode="w")
+
+
+class TestFsspecInfo:
+    """Tests for fsspec_info() URL translation."""
+
+    def test_s3_passthrough(self):
+        fs = CloudFileSystem()
+        url, opts = fs.fsspec_info("s3://bucket/path/file.nc")
+        assert url == "s3://bucket/path/file.nc"
+        assert opts == {}
+
+    def test_gs_passthrough(self):
+        fs = CloudFileSystem()
+        url, opts = fs.fsspec_info("gs://bucket/path/file.nc")
+        assert url == "gs://bucket/path/file.nc"
+        assert opts == {}
+
+    def test_az_passthrough(self):
+        fs = CloudFileSystem()
+        url, opts = fs.fsspec_info("az://container/path/file.nc")
+        assert url == "az://container/path/file.nc"
+        assert opts == {}
+
+    def test_r2_translates_to_s3_with_endpoint(self):
+        fs = CloudFileSystem(r2_account_id="abc123")
+        url, opts = fs.fsspec_info("r2://my-bucket/data/file.nc")
+        assert url == "s3://my-bucket/data/file.nc"
+        assert opts == {
+            "endpoint_url": "https://abc123.r2.cloudflarestorage.com"
+        }
+
+    def test_bare_path_defaults_to_s3(self):
+        fs = CloudFileSystem()
+        url, opts = fs.fsspec_info("bucket/path/file.nc")
+        assert url == "s3://bucket/path/file.nc"
+        assert opts == {}
 
 
 class TestCloudflareR2:
@@ -276,8 +312,8 @@ class TestCloudflareR2:
         results = fs.glob("r2://my-bucket/data/tas_*.nc")
 
         assert results == [
-            "my-bucket/data/tas_2020.nc",
-            "my-bucket/data/tas_2021.nc",
+            "r2://my-bucket/data/tas_2020.nc",
+            "r2://my-bucket/data/tas_2021.nc",
         ]
         mock_obstore.list.assert_called_once_with(mock_store, prefix="data/")
 
@@ -297,12 +333,12 @@ class TestCloudflareR2:
 
         assert len(items) == 2
         assert items[0] == {
-            "name": "my-bucket/data/file1.nc",
+            "name": "r2://my-bucket/data/file1.nc",
             "type": "file",
             "size": 50,
         }
         assert items[1] == {
-            "name": "my-bucket/data/subdir",
+            "name": "r2://my-bucket/data/subdir",
             "type": "directory",
         }
 

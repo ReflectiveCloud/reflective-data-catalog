@@ -191,13 +191,10 @@ class CloudFileSystem:
         Returns
         -------
         list[str]
-            Matching paths in the same format as s3fs:
-            "bucket/path/to/file" (without scheme prefix).
+            Full URLs including the scheme prefix,
+            e.g. "s3://bucket/path/to/file".
         """
         store, store_key, rel_pattern = self._get_store(pattern)
-
-        # Extract bucket name from store_key for prepending to results
-        bucket = store_key.split("://")[1]
 
         # Find the static prefix (everything before the first wildcard)
         # Truncate at the last '/' to ensure we use a directory-level prefix
@@ -209,9 +206,9 @@ class CloudFileSystem:
         for chunk in obstore.list(store, prefix=prefix):
             all_files.extend(chunk)
 
-        # Filter with fnmatch and prepend bucket name
+        # Filter with fnmatch and prepend full scheme://bucket prefix
         matched = [
-            f"{bucket}/{f['path']}"
+            f"{store_key}/{f['path']}"
             for f in all_files
             if fnmatch.fnmatch(f["path"], rel_pattern)
         ]
@@ -233,11 +230,10 @@ class CloudFileSystem:
         Returns
         -------
         list
-            Directory contents. Paths include the bucket prefix
-            (matching s3fs behavior), e.g., "bucket/path/to/dir".
+            Directory contents as full URLs including the scheme
+            prefix, e.g., "s3://bucket/path/to/dir".
         """
         store, store_key, rel_path = self._get_store(path)
-        bucket = store_key.split("://")[1]
 
         if rel_path and not rel_path.endswith("/"):
             rel_path += "/"
@@ -246,7 +242,7 @@ class CloudFileSystem:
 
         items = []
         for obj in result["objects"]:
-            full_path = f"{bucket}/{obj['path']}"
+            full_path = f"{store_key}/{obj['path']}"
             if detail:
                 items.append(
                     {
@@ -259,7 +255,7 @@ class CloudFileSystem:
                 items.append(full_path)
 
         for pfx in result["common_prefixes"]:
-            name = f"{bucket}/{pfx.rstrip('/')}"
+            name = f"{store_key}/{pfx.rstrip('/')}"
             if detail:
                 items.append({"name": name, "type": "directory"})
             else:
@@ -297,12 +293,56 @@ class CloudFileSystem:
         result = obstore.list_with_delimiter(store, prefix=prefix)
         return bool(result["objects"] or result["common_prefixes"])
 
+    def fsspec_info(self, url: str) -> tuple[str, dict[str, Any]]:
+        """
+        Convert a URL to an fsspec-compatible URL and storage options.
+
+        This is useful for passing URLs directly to libraries like xarray
+        that use fsspec for lazy, range-request-based file access — avoiding
+        the need to download the entire file into memory.
+
+        ``r2://`` URLs are translated to ``s3://`` with the appropriate
+        ``endpoint_url`` so that fsspec's S3 backend can reach R2.
+
+        Parameters
+        ----------
+        url : str
+            Full URL (e.g., "s3://bucket/path", "r2://bucket/path").
+
+        Returns
+        -------
+        tuple[str, dict[str, Any]]
+            (fsspec_url, storage_options) ready for
+            ``xr.open_dataset(fsspec_url, storage_options=storage_options)``.
+        """
+        store_key, bucket, rel_path = self._parse_url(url)
+        scheme = store_key.split("://")[0]
+
+        storage_options: dict[str, Any] = {}
+
+        if scheme == "r2":
+            # fsspec doesn't know r2://; translate to s3:// with R2 endpoint
+            endpoint = self._get_r2_endpoint()
+            fsspec_url = f"s3://{bucket}/{rel_path}"
+            storage_options["endpoint_url"] = endpoint
+        else:
+            fsspec_url = f"{scheme}://{bucket}/{rel_path}"
+
+        return fsspec_url, storage_options
+
     def open(self, path: str, mode: str = "rb") -> io.BytesIO:
         """
-        Open a file for reading.
+        Open a file for reading (downloads entire file into memory).
 
-        Downloads the file content and returns a BytesIO object
-        compatible with xarray, h5netcdf, scipy, etc.
+        .. warning::
+
+            This downloads the **complete** file before returning.
+            For lazy / dask-backed access, pass the URL directly to
+            ``xr.open_dataset`` with :meth:`fsspec_info` instead::
+
+                url, opts = fs.fsspec_info("s3://bucket/file.nc")
+                ds = xr.open_dataset(url, engine="h5netcdf",
+                                     chunks="auto", storage_options=opts)
 
         Parameters
         ----------

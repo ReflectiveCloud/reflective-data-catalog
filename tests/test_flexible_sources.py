@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from reflective_data_catalog.flexibleSoruces import (
+from reflective_data_catalog.flexibleSources import (
     FlexibleSource,
     FlexibleSourceConfig,
     FlexibleSourceRegistry,
@@ -304,8 +304,8 @@ class TestSourceDiscovery:
 
         mock_fs = MagicMock()
         mock_fs.ls.return_value = [
-            {"name": "bucket/path/r1i1p1f1", "type": "directory"},
-            {"name": "bucket/path/r2i1p1f1", "type": "directory"},
+            {"name": "s3://bucket/path/r1i1p1f1", "type": "directory"},
+            {"name": "s3://bucket/path/r2i1p1f1", "type": "directory"},
         ]
         sd._fs = mock_fs
 
@@ -338,9 +338,9 @@ class TestSourceDiscovery:
         sd = SourceDiscovery(simple_config)
         mock_fs = MagicMock()
         mock_fs.glob.return_value = [
-            "test-bucket/model/experiment/r1i1p1f1/Amon/tas.nc",
-            "test-bucket/model/experiment/r1i1p1f1/Amon/pr.nc",
-            "test-bucket/model/experiment/r1i1p1f1/Amon/tos.nc",
+            "s3://test-bucket/model/experiment/r1i1p1f1/Amon/tas.nc",
+            "s3://test-bucket/model/experiment/r1i1p1f1/Amon/pr.nc",
+            "s3://test-bucket/model/experiment/r1i1p1f1/Amon/tos.nc",
         ]
         sd._fs = mock_fs
 

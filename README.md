@@ -22,7 +22,10 @@ For development:
 git clone https://github.com/ReflectiveCloud/reflective-data-catalog.git
 cd reflective-data-catalog
 pip install -e ".[dev]"
+pre-commit install
 ```
+
+This installs a [pre-commit](https://pre-commit.com/) hook that automatically runs [Ruff](https://docs.astral.sh/ruff/) linting (with auto-fix) and formatting on every commit.
 
 ## Quick Start
 

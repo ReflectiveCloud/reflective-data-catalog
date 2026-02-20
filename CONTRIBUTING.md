@@ -134,7 +134,7 @@ The source will automatically be available as `catalog.model_experiment()`.
 src/reflective_data_catalog/
 ├── __init__.py          # Package exports
 ├── main.py              # ReflectiveCatalog class
-├── flexibleSoruces.py   # FlexibleSourceConfig, FlexibleSource, SourceDiscovery
+├── flexibleSources.py   # FlexibleSourceConfig, FlexibleSource, SourceDiscovery
 ├── reflective_data.py   # Default source configurations
 ├── esgf.py              # ESGF data access helper
 ├── esm.py               # intake-esm Google Cloud CMIP6/GeoMIP access

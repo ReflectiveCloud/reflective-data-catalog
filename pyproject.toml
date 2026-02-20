@@ -40,11 +40,15 @@ dependencies = [
 source-code = "https://github.com/ReflectiveCloud/reflective-data-catalog"
 homepage = "https://reflective.org"
 
+[tool.setuptools.package-data]
+reflective_data_catalog = ["data-catalog.yaml", "py.typed"]
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=6.0",
     "ruff>=0.12.0",
+    "pre-commit>=3.0",
 ]
 
 [tool.pytest.ini_options]

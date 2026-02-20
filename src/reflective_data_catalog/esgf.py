@@ -3,8 +3,8 @@ class ESGFHelper:
 
     def __init__(self):
         self._esgf_cat = None
-        self.geomip = GeoMIPHelper()
-        self.ssp = SSPHelper()
+        self.geomip = GeoMIPHelper(parent=self)
+        self.ssp = SSPHelper(parent=self)
 
     def _get_catalog(self):
         """Lazy initialization of ESGF catalog"""
@@ -188,6 +188,19 @@ class ESGFHelper:
 class GeoMIPHelper:
     """Helper for GeoMIP experiments"""
 
+    def __init__(self, parent: "ESGFHelper | None" = None):
+        self._parent = parent
+
+    def _get_catalog(self):
+        """Get or create an ESGFCatalog instance."""
+        if self._parent is not None:
+            return self._parent._get_catalog()
+        try:
+            from intake_esgf import ESGFCatalog
+        except ImportError:
+            raise ImportError("intake-esgf required: pip install intake-esgf")
+        return ESGFCatalog()
+
     def g6sulfur(
         self, model="UKESM1-0-LL", variable="tas", table="Amon", member="r1i1p1f2"
     ):
@@ -228,12 +241,7 @@ class GeoMIPHelper:
         catalog.esgf.geomip.list_variables()
         catalog.esgf.geomip.list_variables(experiment='G6solar', model='UKESM1-0-LL')
         """
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
-
-        cat = ESGFCatalog()
+        cat = self._get_catalog()
 
         search_params = {
             "project": "CMIP6",
@@ -273,12 +281,7 @@ class GeoMIPHelper:
 
     def _load_geomip(self, experiment, model, variable, table, member):
         """Internal method to load GeoMIP data"""
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
-
-        cat = ESGFCatalog()
+        cat = self._get_catalog()
 
         print(f"Searching ESGF for {experiment} {model} {variable}...")
 
@@ -305,6 +308,19 @@ class GeoMIPHelper:
 
 class SSPHelper:
     """Helper for CMIP6 SSP scenarios"""
+
+    def __init__(self, parent: "ESGFHelper | None" = None):
+        self._parent = parent
+
+    def _get_catalog(self):
+        """Get or create an ESGFCatalog instance."""
+        if self._parent is not None:
+            return self._parent._get_catalog()
+        try:
+            from intake_esgf import ESGFCatalog
+        except ImportError:
+            raise ImportError("intake-esgf required: pip install intake-esgf")
+        return ESGFCatalog()
 
     def ssp245(
         self, model="UKESM1-0-LL", variable="tas", table="Amon", member="r1i1p1f2"
@@ -352,12 +368,7 @@ class SSPHelper:
         catalog.esgf.ssp.list_variables()
         catalog.esgf.ssp.list_variables(experiment='ssp585', model='UKESM1-0-LL')
         """
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
-
-        cat = ESGFCatalog()
+        cat = self._get_catalog()
 
         search_params = {
             "project": "CMIP6",
@@ -397,12 +408,7 @@ class SSPHelper:
 
     def _load_ssp(self, experiment, model, variable, table, member):
         """Internal method to load SSP data"""
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
-
-        cat = ESGFCatalog()
+        cat = self._get_catalog()
 
         print(f"Searching ESGF for {experiment.upper()} {model} {variable}...")
 
