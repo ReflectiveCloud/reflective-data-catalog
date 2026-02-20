@@ -202,13 +202,13 @@ class GeoMIPHelper:
         return ESGFCatalog()
 
     def g6sulfur(
-        self, model="UKESM1-0-LL", variable="tas", table="Amon", member="r1i1p1f2"
+        self, model="UKESM1-0-LL", variable="tas", table="day", member="r4i1p1f2"
     ):
         """Load G6sulfur data from ESGF"""
         return self._load_geomip("G6sulfur", model, variable, table, member)
 
     def g6solar(
-        self, model="UKESM1-0-LL", variable="tas", table="Amon", member="r1i1p1f2"
+        self, model="UKESM1-0-LL", variable="tas", table="day", member="r1i1p1f2"
     ):
         """Load G6solar data from ESGF"""
         return self._load_geomip("G6solar", model, variable, table, member)
