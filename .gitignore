@@ -41,5 +41,17 @@ dump.rdb
 *.eggs.tar.zstd
 *.eggs.tar.zstd.tar.gz
 
+# Jupyter notebooks cruft
 **/.ipynb_checkpoints/
+
+# Ruff cache
 .ruff_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Pytest coverage
+.coverage
+coverage.xml
+htmlcov/
+.coverage.*
