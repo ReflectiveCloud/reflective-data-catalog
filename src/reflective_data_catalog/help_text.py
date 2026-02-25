@@ -38,7 +38,7 @@ DISCOVERING AVAILABLE DATA:
     # Full discovery summary
     source.discover()
 
-FLEXIBLE SOURCES:
+FLEXIBLE SOURCES (Data in the Reflective Cloud Hub S3 bucket):
 ----------------
     # These support any valid table/variable combination
     ds = catalog.ukesm1_g6_1p5k_hilla(
@@ -53,7 +53,7 @@ FLEXIBLE SOURCES:
         variant='baseline'  # or 'G6-1.5K-SAI'
     ).to_dask()
 
-GOOGLE CLOUD CMIP6/GeoMIP (intake-esm):
+CMIP6/GeoMIP (intake-esm):
 ---------------------------------------
     # Search and load cloud-optimized Zarr data
     datasets = catalog.esm.load(
@@ -82,7 +82,7 @@ ESGF DATA:
 
 CLOUD STORAGE:
 -------------
-    Data is stored across S3, GCS, Azure, and Cloudflare R2.
+    Data stored across S3, GCS, Azure, and Cloudflare R2 can be accessed using this Data Catalog.
     The CloudFileSystem auto-detects the provider from the URL scheme:
         s3://  -> AWS S3
         gs://  -> Google Cloud Storage
