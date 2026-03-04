@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from reflective_data_catalog.flexibleSources import FlexibleSourceConfig
-from reflective_data_catalog.main import ReflectiveCatalog
+from reflective_data_catalog.main import IntakeSource, ReflectiveCatalog
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -88,6 +88,44 @@ class TestCatalogGetattr:
         cat = _make_catalog()
         with pytest.raises(AttributeError):
             _ = cat._nonexistent
+
+    def test_intake_source_returns_intake_source_wrapper(self):
+        cat = _make_catalog()
+
+        mock_ds = MagicMock(name="dataset")
+        mock_source = MagicMock(name="source")
+        mock_source.to_dask.return_value = mock_ds
+
+        mock_entry = MagicMock(name="entry")
+        mock_entry.return_value = mock_source
+        mock_entry._params = {
+            "parameters": {
+                "variable": {
+                    "type": "str",
+                    "default": "tas",
+                    "allowed": ["tas", "pr"],
+                    "description": "variable",
+                },
+                "table": {
+                    "type": "str",
+                    "default": "Amon",
+                    "allowed": ["Amon", "day"],
+                    "description": "table",
+                },
+            }
+        }
+        mock_entry._args = {"urlpath": "s3://bucket/{{table}}/{{variable}}.zarr"}
+
+        cat._get_intake_catalog = MagicMock(return_value={"yaml_source": mock_entry})
+
+        loader = cat.yaml_source
+        source = loader(variable="tas")
+
+        assert isinstance(source, IntakeSource)
+        assert source.to_dask() is mock_ds
+        assert source.list_variables() == ["tas", "pr"]
+        assert source.list_tables() == ["Amon", "day"]
+        assert source.url == "s3://bucket/Amon/tas.zarr"
 
 
 # =========================================================================

@@ -11,6 +11,152 @@ from .flexibleSources import (
 from .reflective_data import DEFAULT_FLEXIBLE_SOURCES
 
 
+class IntakeSource:
+    """
+    Wrapper that gives intake YAML sources the same methods as FlexibleSource.
+
+    This keeps the user-facing API consistent regardless of whether the source
+    is backed by a flexible config or an intake catalog entry.
+    """
+
+    def __init__(self, name: str, entry, **kwargs):
+        self._name = name
+        self._entry = entry
+        self._kwargs = kwargs
+        self._src = None
+
+    def _instantiate(self):
+        """Instantiate and cache the underlying intake source object."""
+        if self._src is None:
+            self._src = self._entry(**self._kwargs)
+        return self._src
+
+    def _entry_parameters(self) -> dict:
+        """Return intake parameter metadata for this entry."""
+        if hasattr(self._entry, "_params") and "parameters" in self._entry._params:
+            return self._entry._params["parameters"]
+        if hasattr(self._entry, "_user_parameters"):
+            return self._entry._user_parameters
+        return {}
+
+    def _values_for(self, keys: tuple[str, ...]) -> list:
+        """
+        Best-effort values for discovery-style helpers.
+
+        Uses parameter ``allowed`` values when available, otherwise falls back
+        to a singleton list containing the default.
+        """
+        params = self._entry_parameters()
+        for key in keys:
+            if key not in params:
+                continue
+            cfg = params[key]
+            allowed = cfg.get("allowed")
+            if allowed:
+                return list(allowed)
+            default = cfg.get("default")
+            if default is not None:
+                return [default]
+        return []
+
+    def _render_urlpath(self):
+        """Render intake URL template with defaults + user kwargs when possible."""
+        if not hasattr(self._entry, "_args"):
+            return None
+
+        urlpath = self._entry._args.get("urlpath")
+        if urlpath is None:
+            return None
+
+        params = self._entry_parameters()
+        values = {
+            name: cfg.get("default")
+            for name, cfg in params.items()
+            if cfg.get("default") is not None
+        }
+        values.update(self._kwargs)
+
+        def _render_one(template: str) -> str:
+            rendered = template
+            for key, value in values.items():
+                rendered = rendered.replace(f"{{{{{key}}}}}", str(value))
+            return rendered
+
+        if isinstance(urlpath, list):
+            return [_render_one(str(item)) for item in urlpath]
+        return _render_one(str(urlpath))
+
+    def to_dask(self):
+        """Load lazily when supported by the underlying intake source."""
+        src = self._instantiate()
+        if hasattr(src, "to_dask"):
+            return src.to_dask()
+        if hasattr(src, "read"):
+            return src.read()
+        raise AttributeError(
+            f"Source '{self._name}' does not expose to_dask() or read() methods."
+        )
+
+    def read(self):
+        """Load into memory."""
+        src = self._instantiate()
+        if hasattr(src, "read"):
+            return src.read()
+        if hasattr(src, "to_dask"):
+            return src.to_dask()
+        raise AttributeError(
+            f"Source '{self._name}' does not expose read() or to_dask() methods."
+        )
+
+    @property
+    def url(self):
+        """Rendered URL/template for this source, if present."""
+        return self._render_urlpath()
+
+    @property
+    def urlpath(self):
+        """Alias for url (matches FlexibleSource/intake naming)."""
+        return self.url
+
+    @property
+    def config(self):
+        """Return the underlying intake entry object."""
+        return self._entry
+
+    def list_ensembles(self, refresh: bool = False) -> list:
+        del refresh  # kept for API parity with FlexibleSource
+        return self._values_for(("ensemble", "ensemble_member", "member_id"))
+
+    def list_tables(self, ensemble: str | None = None, refresh: bool = False) -> list:
+        del ensemble, refresh  # kept for API parity with FlexibleSource
+        return self._values_for(("table", "table_id"))
+
+    def list_variables(
+        self,
+        ensemble: str | None = None,
+        table: str | None = None,
+        variant: str | None = None,
+        refresh: bool = False,
+    ) -> list:
+        del ensemble, table, variant, refresh  # kept for API parity
+        return self._values_for(("variable", "variable_id"))
+
+    def discover(self, refresh: bool = False):
+        """Print a lightweight source summary using intake metadata."""
+        del refresh  # kept for API parity with FlexibleSource
+        print("=" * 80)
+        print(f"SOURCE: {self._name}")
+        print("-" * 80)
+        print(f"URL: {self.url}")
+        print(f"Ensembles: {self.list_ensembles() or 'n/a'}")
+        print(f"Tables: {self.list_tables() or 'n/a'}")
+        print(f"Variables: {self.list_variables() or 'n/a'}")
+        print("=" * 80)
+
+    def __repr__(self) -> str:
+        return f"IntakeSource(name='{self._name}', kwargs={self._kwargs})"
+
+
 class ReflectiveCatalog:
     """
     Unified catalog interface for all of Reflective's climate data sources
@@ -358,7 +504,12 @@ class ReflectiveCatalog:
         try:
             cat = self._get_intake_catalog()
             if name in cat:
-                return cat[name]
+                entry = cat[name]
+
+                def intake_loader(**kwargs):
+                    return IntakeSource(name=name, entry=entry, **kwargs)
+
+                return intake_loader
         except Exception:
             pass
 

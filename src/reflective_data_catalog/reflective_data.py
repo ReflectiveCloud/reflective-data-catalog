@@ -16,7 +16,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
             "ODAY": "ODAY",
             "OMON": "OMON",
         },
-        default_table="ADAY",
+        default_table="AMON",
         default_variable="T",
         default_ensemble="r1",
         driver="netcdf",
