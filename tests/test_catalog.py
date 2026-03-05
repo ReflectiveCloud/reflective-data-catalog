@@ -114,7 +114,7 @@ class TestCatalogGetattr:
                 },
             }
         }
-        mock_entry._args = {"urlpath": "s3://bucket/{{table}}/{{variable}}.zarr"}
+        mock_entry._open_args = {"urlpath": "s3://bucket/{{table}}/{{variable}}.zarr"}
 
         cat._get_intake_catalog = MagicMock(return_value={"yaml_source": mock_entry})
 
@@ -126,6 +126,35 @@ class TestCatalogGetattr:
         assert source.list_variables() == ["tas", "pr"]
         assert source.list_tables() == ["Amon", "day"]
         assert source.url == "s3://bucket/Amon/tas.zarr"
+
+    def test_intake_list_tables_uses_default_when_allowed_missing(self):
+        cat = _make_catalog()
+
+        class Param:
+            def __init__(self, name, default, allowed=None, description="", ptype="str"):
+                self.name = name
+                self.default = default
+                self.allowed = allowed
+                self.description = description
+                self.type = ptype
+
+        mock_entry = MagicMock(name="entry")
+        mock_entry._user_parameters = [
+            Param("variable", "tas"),
+            Param("member_id", "r1i1p1f2", ["r1i1p1f2", "r2i1p1f2"]),
+            Param("table_id", "day", None),
+        ]
+        mock_entry._open_args = {
+            "urlpath": "s3://bucket/{{member_id}}/{{table_id}}/{{variable}}/*"
+        }
+        mock_entry.return_value = MagicMock(name="source")
+
+        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+
+        source = cat.ukesm1_arise_sai()
+        assert source.list_tables() == ["day"]
+        assert source.list_ensembles() == ["r1i1p1f2", "r2i1p1f2"]
+        assert source.url == "s3://bucket/r1i1p1f2/day/tas/*"
 
 
 # =========================================================================

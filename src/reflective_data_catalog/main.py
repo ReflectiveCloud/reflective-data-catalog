@@ -36,7 +36,18 @@ class IntakeSource:
         if hasattr(self._entry, "_params") and "parameters" in self._entry._params:
             return self._entry._params["parameters"]
         if hasattr(self._entry, "_user_parameters"):
-            return self._entry._user_parameters
+            user_params = self._entry._user_parameters
+            if isinstance(user_params, list):
+                return {
+                    p.name: {
+                        "type": getattr(p, "type", "unknown"),
+                        "default": getattr(p, "default", None),
+                        "allowed": getattr(p, "allowed", None),
+                        "description": getattr(p, "description", ""),
+                    }
+                    for p in user_params
+                }
+            return user_params
         return {}
 
     def _values_for(self, keys: tuple[str, ...]) -> list:
@@ -61,10 +72,16 @@ class IntakeSource:
 
     def _render_urlpath(self):
         """Render intake URL template with defaults + user kwargs when possible."""
-        if not hasattr(self._entry, "_args"):
+        open_args = None
+        if hasattr(self._entry, "_open_args"):
+            open_args = self._entry._open_args
+        elif hasattr(self._entry, "_captured_init_kwargs"):
+            open_args = self._entry._captured_init_kwargs.get("args")
+
+        if not open_args:
             return None
 
-        urlpath = self._entry._args.get("urlpath")
+        urlpath = open_args.get("urlpath")
         if urlpath is None:
             return None
 
@@ -504,7 +521,11 @@ class ReflectiveCatalog:
         try:
             cat = self._get_intake_catalog()
             if name in cat:
-                entry = cat[name]
+                if hasattr(cat, "_entries"):
+                    entry = cat._entries[name]
+                else:
+                    # Test doubles may provide dict-like catalogs only.
+                    entry = cat[name]
 
                 def intake_loader(**kwargs):
                     return IntakeSource(name=name, entry=entry, **kwargs)
@@ -1060,7 +1081,19 @@ class ReflectiveCatalog:
             if hasattr(entry, "_params") and "parameters" in entry._params:
                 params = entry._params["parameters"]
             elif hasattr(entry, "_user_parameters"):
-                params = entry._user_parameters
+                user_params = entry._user_parameters
+                if isinstance(user_params, list):
+                    params = {
+                        p.name: {
+                            "type": getattr(p, "type", "unknown"),
+                            "default": getattr(p, "default", None),
+                            "allowed": getattr(p, "allowed", None),
+                            "description": getattr(p, "description", ""),
+                        }
+                        for p in user_params
+                    }
+                else:
+                    params = user_params
 
             if params is None:
                 return {
