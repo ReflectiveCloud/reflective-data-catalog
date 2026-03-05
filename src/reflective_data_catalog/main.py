@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from .esgf import ESGFHelper
 from .esm import ESMCatalog, GeoMIPCloudHelper
@@ -19,11 +20,13 @@ class IntakeSource:
     is backed by a flexible config or an intake catalog entry.
     """
 
-    def __init__(self, name: str, entry, **kwargs):
+    def __init__(self, catalog: "ReflectiveCatalog", name: str, entry, **kwargs):
+        self._catalog = catalog
         self._name = name
         self._entry = entry
         self._kwargs = kwargs
         self._src = None
+        self._discovery_cache: dict[tuple, list[str]] = {}
 
     def _instantiate(self):
         """Instantiate and cache the underlying intake source object."""
@@ -70,14 +73,128 @@ class IntakeSource:
                 return [default]
         return []
 
+    def _open_args(self) -> dict:
+        """Best-effort intake open args for this entry."""
+        if hasattr(self._entry, "_open_args") and self._entry._open_args:
+            return self._entry._open_args
+        if hasattr(self._entry, "_captured_init_kwargs"):
+            return self._entry._captured_init_kwargs.get("args", {})
+        return {}
+
+    def _url_templates(self) -> list[str]:
+        """Return URL templates from intake entry args."""
+        urlpath = self._open_args().get("urlpath")
+        if urlpath is None:
+            return []
+        if isinstance(urlpath, list):
+            return [str(item) for item in urlpath]
+        return [str(urlpath)]
+
+    def _parameter_values(self, overrides: dict[str, str] | None = None) -> dict:
+        """Defaults + user kwargs + explicit overrides."""
+        params = self._entry_parameters()
+        values = {
+            name: cfg.get("default")
+            for name, cfg in params.items()
+            if cfg.get("default") is not None
+        }
+        values.update(self._kwargs)
+        if overrides:
+            values.update(overrides)
+        return values
+
+    def _compile_template_regex(self, template: str) -> re.Pattern:
+        """Compile a regex that captures {{placeholders}} from a URL template."""
+        parts: list[str] = []
+        seen: set[str] = set()
+        idx = 0
+        for match in re.finditer(r"\{\{([a-zA-Z0-9_]+)\}\}", template):
+            literal = re.escape(template[idx : match.start()])
+            literal = literal.replace(r"\*", ".*").replace(r"\?", ".")
+            parts.append(literal)
+            name = match.group(1)
+            if name in seen:
+                parts.append(r"[^/]+")
+            else:
+                parts.append(fr"(?P<{name}>[^/]+)")
+                seen.add(name)
+            idx = match.end()
+
+        tail = re.escape(template[idx:])
+        tail = tail.replace(r"\*", ".*").replace(r"\?", ".")
+        parts.append(tail)
+        return re.compile("^" + "".join(parts) + "$")
+
+    def _render_template_for_scan(
+        self,
+        template: str,
+        wildcard_keys: set[str],
+        overrides: dict[str, str] | None = None,
+    ) -> str:
+        """Render template into a glob pattern for cloud scanning."""
+        values = self._parameter_values(overrides=overrides)
+
+        def replace(match: re.Match) -> str:
+            key = match.group(1)
+            if key in wildcard_keys:
+                return "*"
+            value = values.get(key)
+            return str(value) if value is not None else "*"
+
+        return re.sub(r"\{\{([a-zA-Z0-9_]+)\}\}", replace, template)
+
+    def _scan_values_from_templates(
+        self,
+        keys: tuple[str, ...],
+        overrides: dict[str, str] | None = None,
+        *,
+        refresh: bool = False,
+    ) -> list[str]:
+        """
+        Discover values by globbing cloud paths derived from urlpath templates.
+        """
+        cache_key = (
+            tuple(sorted(keys)),
+            tuple(sorted((overrides or {}).items())),
+        )
+        if not refresh and cache_key in self._discovery_cache:
+            return list(self._discovery_cache[cache_key])
+
+        templates = self._url_templates()
+        if not templates:
+            return []
+
+        values: set[str] = set()
+        for template in templates:
+            wildcard_keys = {key for key in keys if f"{{{{{key}}}}}" in template}
+            if not wildcard_keys:
+                continue
+
+            scan_pattern = self._render_template_for_scan(
+                template, wildcard_keys=wildcard_keys, overrides=overrides
+            )
+            try:
+                matches = self._catalog.fs.glob(scan_pattern)
+            except Exception:
+                continue
+
+            regex = self._compile_template_regex(template)
+            for path in matches:
+                match = regex.match(path)
+                if not match:
+                    continue
+                for key in keys:
+                    value = match.groupdict().get(key)
+                    if value:
+                        values.add(value)
+
+        discovered = sorted(values)
+        self._discovery_cache[cache_key] = list(discovered)
+        return discovered
+
     def _render_urlpath(self):
         """Render intake URL template with defaults + user kwargs when possible."""
-        open_args = None
-        if hasattr(self._entry, "_open_args"):
-            open_args = self._entry._open_args
-        elif hasattr(self._entry, "_captured_init_kwargs"):
-            open_args = self._entry._captured_init_kwargs.get("args")
-
+        open_args = self._open_args()
         if not open_args:
             return None
 
@@ -141,12 +258,25 @@ class IntakeSource:
         return self._entry
 
     def list_ensembles(self, refresh: bool = False) -> list:
-        del refresh  # kept for API parity with FlexibleSource
-        return self._values_for(("ensemble", "ensemble_member", "member_id"))
+        keys = ("ensemble", "ensemble_member", "member_id")
+        scanned = self._scan_values_from_templates(keys, refresh=refresh)
+        if scanned:
+            return scanned
+        return self._values_for(keys)
 
     def list_tables(self, ensemble: str | None = None, refresh: bool = False) -> list:
-        del ensemble, refresh  # kept for API parity with FlexibleSource
-        return self._values_for(("table", "table_id"))
+        keys = ("table", "table_id")
+        overrides = (
+            {"ensemble": ensemble, "ensemble_member": ensemble, "member_id": ensemble}
+            if ensemble
+            else None
+        )
+        scanned = self._scan_values_from_templates(
+            keys, overrides=overrides, refresh=refresh
+        )
+        if scanned:
+            return scanned
+        return self._values_for(keys)
 
     def list_variables(
         self,
@@ -155,8 +285,27 @@ class IntakeSource:
         variant: str | None = None,
         refresh: bool = False,
     ) -> list:
-        del ensemble, table, variant, refresh  # kept for API parity
-        return self._values_for(("variable", "variable_id"))
+        keys = ("variable", "variable_id")
+        overrides: dict[str, str] = {}
+        if ensemble is not None:
+            overrides.update(
+                {
+                    "ensemble": ensemble,
+                    "ensemble_member": ensemble,
+                    "member_id": ensemble,
+                }
+            )
+        if table is not None:
+            overrides.update({"table": table, "table_id": table})
+        if variant is not None:
+            overrides["variant"] = variant
+
+        scanned = self._scan_values_from_templates(
+            keys, overrides=overrides or None, refresh=refresh
+        )
+        if scanned:
+            return scanned
+        return self._values_for(keys)
 
     def discover(self, refresh: bool = False):
         """Print a lightweight source summary using intake metadata."""
@@ -177,11 +326,11 @@ class IntakeSource:
 class ReflectiveCatalog:
     """
     Unified catalog interface for all of Reflective's climate data sources
-
+    
     All sources use the same interface pattern:
         ds = catalog.source_name(param='value').to_dask()  # Lazy loading
         ds = catalog.source_name(param='value').read()     # Load to memory
-
+    
     Attributes:
     -----------
     esgf : ESGFHelper
@@ -200,7 +349,7 @@ class ReflectiveCatalog:
     ):
         """
         Initialize unified catalog
-
+        
         Parameters:
         -----------
         catalog_path : Path
@@ -214,17 +363,17 @@ class ReflectiveCatalog:
         self._intake_cat = None
         self._r2_account_id = r2_account_id
         self._fs = None  # shared CloudFileSystem (lazy)
-
+        
         # Initialize helpers
         self.esgf = ESGFHelper()
         self.esm = ESMCatalog()
         self.geomip_cloud = GeoMIPCloudHelper()
-
+        
         # Initialize flexible source registry with defaults
         self._flexible_registry = FlexibleSourceRegistry()
         for config in DEFAULT_FLEXIBLE_SOURCES:
             self._flexible_registry.register(config)
-
+    
     @property
     def fs(self):
         """Shared :class:`CloudFileSystem` instance (lazy-initialized)."""
@@ -233,11 +382,11 @@ class ReflectiveCatalog:
 
             self._fs = CloudFileSystem(r2_account_id=self._r2_account_id)
         return self._fs
-
+    
     def _load_flexible(self, config: FlexibleSourceConfig, lazy: bool = True, **kwargs):
         """
         Internal method to load data from a flexible source configuration
-
+        
         Parameters:
         -----------
         config : FlexibleSourceConfig
@@ -246,16 +395,16 @@ class ReflectiveCatalog:
             If True, load lazily with dask. If False, load into memory.
         **kwargs : dict
             Parameters for URL construction
-
+        
         Returns:
         --------
         xarray.Dataset
         """
         url = config.build_url(**kwargs)
-
+        
         # Merge defaults with kwargs for display
         params = {**config.defaults, **kwargs}
-
+        
         print(f"Loading {config.name}")
         print(f"  Table: {params.get('table', 'Amon')}")
         print(f"  Variable: {params.get('variable', 'tas')}")
@@ -264,7 +413,7 @@ class ReflectiveCatalog:
         print(f"  Driver: {config.driver}")
         print(f"  Multi-file: {config.is_multi_file}")
         print(f"  Lazy: {lazy}")
-
+        
         if config.is_multi_file:
             return self._open_multi_file_dataset(
                 url_pattern=url, config=config, lazy=lazy
@@ -274,13 +423,13 @@ class ReflectiveCatalog:
                 return self._open_dataset_lazy(url, driver=config.driver)
             else:
                 return self._open_dataset(url, driver=config.driver)
-
+    
     def _open_multi_file_dataset(
         self, url_pattern: str, config: FlexibleSourceConfig, lazy: bool = True
     ):
         """
         Open multiple files matching a glob pattern and combine them
-
+        
         Parameters:
         -----------
         url_pattern : str
@@ -289,25 +438,25 @@ class ReflectiveCatalog:
             Source configuration with combine settings
         lazy : bool
             If True, load lazily with dask
-
+        
         Returns:
         --------
         xarray.Dataset
         """
         import xarray as xr
-
+        
         fs = self.fs
-
+        
         # Find all matching files
         print(f"  Searching for files matching: {url_pattern}")
         matching_files = fs.glob(url_pattern)
-
+        
         if not matching_files:
             raise FileNotFoundError(f"No files found matching pattern: {url_pattern}")
-
+        
         # Sort files (usually by date in filename)
         matching_files = sorted(matching_files)
-
+        
         print(f"  Found {len(matching_files)} files")
         if len(matching_files) <= 5:
             for f in matching_files:
@@ -318,7 +467,7 @@ class ReflectiveCatalog:
             print(f"    ... ({len(matching_files) - 4} more)")
             print(f"    - {matching_files[-2]}")
             print(f"    - {matching_files[-1]}")
-
+        
         # Handle single file case
         if len(matching_files) == 1:
             url = matching_files[0]
@@ -326,7 +475,7 @@ class ReflectiveCatalog:
                 return self._open_dataset_lazy(url, driver=config.driver)
             else:
                 return self._open_dataset(url, driver=config.driver)
-
+        
         # Handle combine_files='first'
         if config.combine_files == "first":
             url = matching_files[0]
@@ -335,7 +484,7 @@ class ReflectiveCatalog:
                 return self._open_dataset_lazy(url, driver=config.driver)
             else:
                 return self._open_dataset(url, driver=config.driver)
-
+        
         # Open and combine multiple files
         print(
             f"  Combining files using: {config.combine_files} along '{config.concat_dim}'"
@@ -366,35 +515,35 @@ class ReflectiveCatalog:
                         else None,
                     )
                     ds = ds.load()
-
+                
                 return ds
-
+            
             elif config.driver == "zarr":
                 # For zarr, load each and combine manually
                 datasets = []
                 for f in matching_files:
                     ds = xr.open_zarr(f, consolidated=True)
                     datasets.append(ds)
-
+                
                 combined = xr.concat(datasets, dim=config.concat_dim)
-
+                
                 if not lazy:
                     combined = combined.load()
-
+                
                 return combined
-
+            
             else:
                 raise ValueError(f"Unknown driver: {config.driver}")
-
+        
         except Exception as e:
             raise RuntimeError(
                 f"Failed to open and combine files from {url_pattern}. Error: {e}"
             )
-
+    
     def _open_dataset(self, url, driver="netcdf", **kwargs):
         """
         Open a dataset from cloud storage using the appropriate driver
-
+        
         Parameters:
         -----------
         url : str
@@ -403,17 +552,17 @@ class ReflectiveCatalog:
             Data format driver ('netcdf' or 'zarr')
         **kwargs : dict
             Additional arguments passed to the open function
-
+        
         Returns:
         --------
         xarray.Dataset
         """
         import xarray as xr
-
+        
         if driver == "zarr":
             # Zarr can open from URL directly via fsspec
             return xr.open_zarr(url, consolidated=True, **kwargs)
-
+        
         elif driver == "netcdf":
             fs = self.fs
 
@@ -431,16 +580,16 @@ class ReflectiveCatalog:
                     raise RuntimeError(
                         f"Failed to open NetCDF file from {url}. Original error: {e}"
                     )
-
+        
         else:
             raise ValueError(
                 f"Unknown driver: {driver}. Supported drivers: 'netcdf', 'zarr'"
             )
-
+    
     def _open_dataset_lazy(self, url, driver="netcdf", **kwargs):
         """
         Open a dataset from cloud storage lazily (using dask)
-
+        
         Parameters:
         -----------
         url : str
@@ -449,17 +598,17 @@ class ReflectiveCatalog:
             Data format driver ('netcdf' or 'zarr')
         **kwargs : dict
             Additional arguments passed to the open function
-
+        
         Returns:
         --------
         xarray.Dataset (with dask arrays)
         """
         import xarray as xr
-
+        
         if driver == "zarr":
             # Zarr can open from URL directly via fsspec
             return xr.open_zarr(url, consolidated=True, **kwargs)
-
+        
         elif driver == "netcdf":
             try:
                 # Use fsspec URL so xarray streams bytes via range
@@ -479,10 +628,10 @@ class ReflectiveCatalog:
                     f"Error: {e}. "
                     f"Try using .read() instead of .to_dask() to load into memory."
                 )
-
+        
         else:
             raise ValueError(f"Unknown driver: {driver}")
-
+    
     def _get_intake_catalog(self):
         """Lazy load the intake catalog"""
         import intake
@@ -495,11 +644,11 @@ class ReflectiveCatalog:
                     f"Could not load catalog from {self._catalog_path}: {e}"
                 )
         return self._intake_cat
-
+    
     def __getattr__(self, name: str):
         """
         Delegate attribute access to intake catalog OR flexible sources
-
+        
         This allows unified access:
             catalog.intake_source(param='value').to_dask()
             catalog.flexible_source(param='value').to_dask()
@@ -507,7 +656,7 @@ class ReflectiveCatalog:
         # Don't intercept private attributes or known attributes
         if name.startswith("_"):
             raise AttributeError(f"'{name}' not found")
-
+        
         # Check flexible registry first
         config = self._flexible_registry.get(name)
         if config is not None:
@@ -516,7 +665,7 @@ class ReflectiveCatalog:
                 return FlexibleSource(self, config, **kwargs)
 
             return flexible_loader
-
+        
         # Fall back to intake catalog
         try:
             cat = self._get_intake_catalog()
@@ -528,29 +677,29 @@ class ReflectiveCatalog:
                     entry = cat[name]
 
                 def intake_loader(**kwargs):
-                    return IntakeSource(name=name, entry=entry, **kwargs)
+                    return IntakeSource(catalog=self, name=name, entry=entry, **kwargs)
 
                 return intake_loader
         except Exception:
             pass
-
+        
         raise AttributeError(
             f"'{name}' not found in catalog. "
             f"Use catalog.list_sources() to see available sources."
         )
-
+    
     def __dir__(self) -> list[str]:
         """Show available attributes (for autocomplete)"""
         # Start with flexible sources from registry
         sources = list(self._flexible_registry.keys())
-
+        
         # Add intake catalog sources
         try:
             cat = self._get_intake_catalog()
             sources.extend(list(cat))
         except Exception:
             pass
-
+        
         # Add built-in attributes
         builtin = [
             "esgf",
@@ -564,24 +713,24 @@ class ReflectiveCatalog:
             "show_parameters",
             "get_source_config",
         ]
-
+        
         return sorted(set(builtin + sources))
-
+    
     def get_source_config(self, name: str) -> FlexibleSourceConfig | None:
         """
         Get the configuration for a flexible source
-
+        
         Parameters:
         -----------
         name : str
             Name of the source
-
+        
         Returns:
         --------
         FlexibleSourceConfig or None
         """
         return self._flexible_registry.get(name)
-
+    
     def list_sources(
         self,
         tag: str | None = None,
@@ -590,7 +739,7 @@ class ReflectiveCatalog:
     ):
         """
         List all available data sources
-
+        
         Parameters:
         -----------
         tag : str, optional
@@ -606,17 +755,17 @@ class ReflectiveCatalog:
         print("\nAll sources use the same interface:")
         print("  ds = catalog.source_name(param='value').to_dask()  # Lazy load")
         print("  ds = catalog.source_name(param='value').read()     # Load to memory")
-
+        
         # List flexible sources first
         if len(self._flexible_registry) > 0:
             print("\n" + "-" * 80)
             print("FLEXIBLE SOURCES (NetCDF/Zarr on cloud storage)")
             print("-" * 80)
-
+            
             for name, config in sorted(self._flexible_registry.items()):
                 if driver and config.driver != driver:
                     continue
-
+                
                 print(f"\n  {name}")
                 if config.description:
                     print(f"    {config.description}")
@@ -635,38 +784,38 @@ class ReflectiveCatalog:
                     )
                 if config.filename_pattern:
                     print(f"    Filename pattern: {config.filename_pattern}")
-
+        
         # List intake catalog sources
         try:
             cat = self._get_intake_catalog()
-
+            
             print("\n" + "-" * 80)
             print("INTAKE CATALOG SOURCES")
             print("-" * 80)
-
+            
             for name in sorted(cat):
                 entry = cat._entries[name]
-
+                
                 metadata = entry._metadata if hasattr(entry, "_metadata") else {}
                 tags = metadata.get("tags", [])
                 drv = entry._driver if hasattr(entry, "_driver") else "unknown"
                 desc = entry._description if hasattr(entry, "_description") else ""
-
+                
                 if tag and tag not in tags:
                     continue
                 if driver and drv != driver:
                     continue
-
+                
                 print(f"\n  {name}")
                 print(f"    Driver: {drv}")
                 if desc:
                     print(f"    {desc[:60]}...")
                 if tags:
                     print(f"    Tags: {', '.join(tags[:5])}")
-
+        
         except Exception as e:
             print(f"\n  (Could not load intake catalog: {e})")
-
+        
         # ESM Catalog (Google Cloud CMIP6/GeoMIP) — always shown
         print("\n" + "-" * 80)
         print("GOOGLE CLOUD CMIP6/GeoMIP (via catalog.esm / catalog.geomip_cloud)")
@@ -693,40 +842,40 @@ class ReflectiveCatalog:
         print("    catalog.geomip_cloud.summary()")
 
         print("\n" + "=" * 80)
-
+        
         # Add ESGF sources if requested
         if include_esgf:
             print("\n" + "=" * 80)
             print("ESGF DATA SOURCES (via catalog.esgf)")
             print("=" * 80)
-
+            
             print("\nGeoMIP Experiments (catalog.esgf.geomip):")
             print("  - g6sulfur(model='UKESM1-0-LL', variable='tas')")
             print("  - g6solar(model='UKESM1-0-LL', variable='tas')")
-
+            
             print("\nCMIP6 SSP Scenarios (catalog.esgf.ssp):")
             print("  - ssp126/ssp245/ssp585(model='...', variable='...')")
-
+            
             print("\nDirect search:")
             print("  catalog.esgf.search(project='CMIP6', experiment_id='...')")
-
+            
             print("\n" + "=" * 80)
-
+    
     def list_tags(self):
         """List all unique tags in the intake catalog"""
         cat = self._get_intake_catalog()
-
+        
         all_tags = set()
         for name in cat:
             entry = cat._entries[name]
             metadata = entry._metadata if hasattr(entry, "_metadata") else {}
             tags = metadata.get("tags", [])
             all_tags.update(tags)
-
+        
         print("Available tags:")
         for tag in sorted(all_tags):
             print(f"  - {tag}")
-
+    
     def search(
         self,
         term: str | None = None,
@@ -738,7 +887,7 @@ class ReflectiveCatalog:
 
         All criteria are combined with AND logic — a source must match
         every specified filter to be included.
-
+        
         Parameters:
         -----------
         term : str, optional
@@ -751,7 +900,7 @@ class ReflectiveCatalog:
         tag : str, optional
             Filter to intake catalog sources that have this tag.
             Case-insensitive.
-
+        
         Returns:
         --------
         list[str] : Matching source names
@@ -796,7 +945,7 @@ class ReflectiveCatalog:
                 )
                 if term_lower not in haystack.lower():
                     continue
-
+            
             # --- variable filter ---
             if var_lower is not None and config.default_variable.lower() != var_lower:
                 continue
@@ -807,17 +956,17 @@ class ReflectiveCatalog:
 
             matches.append(name)
             match_details.append((name, "flexible", config.description or ""))
-
+        
         # -----------------------------------------------------------------
         # Search intake catalog
         # -----------------------------------------------------------------
         try:
             cat = self._get_intake_catalog()
-
+            
             for entry_name in cat:
                 if entry_name in matches:
                     continue
-
+                
                 entry = cat._entries[entry_name]
                 desc = (
                     entry._description
@@ -839,18 +988,28 @@ class ReflectiveCatalog:
                     ).lower()
                     if term_lower not in haystack:
                         continue
-
+                
                 # --- variable filter ---
                 if var_lower is not None:
                     # Check the variable parameter default on the entry
                     entry_var = None
                     if hasattr(entry, "_user_parameters"):
-                        var_param = entry._user_parameters.get("variable")
-                        if var_param and hasattr(var_param, "default"):
-                            entry_var = var_param.default
+                        user_params = entry._user_parameters
+                        if isinstance(user_params, list):
+                            for p in user_params:
+                                if getattr(p, "name", None) in {
+                                    "variable",
+                                    "variable_id",
+                                }:
+                                    entry_var = getattr(p, "default", None)
+                                    break
+                        else:
+                            var_param = user_params.get("variable")
+                            if var_param and hasattr(var_param, "default"):
+                                entry_var = var_param.default
                     if entry_var is None or entry_var.lower() != var_lower:
                         continue
-
+                
                 # --- tag filter ---
                 if tag_lower is not None and not any(
                     tag_lower in t.lower() for t in tags
@@ -861,10 +1020,10 @@ class ReflectiveCatalog:
                 match_details.append(
                     (entry_name, "intake", desc[:80] if desc else "")
                 )
-
+        
         except Exception:
             pass
-
+        
         # -----------------------------------------------------------------
         # Search ESM catalog (Google Cloud CMIP6/GeoMIP)
         # -----------------------------------------------------------------
@@ -1018,18 +1177,18 @@ class ReflectiveCatalog:
 
         print("\n" + "=" * 80)
         print(f"Found {len(matches)} match(es)")
-
+        
         return matches
-
+    
     def get_parameters(self, source_name: str) -> dict:
         """
         Get parameter information for a source
-
+        
         Parameters:
         -----------
         source_name : str
             Name of the source
-
+        
         Returns:
         --------
         dict : Parameter information
@@ -1067,16 +1226,16 @@ class ReflectiveCatalog:
                 "concat_dim": config.concat_dim if config.is_multi_file else None,
                 "description": config.description,
             }
-
+        
         # Check intake catalog
         try:
             cat = self._get_intake_catalog()
-
+            
             if source_name not in cat:
                 raise ValueError(f"Source '{source_name}' not found")
-
+            
             entry = cat._entries[source_name]
-
+            
             params = None
             if hasattr(entry, "_params") and "parameters" in entry._params:
                 params = entry._params["parameters"]
@@ -1094,19 +1253,19 @@ class ReflectiveCatalog:
                     }
                 else:
                     params = user_params
-
+            
             if params is None:
                 return {
                     "has_parameters": False,
                     "message": f"Source '{source_name}' has no parameters",
                 }
-
+            
             param_info = {
                 "has_parameters": True,
                 "is_flexible": False,
                 "parameters": {},
             }
-
+            
             for param_name, param_config in params.items():
                 param_info["parameters"][param_name] = {
                     "type": param_config.get("type", "unknown"),
@@ -1114,16 +1273,16 @@ class ReflectiveCatalog:
                     "allowed": param_config.get("allowed", None),
                     "description": param_config.get("description", ""),
                 }
-
+            
             return param_info
-
+        
         except Exception as e:
             raise ValueError(f"Could not get parameters for '{source_name}': {e}")
-
+    
     def show_parameters(self, source_name, discover=False):
         """
         Print formatted parameter information for a source
-
+        
         Parameters:
         -----------
         source_name : str
@@ -1137,18 +1296,18 @@ class ReflectiveCatalog:
         except ValueError as e:
             print(f"Error: {e}")
             return
-
+        
         if not param_info.get("has_parameters"):
             print(f"Source '{source_name}' has no parameters")
             return
-
+        
         print("=" * 80)
         print(f"PARAMETERS: {source_name}")
         print("=" * 80)
-
+        
         if param_info.get("description"):
             print(f"\n{param_info['description']}")
-
+        
         if param_info.get("is_flexible"):
             print(f"\n[Flexible source - driver: {param_info.get('driver', 'netcdf')}]")
             if param_info.get("is_multi_file"):
@@ -1160,7 +1319,7 @@ class ReflectiveCatalog:
         print("\n" + "-" * 40)
         print("PARAMETERS:")
         print("-" * 40)
-
+        
         for param_name, info in param_info["parameters"].items():
             print(f"\n  {param_name}:")
             print(f"    Default: {info['default']}")
@@ -1172,32 +1331,43 @@ class ReflectiveCatalog:
                     print(f"    Allowed: {allowed}")
                 else:
                     print(f"    Allowed: {allowed[:5]} ... ({len(allowed)} total)")
+        
+        # If discover=True, use the source wrapper discovery methods
+        # for both flexible and intake-backed sources.
+        if discover:
+            print("\n" + "-" * 40)
+            print("AVAILABLE DATA (from cloud storage scan):")
+            print("-" * 40)
 
-        # If discover=True and this is a flexible source, scan cloud storage
-        if discover and param_info.get("is_flexible"):
-            config = self._flexible_registry.get(source_name)
-            if config:
-                discovery = SourceDiscovery(config)
+            defaults = {
+                name: cfg.get("default")
+                for name, cfg in param_info.get("parameters", {}).items()
+            }
+            default_ensemble = (
+                defaults.get("ensemble")
+                or defaults.get("ensemble_member")
+                or defaults.get("member_id")
+            )
+            default_table = defaults.get("table") or defaults.get("table_id")
 
-                print("\n" + "-" * 40)
-                print("AVAILABLE DATA (from cloud storage scan):")
-                print("-" * 40)
+            try:
+                source = getattr(self, source_name)()
+            except Exception as e:
+                print(f"\n  Could not initialize source for discovery ({e})")
+                source = None
 
+            if source is not None:
                 # Ensembles
                 try:
-                    ensembles = discovery.list_ensembles()
+                    ensembles = source.list_ensembles(refresh=True)
                     print(f"\n  Ensembles ({len(ensembles)}):")
                     if len(ensembles) <= 10:
                         for ens in ensembles:
-                            marker = (
-                                " (default)" if ens == config.default_ensemble else ""
-                            )
+                            marker = " (default)" if ens == default_ensemble else ""
                             print(f"    • {ens}{marker}")
                     else:
                         for ens in ensembles[:5]:
-                            marker = (
-                                " (default)" if ens == config.default_ensemble else ""
-                            )
+                            marker = " (default)" if ens == default_ensemble else ""
                             print(f"    • {ens}{marker}")
                         print(f"    ... and {len(ensembles) - 5} more")
                 except Exception as e:
@@ -1205,20 +1375,19 @@ class ReflectiveCatalog:
 
                 # Tables
                 try:
-                    tables = discovery.list_tables()
+                    tables = source.list_tables(refresh=True)
                     print(f"\n  Tables ({len(tables)}):")
                     for tbl in tables:
-                        marker = " (default)" if tbl == config.default_table else ""
+                        marker = " (default)" if tbl == default_table else ""
                         print(f"    • {tbl}{marker}")
                 except Exception as e:
                     print(f"\n  Tables: Could not scan ({e})")
 
-                # Variables (for default ensemble/table)
+                # Variables
                 try:
-                    variables = discovery.list_variables()
-                    print(
-                        f"\n  Variables in {config.default_table} ({len(variables)}):"
-                    )
+                    variables = source.list_variables(refresh=True)
+                    table_label = default_table or "default table"
+                    print(f"\n  Variables in {table_label} ({len(variables)}):")
                     if len(variables) <= 20:
                         # Print in columns
                         n_cols = 4
@@ -1237,20 +1406,20 @@ class ReflectiveCatalog:
                 except Exception as e:
                     print(f"\n  Variables: Could not scan ({e})")
 
-        elif param_info.get("is_flexible") and not discover:
+        elif not discover:
             print("\n" + "-" * 40)
             print("TIP: Use discover=True to scan cloud storage for available data:")
             print(f"  catalog.show_parameters('{source_name}', discover=True)")
             print("-" * 40)
-
+        
         print("\n" + "=" * 80)
         print(f"Usage: catalog.{source_name}(param='value').to_dask()")
         print("=" * 80)
-
+    
     def help(self, source_name=None):
         """
         Show help for the catalog or a specific source
-
+        
         Parameters:
         -----------
         source_name : str, optional

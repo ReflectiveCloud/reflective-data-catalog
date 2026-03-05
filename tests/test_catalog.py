@@ -156,6 +156,87 @@ class TestCatalogGetattr:
         assert source.list_ensembles() == ["r1i1p1f2", "r2i1p1f2"]
         assert source.url == "s3://bucket/r1i1p1f2/day/tas/*"
 
+    def test_intake_list_methods_scan_cloud_from_url_template(self):
+        cat = _make_catalog()
+
+        class Param:
+            def __init__(self, name, default, allowed=None, description="", ptype="str"):
+                self.name = name
+                self.default = default
+                self.allowed = allowed
+                self.description = description
+                self.type = ptype
+
+        mock_entry = MagicMock(name="entry")
+        mock_entry._user_parameters = [
+            Param("member_id", "r1i1p1f2"),
+            Param("table_id", "day"),
+            Param("variable", "tas"),
+        ]
+        mock_entry._open_args = {
+            "urlpath": (
+                "s3://bucket/arise/{{member_id}}/{{table_id}}/{{variable}}/"
+                "gn/v20220325/*"
+            )
+        }
+        mock_entry.return_value = MagicMock(name="source")
+        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+
+        mock_fs = MagicMock()
+        mock_fs.glob.side_effect = [
+            [
+                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+                "s3://bucket/arise/r2i1p1f2/Amon/pr/gn/v20220325/file2.nc",
+            ],
+            [
+                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+            ],
+            [
+                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+                "s3://bucket/arise/r1i1p1f2/day/pr/gn/v20220325/file2.nc",
+            ],
+        ]
+        cat._fs = mock_fs
+
+        source = cat.ukesm1_arise_sai()
+        assert source.list_ensembles() == ["r1i1p1f2", "r2i1p1f2"]
+        assert source.list_tables(ensemble="r1i1p1f2") == ["day"]
+        assert source.list_variables(ensemble="r1i1p1f2", table="day") == ["pr", "tas"]
+
+    def test_intake_discovery_cache_and_refresh(self):
+        cat = _make_catalog()
+
+        class Param:
+            def __init__(self, name, default):
+                self.name = name
+                self.default = default
+                self.allowed = None
+                self.description = ""
+                self.type = "str"
+
+        mock_entry = MagicMock(name="entry")
+        mock_entry._user_parameters = [Param("member_id", "r1i1p1f2")]
+        mock_entry._open_args = {"urlpath": "s3://bucket/arise/{{member_id}}/*"}
+        mock_entry.return_value = MagicMock(name="source")
+        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+
+        mock_fs = MagicMock()
+        mock_fs.glob.side_effect = [
+            ["s3://bucket/arise/r1i1p1f2/file1.nc"],
+            ["s3://bucket/arise/r2i1p1f2/file2.nc"],
+        ]
+        cat._fs = mock_fs
+
+        source = cat.ukesm1_arise_sai()
+        assert source.list_ensembles() == ["r1i1p1f2"]
+        # Cached result: no extra glob call
+        assert source.list_ensembles() == ["r1i1p1f2"]
+        assert mock_fs.glob.call_count == 1
+
+        # refresh=True bypasses cache
+        assert source.list_ensembles(refresh=True) == ["r2i1p1f2"]
+        assert mock_fs.glob.call_count == 2
+
 
 # =========================================================================
 # __dir__
@@ -248,6 +329,37 @@ class TestShowParameters:
         cat.show_parameters("nope")
         captured = capsys.readouterr()
         assert "Error" in captured.out
+
+    def test_discover_intake_source_uses_wrapper_methods(self, capsys):
+        cat = _make_catalog()
+
+        mock_fs = MagicMock()
+        mock_fs.glob.side_effect = [
+            [
+                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
+                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
+                "arise-sai-1p5/r2i1p1f2/day/tas/gn/v20220325/file2.nc",
+            ],
+            [
+                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
+                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+            ],
+            [
+                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
+                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
+                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
+                "arise-sai-1p5/r1i1p1f2/day/pr/gn/v20220325/file2.nc",
+            ],
+        ]
+        cat._fs = mock_fs
+
+        cat.show_parameters("ukesm1_arise_sai", discover=True)
+        captured = capsys.readouterr()
+        assert "AVAILABLE DATA (from cloud storage scan):" in captured.out
+        assert "r1i1p1f2" in captured.out
+        assert "day (default)" in captured.out
+        assert "tas" in captured.out
 
 
 # =========================================================================

@@ -148,13 +148,6 @@ sources:
       tags: ["geoengineering", "SAI", "high-latitude", "MIROC", "G6-1.5K-HiLLA", "feedback-control"]
 
 
-
-  # ============================================================================
-  # SSP2-4.5 reference experiments
-  # (note that some of these are found under external ESGF data, some on hub)
-  # ============================================================================
-  
-
   miroc_ssp245_(g6_1p5k_hilla):
     driver: netcdf
     description: "MIROC SSP2-4.5 (reference scenario for G6-1.5K-SAI and G6-1.5K-HiLLA). The SSP2-4.5 simulations are the same for reference against G6-1.5K-SAI and G6-1.5K-HiLLA, but different SSP2-4.5 outputs are available in the two cases."
