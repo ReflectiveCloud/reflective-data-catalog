@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
@@ -262,9 +263,8 @@ def mock_esm_catalog(monkeypatch, mock_esm_df):
 
     mock_datastore.search = mock_search
 
-    monkeypatch.setattr(
-        "intake.open_esm_datastore",
-        lambda *args, **kwargs: mock_datastore,
-    )
+    mock_module = MagicMock()
+    mock_module.open_esm_datastore = lambda *args, **kwargs: mock_datastore
+    monkeypatch.setitem(sys.modules, "intake", mock_module)
 
     return mock_datastore
