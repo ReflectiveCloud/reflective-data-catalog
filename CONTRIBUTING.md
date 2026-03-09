@@ -160,4 +160,4 @@ When reporting a bug, please include:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the GPL-3.0 license.
+By contributing, you agree that your contributions will be licensed under the Apache 2.0 license.

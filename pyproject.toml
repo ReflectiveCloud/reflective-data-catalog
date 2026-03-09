@@ -12,7 +12,7 @@ authors = [
     {name = "John Orcutt", email = "john@reflective.org"},
     {name = "Alistair Duffey", email="alistair@reflective.org"}
 ]
-license = "GPL-3.0"
+license = "Apache-2.0"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Operating System :: OS Independent",
