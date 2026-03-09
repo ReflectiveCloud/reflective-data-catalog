@@ -1,8 +1,7 @@
 # Reflective Data Catalog
 
-[![Reflective](https://img.shields.io/badge/reflective.org-blue?logo=data:image/svg+xml;base64,&label=🌍)](https://reflective.org)
-[![CI](https://img.shields.io/github/actions/workflow/status/ReflectiveCloud/reflective-data-catalog/tests.yml?branch=main&label=CI)](https://github.com/ReflectiveCloud/reflective-data-catalog/actions)
-[![codecov](https://img.shields.io/codecov/c/github/ReflectiveCloud/reflective-data-catalog?label=coverage)](https://codecov.io/gh/ReflectiveCloud/reflective-data-catalog)
+[![Reflective](https://img.shields.io/badge/reflective.org-blue?label=🌍)](https://reflective.org)
+[![CI](https://img.shields.io/github/actions/workflow/status/ReflectiveCloud/reflective-data-catalog/tests.yml?branch=main)](https://github.com/ReflectiveCloud/reflective-data-catalog/actions)
 [![License: Apache-2.0](https://img.shields.io/github/license/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/blob/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/reflective-data-catalog?label=version)](https://pypi.org/project/reflective-data-catalog/)
 [![Last Commit](https://img.shields.io/github/last-commit/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/commits/main)
