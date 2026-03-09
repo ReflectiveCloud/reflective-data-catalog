@@ -45,10 +45,13 @@ class TestESGFHelper:
 
     def test_get_catalog_import_error(self):
         helper = ESGFHelper()
-        with patch.dict(
-            "sys.modules",
-            {"intake_esgf": None},
-        ), pytest.raises(ImportError, match="intake-esgf"):
+        with (
+            patch.dict(
+                "sys.modules",
+                {"intake_esgf": None},
+            ),
+            pytest.raises(ImportError, match="intake-esgf"),
+        ):
             helper._get_catalog()
 
     def test_search_delegates(self):
@@ -100,9 +103,7 @@ class TestESGFHelper:
         helper = ESGFHelper()
         mock_cat = MagicMock()
         mock_results = MagicMock()
-        mock_results.df = pd.DataFrame(
-            {"variable_id": ["tas", "pr", "tas"]}
-        )
+        mock_results.df = pd.DataFrame({"variable_id": ["tas", "pr", "tas"]})
         mock_cat.search.return_value = mock_results
         helper._esgf_cat = mock_cat
 
@@ -179,9 +180,7 @@ class TestGeoMIPHelper:
     def test_list_variables(self):
         mock_cat = MagicMock()
         mock_results = MagicMock()
-        mock_results.df = pd.DataFrame(
-            {"variable_id": ["tas", "pr", "huss"]}
-        )
+        mock_results.df = pd.DataFrame({"variable_id": ["tas", "pr", "huss"]})
         mock_cat.search.return_value = mock_results
 
         with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
@@ -238,9 +237,7 @@ class TestSSPHelper:
     def test_list_variables(self):
         mock_cat = MagicMock()
         mock_results = MagicMock()
-        mock_results.df = pd.DataFrame(
-            {"variable_id": ["tas", "pr"]}
-        )
+        mock_results.df = pd.DataFrame({"variable_id": ["tas", "pr"]})
         mock_cat.search.return_value = mock_results
 
         with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:

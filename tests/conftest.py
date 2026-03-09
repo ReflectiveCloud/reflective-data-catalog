@@ -118,9 +118,7 @@ class MockESGFResults:
         if len(self.df) == 0:
             return {}
         # Create one mock xarray-like object per unique key
-        keys = (
-            self.df["experiment_id"] + "." + self.df["source_id"]
-        ).unique()
+        keys = (self.df["experiment_id"] + "." + self.df["source_id"]).unique()
         return {k: MagicMock(name=f"ds_{k}") for k in keys}
 
 
@@ -165,9 +163,7 @@ def mock_esgf_catalog(monkeypatch):
     # Patch the import
     mock_module = MagicMock()
     mock_module.ESGFCatalog.return_value = mock_cat
-    monkeypatch.setitem(
-        __import__("sys").modules, "intake_esgf", mock_module
-    )
+    monkeypatch.setitem(__import__("sys").modules, "intake_esgf", mock_module)
 
     return mock_cat
 

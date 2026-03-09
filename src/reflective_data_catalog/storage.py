@@ -171,9 +171,7 @@ class CloudFileSystem:
                     **self._store_kwargs,
                 )
             else:
-                self._stores[store_key] = from_url(
-                    store_key, **self._store_kwargs
-                )
+                self._stores[store_key] = from_url(store_key, **self._store_kwargs)
 
         return self._stores[store_key], store_key, rel_path
 

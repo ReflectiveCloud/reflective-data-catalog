@@ -220,9 +220,7 @@ class TestFsspecInfo:
         fs = CloudFileSystem(r2_account_id="abc123")
         url, opts = fs.fsspec_info("r2://my-bucket/data/file.nc")
         assert url == "s3://my-bucket/data/file.nc"
-        assert opts == {
-            "endpoint_url": "https://abc123.r2.cloudflarestorage.com"
-        }
+        assert opts == {"endpoint_url": "https://abc123.r2.cloudflarestorage.com"}
 
     def test_bare_path_defaults_to_s3(self):
         fs = CloudFileSystem()
@@ -256,9 +254,7 @@ class TestCloudflareR2:
 
     def test_get_r2_endpoint(self):
         fs = CloudFileSystem(r2_account_id="abc123")
-        assert fs._get_r2_endpoint() == (
-            "https://abc123.r2.cloudflarestorage.com"
-        )
+        assert fs._get_r2_endpoint() == ("https://abc123.r2.cloudflarestorage.com")
 
     def test_get_r2_endpoint_missing_account_id(self):
         fs = CloudFileSystem()

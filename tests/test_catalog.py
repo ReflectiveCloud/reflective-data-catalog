@@ -16,13 +16,11 @@ from reflective_data_catalog.main import IntakeSource, ReflectiveCatalog
 
 def _make_catalog(**kwargs) -> ReflectiveCatalog:
     """Create a ReflectiveCatalog with ESGF and ESM helpers mocked."""
-    with patch(
-        "reflective_data_catalog.main.ESGFHelper"
-    ) as mock_esgf_cls, patch(
-        "reflective_data_catalog.main.ESMCatalog"
-    ) as mock_esm_cls, patch(
-        "reflective_data_catalog.main.GeoMIPCloudHelper"
-    ) as mock_geomip_cls:
+    with (
+        patch("reflective_data_catalog.main.ESGFHelper") as mock_esgf_cls,
+        patch("reflective_data_catalog.main.ESMCatalog") as mock_esm_cls,
+        patch("reflective_data_catalog.main.GeoMIPCloudHelper") as mock_geomip_cls,
+    ):
         mock_esgf_cls.return_value = MagicMock(name="ESGFHelper")
         mock_esm_cls.return_value = MagicMock(name="ESMCatalog")
         mock_geomip_cls.return_value = MagicMock(name="GeoMIPCloudHelper")
@@ -131,7 +129,9 @@ class TestCatalogGetattr:
         cat = _make_catalog()
 
         class Param:
-            def __init__(self, name, default, allowed=None, description="", ptype="str"):
+            def __init__(
+                self, name, default, allowed=None, description="", ptype="str"
+            ):
                 self.name = name
                 self.default = default
                 self.allowed = allowed
@@ -149,7 +149,9 @@ class TestCatalogGetattr:
         }
         mock_entry.return_value = MagicMock(name="source")
 
-        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+        cat._get_intake_catalog = MagicMock(
+            return_value={"ukesm1_arise_sai": mock_entry}
+        )
 
         source = cat.ukesm1_arise_sai()
         assert source.list_tables() == ["day"]
@@ -160,7 +162,9 @@ class TestCatalogGetattr:
         cat = _make_catalog()
 
         class Param:
-            def __init__(self, name, default, allowed=None, description="", ptype="str"):
+            def __init__(
+                self, name, default, allowed=None, description="", ptype="str"
+            ):
                 self.name = name
                 self.default = default
                 self.allowed = allowed
@@ -180,7 +184,9 @@ class TestCatalogGetattr:
             )
         }
         mock_entry.return_value = MagicMock(name="source")
-        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+        cat._get_intake_catalog = MagicMock(
+            return_value={"ukesm1_arise_sai": mock_entry}
+        )
 
         mock_fs = MagicMock()
         mock_fs.glob.side_effect = [
@@ -218,7 +224,9 @@ class TestCatalogGetattr:
         mock_entry._user_parameters = [Param("member_id", "r1i1p1f2")]
         mock_entry._open_args = {"urlpath": "s3://bucket/arise/{{member_id}}/*"}
         mock_entry.return_value = MagicMock(name="source")
-        cat._get_intake_catalog = MagicMock(return_value={"ukesm1_arise_sai": mock_entry})
+        cat._get_intake_catalog = MagicMock(
+            return_value={"ukesm1_arise_sai": mock_entry}
+        )
 
         mock_fs = MagicMock()
         mock_fs.glob.side_effect = [
