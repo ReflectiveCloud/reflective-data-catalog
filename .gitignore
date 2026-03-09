@@ -22,7 +22,6 @@ Thumbs.db
 *.joblib
 *.nc
 dump.rdb
-*.ipynb
 *.npy
 *.pkl
 *.csv
