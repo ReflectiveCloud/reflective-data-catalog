@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from reflective_data_catalog.flexibleSources import FlexibleSourceConfig
+from reflective_data_catalog.flexible_sources import FlexibleSourceConfig
 from reflective_data_catalog.main import IntakeSource, ReflectiveCatalog
 
 # ---------------------------------------------------------------------------
@@ -71,7 +71,7 @@ class TestCatalogGetattr:
         assert callable(loader)
 
     def test_flexible_source_returns_flexible_source(self):
-        from reflective_data_catalog.flexibleSources import FlexibleSource
+        from reflective_data_catalog.flexible_sources import FlexibleSource
 
         cat = _make_catalog()
         source = cat.cesm2_waccm_g6_1p5k_hilla()

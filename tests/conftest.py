@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from reflective_data_catalog.flexibleSources import (
+from reflective_data_catalog.flexible_sources import (
     FlexibleSourceConfig,
     FlexibleSourceRegistry,
 )

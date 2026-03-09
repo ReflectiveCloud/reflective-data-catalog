@@ -305,11 +305,14 @@ class ESMCatalog:
         print("=" * 60)
 
     def __repr__(self) -> str:
+        if self._catalog is None:
+            return f"<ESMCatalog: {self._catalog_url} (not loaded)>"
+
         try:
-            n = len(self.catalog.df)
+            n = len(self._catalog.df)
             return f"<ESMCatalog: {n} entries from {self._catalog_url}>"
         except Exception:
-            return f"<ESMCatalog: {self._catalog_url} (not loaded)>"
+            return f"<ESMCatalog: {self._catalog_url} (loaded)>"
 
 
 class GeoMIPCloudHelper:

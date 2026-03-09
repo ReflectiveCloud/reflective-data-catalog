@@ -1,4 +1,4 @@
-from .flexibleSources import FlexibleSourceConfig
+from .flexible_sources import FlexibleSourceConfig
 
 DEFAULT_FLEXIBLE_SOURCES = [
     # CESM2-WACCM

@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from main import ReflectiveCatalog
-
 
 @dataclass(frozen=True)
 class FlexibleSourceConfig:
@@ -828,7 +826,7 @@ class FlexibleSource:
     """
 
     def __init__(
-        self, catalog: ReflectiveCatalog, config: FlexibleSourceConfig, **kwargs
+        self, catalog: "ReflectiveCatalog", config: FlexibleSourceConfig, **kwargs # noqa: F821
     ):
         """
         Initialize flexible source
