@@ -826,7 +826,10 @@ class FlexibleSource:
     """
 
     def __init__(
-        self, catalog: "ReflectiveCatalog", config: FlexibleSourceConfig, **kwargs # noqa: F821
+        self,
+        catalog: "ReflectiveCatalog",
+        config: FlexibleSourceConfig,
+        **kwargs,  # noqa: F821
     ):
         """
         Initialize flexible source
