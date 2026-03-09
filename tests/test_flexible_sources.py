@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from reflective_data_catalog.flexibleSources import (
+from reflective_data_catalog.flexible_sources import (
     FlexibleSource,
     FlexibleSourceConfig,
     FlexibleSourceRegistry,

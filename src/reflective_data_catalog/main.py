@@ -3,7 +3,7 @@ from pathlib import Path
 
 from .esgf import ESGFHelper
 from .esm import ESMCatalog, GeoMIPCloudHelper
-from .flexibleSources import (
+from .flexible_sources import (
     FlexibleSource,
     FlexibleSourceConfig,
     FlexibleSourceRegistry,
@@ -669,11 +669,7 @@ class ReflectiveCatalog:
         try:
             cat = self._get_intake_catalog()
             if name in cat:
-                if hasattr(cat, "_entries"):
-                    entry = cat._entries[name]
-                else:
-                    # Test doubles may provide dict-like catalogs only.
-                    entry = cat[name]
+                entry = cat._entries[name] if hasattr(cat, "_entries") else cat[name]
 
                 def intake_loader(**kwargs):
                     return IntakeSource(catalog=self, name=name, entry=entry, **kwargs)

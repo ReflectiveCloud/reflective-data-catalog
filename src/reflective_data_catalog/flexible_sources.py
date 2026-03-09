@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Any
 
+from main import ReflectiveCatalog
+
 
 @dataclass(frozen=True)
 class FlexibleSourceConfig:
@@ -364,7 +366,7 @@ class SourceDiscovery:
         # If we have explicit table mapping, check which ones exist
         if self.config.table_mapping:
             existing_tables = []
-            for table_name, table_path in self.config.table_mapping.items():
+            for table_name, _table_path in self.config.table_mapping.items():
                 try:
                     dir_path = self.config.build_directory_path(
                         ensemble=ensemble, table=table_name, variable="PLACEHOLDER"
@@ -826,7 +828,7 @@ class FlexibleSource:
     """
 
     def __init__(
-        self, catalog: "ReflectiveCatalog", config: FlexibleSourceConfig, **kwargs
+        self, catalog: ReflectiveCatalog, config: FlexibleSourceConfig, **kwargs
     ):
         """
         Initialize flexible source
