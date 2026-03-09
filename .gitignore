@@ -1,0 +1,57 @@
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment variables
+.env
+
+# IDE settings
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Data files
+*.joblib
+*.nc
+dump.rdb
+*.ipynb
+*.npy
+*.pkl
+*.csv
+
+# Python packages
+*.egg-info/
+*.egg
+*.eggs
+*.eggs.zip
+*.eggs.tar.gz
+*.eggs.tar.bz2
+*.eggs.tar.xz
+*.eggs.tar.lzma
+*.eggs.tar.lz
+*.eggs.tar.zst
+*.eggs.tar.zstd
+*.eggs.tar.zstd.tar.gz
+
+# Jupyter notebooks cruft
+**/.ipynb_checkpoints/
+
+# Ruff cache
+.ruff_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Pytest coverage
+.coverage
+coverage.xml
+htmlcov/
+.coverage.*

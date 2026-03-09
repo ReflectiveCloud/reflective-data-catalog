@@ -1,0 +1,645 @@
+metadata:
+  version: 1
+  description: "Climate Model Experiments - Solar Geoengineering (SAI) Simulations"
+  documentation: "https://reflectivecloud.github.io/Book/"
+  
+sources:
+  # ============================================================================
+  # G6-1.5K-HiLLA Experiments
+  # High-latitude injection (60°N/S at 15km) targeting 1.5K warming
+  # ============================================================================
+  
+  ukesm1_g6_1p5k_hilla_zarr:
+    driver: zarr
+    description: "UKESM1.1 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f2"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "UKESM1.1"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5 in UKESM1.1 (on cloud hub not the CMIP6 version)"
+      temperature_target: "1.5K"
+      variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "high-latitude", "UKESM1.1", "G6-1.5K-HiLLA", "feedback-control"]
+  
+  cesm2_waccm_g6_1p5k_hilla_zarr:
+    driver: zarr
+    description: "CESM2-WACCM G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "CESM2-WACCM"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5"
+      temperature_target: "1.5K"
+      variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "high-latitude", "CESM2-WACCM", "G6-1.5K-HiLLA", "feedback-control"]
+  
+  e3smv3_g6_1p5k_hilla_zarr:
+    driver: zarr
+    description: "E3SMv3 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "E3SMv3"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5 (on cloud hub)"
+      temperature_target: "1.5K"
+      grid_notes: "Unstructured grid - see /maps/README"
+      variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "high-latitude", "E3SMv3", "G6-1.5K-HiLLA", "unstructured-grid", "feedback-control"]
+  
+  miroc_g6_1p5k_hilla:
+    driver: netcdf
+    description: "MIROC G6-1.5K-HiLLA: SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_G6-1.5K-HiLLA_*.nc"
+      combine: by_coords
+      xarray_kwargs:
+        engine: netcdf4
+    parameters:
+      table:
+        description: "CMIP6 table (Amon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "MIROC"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      temperature_target: "1.5K"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "high-latitude", "MIROC", "G6-1.5K-HiLLA", "feedback-control"]
+
+
+  miroc_ssp245_(g6_1p5k_hilla):
+    driver: netcdf
+    description: "MIROC SSP2-4.5 (reference scenario for G6-1.5K-SAI and G6-1.5K-HiLLA). The SSP2-4.5 simulations are the same for reference against G6-1.5K-SAI and G6-1.5K-HiLLA, but different SSP2-4.5 outputs are available in the two cases."
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_baseline_*.nc"
+      combine: by_coords
+      xarray_kwargs:
+        engine: netcdf4
+    parameters:
+      table:
+        description: "CMIP6 table (Amon, Omon, day, etc.)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "MIROC"
+      experiment: "SSP2-4.5"
+      experiment_id: "ssp245"
+      injection_strategy: "N/A"
+      feedback_control: true
+      years: "2015-2100"
+      temperature_target: "1.5K"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["MIROC", "SSP2-4.5", "reference", "baseline"]
+
+  miroc_ssp245_(g6_1p5k_sai):
+    driver: netcdf
+    description: "MIROC SSP2-4.5, for outputs aligned to G6-1.5K-SAI data"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_baseline_*.nc"
+      combine: by_coords
+      xarray_kwargs:
+        engine: netcdf4
+    parameters:
+      table:
+        description: "CMIP6 table (Mon, MAM3, day, etc.)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "MIROC"
+      experiment: "SSP2-4.5"
+      experiment_id: "ssp245"
+      injection_strategy: "N/A"
+      feedback_control: true
+      years: "2015-2100"
+      temperature_target: "N/A"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["MIROC", "SSP2-4.5"]
+  
+
+  ukesm1_ssp245_g6_1p5k_hilla:
+    driver: zarr
+    description: "UKESM1.1 SSP2-4.5 (RunIDs: udp-902,903,904), the reference case for G6-1.5K-HiLLA runs. This version of SSP2-4.5 has strat. het. chem. ON"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f2"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "UKESM1.1"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5 in UKESM1.1 (on cloud hub not the CMIP6 version)"
+      temperature_target: "1.5K"
+      variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "UKESM1.1", "SSP2-4.5", "reference"]
+
+  e3smv3_ssp245:
+    driver: zarr
+    description: "E3SMv3 SSP2-4.5 reference (control runs for for G6-1.5K-HiLLA)"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "E3SMv3"
+      experiment: "G6-1.5K-HiLLA"
+      experiment_id: "g6-1.5k-hilla"
+      injection_strategy: "60°N/S at 15km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5 (on cloud hub)"
+      temperature_target: "1.5K"
+      grid_notes: "Unstructured grid - see /maps/README"
+      variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "high-latitude", "E3SMv3", "G6-1.5K-HiLLA", "unstructured-grid", "feedback-control"]
+  
+  # ============================================================================
+  # G6-1.5K-SAI Experiments
+  # Mid-latitude injection (30°N/S at 21km) targeting 1.5K warming
+  # ============================================================================
+  
+  ukesm1_g6_1p5k_sai:
+    driver: zarr
+    description: "UKESM1.1 G6-1.5K-SAI: SAI 30°N/S injection at 21km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f2"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "UKESM1.1"
+      experiment: "G6-1.5K-SAI"
+      experiment_id: "g6-1.5k-sai"
+      injection_strategy: "30°N/S at 21km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5"
+      temperature_target: "1.5K"
+      variables_status: "TBD"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      documentation: "to be added"
+      hosted_on: "coming soon on AWS (CarbonPlan for some variables, many to be added to our cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      status: "coming_soon"
+      tags: ["geoengineering", "SAI", "mid-latitude", "UKESM1.1", "G6-1.5K-SAI", "feedback-control"]
+  
+  cesm2_waccm_g6_1p5k_sai:
+    driver: zarr
+    description: "CESM2-WACCM G6-1.5K-SAI: SAI 30°N/S injection at 21km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "CESM2-WACCM"
+      experiment: "G6-1.5K-SAI"
+      experiment_id: "g6-1.5k-sai"
+      injection_strategy: "30°N/S at 21km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5"
+      temperature_target: "1.5K"
+      variables_status: "TBD"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      documentation: "to be added"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      status: "coming_soon"
+      tags: ["geoengineering", "SAI", "mid-latitude", "CESM2-WACCM", "G6-1.5K-SAI", "feedback-control"]
+  
+  e3smv3_g6_1p5k_sai:
+    driver: zarr
+    description: "E3SMv3 G6-1.5K-SAI: SAI 30°N/S injection at 21km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "E3SMv3"
+      experiment: "G6-1.5K-SAI"
+      experiment_id: "g6-1.5k-sai"
+      injection_strategy: "30°N/S at 21km"
+      feedback_control: true
+      years: "2035-2085"
+      reference_scenario: "SSP2-4.5"
+      temperature_target: "1.5K"
+      grid_notes: "Unstructured grid - see /maps/README"
+      variables_status: "TBD"
+      paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
+      documentation: "to be added"
+      hosted_on: "coming soon on AWS (CarbonPlan for some variables, many to be added to our cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      status: "coming_soon"
+      tags: ["geoengineering", "SAI", "mid-latitude", "E3SMv3", "G6-1.5K-SAI", "unstructured-grid", "feedback-control"]
+
+  miroc_g6_1p5k_sai:
+    driver: netcdf
+    description: "MIROC G6-1.5K-SAI: SAI with 30°N/S injection at 21km to hold global mean temperature to 1.5K"
+    args:
+      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_G6-1.5K-SAI_*.nc"
+      combine: by_coords
+      xarray_kwargs:
+        engine: netcdf4
+    parameters:
+      table:
+        description: "CMIP6 table (Mon, MAM3, day, etc.)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "MIROC"
+      experiment: "G6-1.5K-SAI"
+      experiment_id: "g6-1.5k-sai"
+      injection_strategy: "30°N/S at 21km"
+      feedback_control: true
+      years: "2035-2085"
+      temperature_target: "1.5K"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "mid-latitude", "MIROC", "G6-1.5K-SAI", "feedback-control"]
+
+    
+  # ============================================================================
+  # GAUSS Experiments
+  # Various injection strategies with different temperature targets
+  # ============================================================================
+
+  ## TO DO - fix paths for GAUSS data - structure is different
+  cesm2_waccm6_gauss_historical:
+    driver: zarr
+    description: "CESM2-WACCM GAUSS: Various SAI simulations with multiple injection strategies and temperature targets"
+    args:
+      urlpath: "s3://reflective-persistent-prod/gauss/{{variable}}/historical/{{variable}}.zarr"
+      consolidated: true
+      storage_options:
+        anon: false
+    parameters:
+      ensemble_member:
+        description: "Ensemble member identifier (includes strategy info)"
+        type: str
+        default: "r1i1p1f1"
+      table:
+        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        type: str
+        default: "Aday"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+    metadata:
+      model: "CESM2-WACCM"
+      experiment: "GAUSS"
+      experiment_id: "gauss"
+      injection_strategies: ["30°N/S and 15°N/S at 21km (multi-objective)", "60°N/S", "30°N/S", "15°N/S", "Equatorial"]
+      single_point_strategies: "12 Tg-SO2 for 35 years at 60, 45, 30, 15 N/S and equator"
+      feedback_control: "Yes (for feedback strategies) / No (for single point)"
+      control_targets: "GMT (for 60, 30, 15, Eq), GMT + hemispheric temp diff + pole-equator gradient (for multi-objective)"
+      temperature_targets: ["1.5°C (multi-objective)", "1.0°C (multi-objective and other strategies)", "0.5°C (multi-objective)"]
+      years: "2035-2070"
+      reference_scenario: "SSP2-4.5"
+      variables_location: "many on GLOBUS"
+      papers: 
+        - "https://www.pnas.org/doi/10.1073/pnas.2202230119 (different scenarios)"
+        - "https://acp.copernicus.org/articles/23/663/2023/ (single point injections)"
+        - "https://esd.copernicus.org/articles/15/191/2024/ (different injection strategies)"
+      documentation: "https://reflectivecloud.github.io/Book/Resources/GAUSS/GAUSS_intro.html"
+      hosted_on: "AWS (cloudhub)"
+      s3_bucket: "s3://reflective-persistent-prod-large"
+      tags: ["geoengineering", "SAI", "GAUSS", "CESM2-WACCM", "multi-strategy", "multi-target", "feedback-control"]
+
+  # ============================================================================
+  # ARISE-SAI Experiments
+  # Multi-objective feedback control (GMT, hemispheric temp diff, pole-equator gradient)
+  # ============================================================================
+  
+  arise_15_cesm2_waccm_ssp245:
+    driver: netcdf
+    description: "ARISE-SAI 1.5°C: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
+    args:
+      urlpath: 
+      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.201501-206412.nc"
+      - "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.206501-210012.nc"
+      combine: "nested"
+      concat_dim: "time"
+      xarray_kwargs:
+        engine: h5netcdf
+        data_vars: minimal
+        coords: minimal
+      storage_options:
+        anon: true
+    parameters:
+      member_id:
+        description: "Member identifier"
+        type: str
+        default: "001"
+      realm:
+        description: "Model realm (atm, glc, ice, lnd, ocn, rof)"
+        type: str
+        default: "atm"
+      time_frequency:
+        description: "Time frequency identifier"
+        type: str
+        default: "month_1"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "TREFHT"
+
+  arise_sai_15:
+    driver: netcdf
+    description: "CESM2-WACCM ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
+    args:
+      urlpath: "s3://ncar-cesm2-arise/ARISE-SAI-1.5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}.cam.h0.{{variable}}.*"
+      consolidated: true
+      storage_options:
+        anon: true
+    parameters:
+      member_id:
+        description: "Member identifier"
+        type: str
+        default: "001"
+        allowed: ["001","002", "003", "004", "005", "006", "007", "008", "009", "010"]
+      time_frequency:
+        description: "Time frequency identifier"
+        type: str
+        default: "day_5"
+        allowed: ["month_1", "day_1", "day_5", "hour_1","year_1"]
+      realm:
+        description: "Model realm (atm, glc, ice, lnd, ocn, rof)"
+        type: str
+        default: "atm"
+        allowed: ["atm", "glc", "ice", "lnd", "ocn", "rof"]
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "TREFHT"
+    metadata:
+      model: "CESM2-WACCM"
+      experiment: "ARISE-SAI"
+      experiment_id: "arise-sai"
+      injection_strategy: "30°N/S and 15°N/S at 21km"
+      feedback_control: true
+      control_targets: ["global mean temperature", "interhemispheric temperature difference", "equator-to-pole gradient"]
+      target_conditions: "values at 1.5°C above pre-industrial"
+      years: "2035-2070"
+      reference_scenario: "SSP2-4.5"
+      variables_index: "https://met-office-ukesm1-arise.s3.amazonaws.com/index.html"
+      paper: "https://gmd.copernicus.org/articles/15/8221/2022/"
+      documentation: "https://reflectivecloud.github.io/Book/Resources/AWS_ARISE/AWS_ARISE_intro.html"
+      hosted_on: "AWS, external - https://registry.opendata.aws/ncar-cesm2-arise/"
+      data_access: "public"
+      tags: ["geoengineering", "SAI", "ARISE", "CESM2-WACCM", "multi-objective", "feedback-control", "public"]
+  
+  ukesm1_arise_sai:
+    driver: netcdf
+    description: "UKESM1.0 ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
+    args:
+      urlpath: "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/{{member_id}}/{{table_id}}/{{variable}}/gn/v20220325/*"
+      consolidated: true
+      storage_options:
+        anon: true
+    parameters:
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+      member_id:
+        description: "Member identifier"
+        type: str
+        default: "r1i1p1f2"
+        allowed: ["r1i1p1f2","r2i1p1f2", "r3i1p1f2", "r4i1p1f2", "r8i1p1f2"]
+      table_id:
+        description: "CMIP6 table ID (e.g., day, Amon, Omon)"
+        type: str
+        default: "day"
+    metadata:
+      model: "UKESM1.0"
+      experiment: "ARISE-SAI"
+      experiment_id: "arise-sai"
+      injection_strategy: "30°N/S and 15°N/S at 21km"
+      feedback_control: true
+      control_targets: ["global mean temperature", "interhemispheric temperature difference", "equator-to-pole gradient"]
+      target_conditions: "values at 1.5°C above pre-industrial"
+      years: "2035-2070"
+      reference_scenario: "SSP2-4.5 (in UKESM1.0 - not the version on cloud hub)"
+      s3_example: "aws s3 ls --no-sign-request s3://ncar-cesm2-arise/"
+      paper: "https://acp.copernicus.org/articles/23/13369/2023/"
+      documentation: "https://reflectivecloud.github.io/Book/Resources/AWS_ARISE/AWS_ARISE_intro.html"
+      hosted_on: "AWS, external - https://registry.opendata.aws/met-office-ukesm1-arise/"
+      data_access: "public"
+      tags: ["geoengineering", "SAI", "ARISE", "UKESM1.0", "multi-objective", "feedback-control", "public"]
+  
+  ukesm1_arise_cmip6:
+    driver: netcdf
+    description: "UKESM1.0 ARISE-SAI: SAI at 30°N/S and 15°N/S (21km) with multi-objective feedback control"
+    args:
+      urlpath: "s3://met-office-ukesm1-arise/CMIP6/ScenarioMIP/MOHC/UKESM1-0-LL/ssp245/{{member_id}}/{{table_id}}/{{variable}}/gn/{{version}}/*"
+      consolidated: true
+      storage_options:
+        anon: true
+    parameters:
+      member_id:
+        description: "Member identifier"
+        type: str
+        default: "r1i1p1f2"
+        allowed: ["r1i1p1f2","r2i1p1f2", "r3i1p1f2", "r4i1p1f2", "r8i1p1f2"]
+      table_id:
+        description: "CMIP6 table ID (e.g., day, Amon, Omon)"
+        type: str
+        default: "day"
+      variable:
+        description: "Climate variable name"
+        type: str
+        default: "tas"
+      version:
+        description: "Version identifier"
+        type: str
+        default: "v20220325"
+    metadata:
+      model: "UKESM1.0"
+      experiment: "CMIP6"
+      experiment_id: "cmip6"
+      injection_strategy: ""
+      feedback_control: true
+      control_targets: ["global mean temperature", "interhemispheric temperature difference", "equator-to-pole gradient"]
+      target_conditions: "values at 1.5°C above pre-industrial"
+      years: "2035-2070"
+      reference_scenario: "SSP2-4.5 (in UKESM1.0 - not the version on cloud hub)"
+      s3_example: "aws s3 ls --no-sign-request s3://met-office-ukesm1-arise/"
+      paper: "https://acp.copernicus.org/articles/23/13369/2023/"
+      documentation: "https://reflectivecloud.github.io/Book/Resources/AWS_ARISE/AWS_ARISE_intro.html"
+      hosted_on: "AWS, external - https://registry.opendata.aws/met-office-ukesm1-arise/"
+      data_access: "public"
+      tags: ["geoengineering", "SAI", "ARISE", "UKESM1.0", "multi-objective", "feedback-control", "public"]
+  
