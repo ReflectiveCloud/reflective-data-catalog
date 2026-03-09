@@ -8,7 +8,11 @@
 [![Last Commit](https://img.shields.io/github/last-commit/ReflectiveCloud/reflective-data-catalog)](https://github.com/ReflectiveCloud/reflective-data-catalog/commits/main)
 
 
-Reflective's unified Python interface for accessing SAI (Stratospheric Aerosol Injection) climate model data across cloud providers (S3, GCS, Azure, Cloudflare R2).
+Reflective's unified Python interface for accessing SAI (Stratospheric Aerosol Injection) climate model data across cloud providers (S3, GCS, Azure, Cloudflare R2) for use on the [Reflective Cloud Hub](https://reflective.2i2c.cloud).
+Note: At this time, most non ESGF and ESM sources will not be accessible outside of the Reflective Cloud Hub due to technical limitations. We are working on storing the data in new locations and will update when it's ready.
+
+This is an [Intake](https://github.com/intake/intake)-like interface for browsing, searching, and loading SRM related datasets in a unified manner. All available datasets [can be seen here](https://docs.google.com/spreadsheets/d/1cjgJQSrDV_IQVN68HoTQpy_xGQQhPy4wz1N0u8E2Pe4/edit?usp=sharing) with more infomration in [the Reflective Cloud Hub documentation](https://reflectivecloud.github.io/Book/usage_guide/accessing_community_datasets.html). [We've also included an example Jupyter Notebook showing how to use the tool.](./Examples.ipynb)
+
 
 ## Installation
 
