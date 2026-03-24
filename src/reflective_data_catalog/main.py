@@ -491,11 +491,19 @@ class ReflectiveCatalog:
 
         try:
             if config.driver == "netcdf":
-                # Use open_mfdataset for combining multiple NetCDF files
-                file_objects = [fs.open(f) for f in matching_files]
+                # Lazy: use fsspec URLs (range reads). fs.open() downloads each
+                # whole file into memory — fine for eager .read(), fatal for OOM.
                 if lazy:
+                    paths_opts = [fs.fsspec_info(f) for f in matching_files]
+                    fsspec_urls = [u for u, _ in paths_opts]
+                    storage_options = paths_opts[0][1]
+                    if not all(opts == storage_options for _, opts in paths_opts):
+                        raise ValueError(
+                            "Multi-file lazy open needs the same storage_options "
+                            "for every path; mixed buckets/endpoints are not supported."
+                        )
                     ds = xr.open_mfdataset(
-                        file_objects,
+                        fsspec_urls,
                         engine="h5netcdf",
                         combine=config.combine_files,
                         concat_dim=config.concat_dim
@@ -503,8 +511,10 @@ class ReflectiveCatalog:
                         else None,
                         chunks="auto",
                         parallel=True,
+                        storage_options=storage_options,
                     )
                 else:
+                    file_objects = [fs.open(f) for f in matching_files]
                     ds = xr.open_mfdataset(
                         file_objects,
                         engine="h5netcdf",
