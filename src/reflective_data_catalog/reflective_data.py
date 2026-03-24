@@ -6,7 +6,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name="cesm2_waccm_g6_1p5k_hilla",
         base="s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA",
         pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.h1.{variable}.*.nc",
+        filename_pattern="b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.{ensemble_id}.cam.*.{variable}.*.nc",
         ensemble_mapping={"r1": "001", "r2": "002", "r3": "003"},
         table_mapping={
             "ADAY": "ADAY",
@@ -28,7 +28,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name="cesm2_waccm_historical",
         base="s3://reflective-persistent-prod-large/CESM2-WACCM/HISTORICAL",
         pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble_id}.pop.h.{variable}.*.nc",
+        filename_pattern="b.e21.BW.f09_g17.HISTORICAL-WACCM.{ensemble_id}.pop.*.{variable}.*.nc",
         ensemble_mapping={"r1": "001", "r2": "002", "r3": "003"},
         table_mapping={
             "OMON": "OMON",
@@ -45,7 +45,7 @@ DEFAULT_FLEXIBLE_SOURCES = [
         name="cesm2_waccm_ssp245",
         base="s3://reflective-persistent-prod-large/CESM2-WACCM/SSP2-4.5",
         pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble_id}.pop.h.{variable}.*.nc",
+        filename_pattern="b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{ensemble_id}.pop.*.{variable}.*.nc",
         ensemble_mapping={"r1": "001", "r2": "002", "r3": "003"},
         table_mapping={
             "OMON": "OMON",
