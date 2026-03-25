@@ -399,15 +399,29 @@ class ReflectiveCatalog:
         --------
         xarray.Dataset
         """
-        url = config.build_url(**kwargs)
-
-        # Merge defaults with kwargs for display
+        # Merge defaults with kwargs before URL build (used for validation + display)
         params = {**config.defaults, **kwargs}
+
+        # G6-1.5K-SAI files live under a different S3 prefix than G6-1.5K-HiLLA; using
+        # variant='G6-1.5K-SAI' on the HiLLA source points at a key that does not exist.
+        if config.name == "miroc_es2h_g6_1p5k_hilla" and params.get("variant") == (
+            "G6-1.5K-SAI"
+        ):
+            raise ValueError(
+                "miroc_es2h_g6_1p5k_hilla is the G6-1.5K-HiLLA experiment prefix in "
+                "cloud storage. For G6-1.5K-SAI experiment data use "
+                "`catalog.miroc_es2h_g6_1p5k_sai(...)` (default table is often 'Mon'), "
+                "not variant='G6-1.5K-SAI' on the HiLLA source."
+            )
+
+        url = config.build_url(**kwargs)
 
         print(f"Loading {config.name}")
         print(f"  Table: {params.get('table', 'Amon')}")
         print(f"  Variable: {params.get('variable', 'tas')}")
         print(f"  Ensemble: {params.get('ensemble', 'N/A')}")
+        if "variant" in params:
+            print(f"  Variant: {params['variant']}")
         print(f"  URL/Pattern: {url}")
         print(f"  Driver: {config.driver}")
         print(f"  Multi-file: {config.is_multi_file}")

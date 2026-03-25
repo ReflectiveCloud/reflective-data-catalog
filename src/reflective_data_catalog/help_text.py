@@ -47,11 +47,12 @@ FLEXIBLE SOURCES (Data in the Reflective Cloud Hub S3 bucket):
         ensemble='r12i1p1f2' # Ensemble member
     ).to_dask()
 
-    # MIROC sources also support a variant parameter
+    # MIROC: HiLLA and SAI are separate storage prefixes — use the matching source
     ds = catalog.miroc_es2h_g6_1p5k_hilla(
         variable='SurfT',
-        variant='baseline'  # or 'G6-1.5K-SAI'
+        variant='baseline',
     ).to_dask()
+    ds = catalog.miroc_es2h_g6_1p5k_sai(variable='SurfT').to_dask()
 
 CMIP6/GeoMIP (intake-esm):
 ---------------------------------------

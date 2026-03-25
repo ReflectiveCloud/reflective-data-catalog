@@ -73,6 +73,6 @@ pytest --cov=reflective_data_catalog --cov-report=term-missing
 - AWS credentials are needed for S3 access; similarly for GCS and Azure.
 - Google Cloud CMIP6/GeoMIP data is accessible via `catalog.esm` and `catalog.geomip_cloud` (requires `intake-esm`).
 - Some sources use `ensemble_mapping` to convert ensemble names to IDs in filenames (e.g., `r1` → `001` for CESM2).
-- MIROC sources use a `variant` parameter to distinguish between file types (e.g., `baseline` vs `G6-1.5K-SAI`).
+- MIROC-ES2H registers two flexible sources: `miroc_es2h_g6_1p5k_hilla` (HiLLA prefix) and `miroc_es2h_g6_1p5k_sai` (SAI prefix). HiLLA uses `variant` (e.g. `baseline`) in filenames; do not use `variant='G6-1.5K-SAI'` on the HiLLA source — use `miroc_es2h_g6_1p5k_sai` for that experiment.
 - UKESM1 and E3SMv3 sources have `{variable}` in the directory pattern, not just the filename.
 - All external services are mocked in tests — no network or cloud credentials needed to run `pytest`.

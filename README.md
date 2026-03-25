@@ -72,12 +72,18 @@ ds = rdc.cesm2_waccm_g6_1p5k_hilla(
     ensemble='r2'
 ).to_dask()
 
-# MIROC sources support a variant parameter
+# MIROC: HiLLA vs SAI are different experiment prefixes in storage — use the matching source
 ds = rdc.miroc_es2h_g6_1p5k_hilla(
-    variable='SurfT',
-    variant='G6-1.5K-SAI',
-    ensemble='r01'
+    table='Amon',
+    variable='tas',
+    variant='baseline',
+    ensemble='r01',
 ).to_dask()
+ds = rdc.miroc_es2h_g6_1p5k_sai(
+    table='Mon',
+    variable='SurfT',
+    ensemble='r01',
+).to_dask()  # default variant is G6-1.5K-SAI
 ```
 
 ### Discovering Available Data

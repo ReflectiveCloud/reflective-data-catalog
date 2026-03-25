@@ -56,6 +56,13 @@ class TestCatalogInit:
         assert cat.esm is not None
         assert cat.geomip_cloud is not None
 
+    def test_miroc_hilla_rejects_sai_variant_on_wrong_source(self):
+        cat = _make_catalog()
+        cfg = cat.get_source_config("miroc_es2h_g6_1p5k_hilla")
+        assert cfg is not None
+        with pytest.raises(ValueError, match="miroc_es2h_g6_1p5k_sai"):
+            cat._load_flexible(cfg, variant="G6-1.5K-SAI")
+
 
 # =========================================================================
 # __getattr__
