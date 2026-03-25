@@ -509,7 +509,8 @@ class ReflectiveCatalog:
                         concat_dim=config.concat_dim
                         if config.combine_files == "nested"
                         else None,
-                        chunks="auto",
+                        # Avoid dask auto rechunking: it fails on object dtype vars.
+                        chunks={},
                         parallel=True,
                         storage_options=storage_options,
                     )
@@ -626,7 +627,8 @@ class ReflectiveCatalog:
                 ds = xr.open_dataset(
                     fsspec_url,
                     engine="h5netcdf",
-                    chunks="auto",
+                    # Avoid dask auto rechunking: it fails on object dtype vars.
+                    chunks={},
                     storage_options=storage_opts,
                     **kwargs,
                 )
