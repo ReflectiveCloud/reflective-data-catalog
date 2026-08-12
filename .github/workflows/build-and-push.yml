@@ -1,10 +1,18 @@
 name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
 
-on: push
+on:
+  push:
+    branches: [main]
+    tags: ["*"]
 
 jobs:
+  test:
+    name: Tests (gate)
+    uses: ./.github/workflows/tests.yml
+
   build:
     name: Build distribution 📦
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -22,9 +30,40 @@ jobs:
         python3 -m
         pip install
         build
+        twine
         --user
     - name: Build a binary wheel and a source tarball
       run: python3 -m build
+    - name: Check distribution metadata
+      run: python3 -m twine check dist/*
+    - name: Assert packaged data files ship in the wheel
+      run: |
+        python3 - <<'EOF'
+        import glob, sys, zipfile
+        wheel = glob.glob("dist/*.whl")[0]
+        names = zipfile.ZipFile(wheel).namelist()
+        required = [
+            "reflective_data_catalog/data-catalog.yaml",
+            "reflective_data_catalog/migration_matrix.yaml",
+            "reflective_data_catalog/py.typed",
+        ]
+        missing = [r for r in required if r not in names]
+        if missing:
+            sys.exit(f"wheel is missing packaged data files: {missing}")
+        print("wheel contains:", ", ".join(required))
+        EOF
+    - name: Install-and-import smoke test of the built wheel
+      run: |
+        python3 -m venv /tmp/smoke
+        /tmp/smoke/bin/pip install --quiet dist/*.whl
+        /tmp/smoke/bin/python - <<'EOF'
+        from importlib.resources import files
+
+        import reflective_data_catalog
+
+        assert files("reflective_data_catalog").joinpath("data-catalog.yaml").is_file()
+        print("import smoke OK:", reflective_data_catalog.__version__)
+        EOF
     - name: Store the distribution packages
       uses: actions/upload-artifact@v5
       with:
@@ -52,9 +91,10 @@ jobs:
         path: dist/
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-  
+
   publish-to-testpypi:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
+    if: github.ref == 'refs/heads/main'  # TestPyPI only from main, never branches
     needs:
     - build
     runs-on: ubuntu-latest
