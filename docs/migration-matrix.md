@@ -6,14 +6,14 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 
 | Old name | New entry | Backend | Status | Old defaults | New defaults |
 |---|---|---|---|---|---|
-| `cesm2_waccm_g6_1p5k_hilla` | `cesm2_waccm_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'AMON', 'variable': 'T', 'ensemble': 'r1'} | {'table': None, 'variable': None, 'ensemble': None} |
+| `cesm2_waccm_g6_1p5k_hilla` | `cesm2_waccm_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'AMON', 'variable': 'T', 'ensemble': 'r1'} | {'table': 'Aday', 'variable': 'tas', 'ensemble': 'r1i1p1f1'} |
 | `cesm2_waccm_historical` | `cesm2_waccm_historical` | netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping | pending_verification | {'table': 'OMON', 'variable': 'TEMP', 'ensemble': 'r1'} | {'table': 'OMON', 'variable': 'TEMP', 'ensemble': 'r1'} |
 | `cesm2_waccm_ssp245` | `cesm2_waccm_ssp245` | netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping | pending_verification | {'table': 'OMON', 'variable': 'TEMP', 'ensemble': 'r1'} | {'table': 'OMON', 'variable': 'TEMP', 'ensemble': 'r1'} |
-| `e3smv3_g6_1p5k_hilla` | `e3smv3_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'Amon', 'variable': 'T', 'ensemble': 'v3.LR.ssp245.g6_hilla.sai.0101'} | {'table': None, 'variable': None, 'ensemble': '0101'} |
+| `e3smv3_g6_1p5k_hilla` | `e3smv3_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'Amon', 'variable': 'T', 'ensemble': 'v3.LR.ssp245.g6_hilla.sai.0101'} | {'table': 'Aday', 'variable': 'tas', 'ensemble': '0101'} |
 | `miroc_es2h_g6_1p5k_hilla` | `miroc_es2h_g6_1p5k_hilla` | netcdf (unchanged) | pending_verification | {'table': 'Amon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'baseline'} | {'table': 'Amon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'baseline'} |
 | `miroc_es2h_g6_1p5k_sai` | `miroc_es2h_g6_1p5k_sai` | netcdf (unchanged) | pending_verification | {'table': 'Mon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'G6-1.5K-SAI'} | {'table': 'Mon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'G6-1.5K-SAI'} |
-| `ukesm1_g6_1p5k_hilla` | `ukesm1_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'ap4', 'variable': 'ua', 'ensemble': 'r12i1p1f2', 'time': 'AERmon'} | {'table': None, 'variable': None, 'ensemble': None} |
-| `ukesm1_ssp245` | `ukesm1_ssp245` | netcdf->zarr | pending_verification | {'table': 'ap4', 'variable': 'mmrso4', 'ensemble': 'r12i1p1f1', 'time': 'AERmon'} | {'table': None, 'variable': None, 'ensemble': None} |
+| `ukesm1_g6_1p5k_hilla` | `ukesm1_g6_1p5k_hilla` | netcdf->zarr | pending_verification | {'table': 'ap4', 'variable': 'ua', 'ensemble': 'r12i1p1f2', 'time': 'AERmon'} | {'table': 'Aday', 'variable': 'tas', 'ensemble': 'r1i1p1f2'} |
+| `ukesm1_ssp245` | `ukesm1_ssp245` | netcdf->zarr | pending_verification | {'table': 'ap4', 'variable': 'mmrso4', 'ensemble': 'r12i1p1f1', 'time': 'AERmon'} | {'table': 'day', 'variable': 'tas', 'ensemble': 'r1i1p1f2'} |
 
 ## Entry stability
 
@@ -31,7 +31,6 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `ukesm1_g6_1p5k_sai` | experimental |
 | `cesm2_waccm_g6_1p5k_sai` | experimental |
 | `e3smv3_g6_1p5k_sai` | experimental |
-| `miroc_g6_1p5k_sai` | absorbed |
 | `cesm2_waccm6_gauss_historical` | experimental |
 | `arise_15_cesm2_waccm_ssp245` | stable |
 | `arise_sai_15` | stable |
