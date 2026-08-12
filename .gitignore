@@ -54,3 +54,4 @@ dump.rdb
 coverage.xml
 htmlcov/
 .coverage.*
+build/

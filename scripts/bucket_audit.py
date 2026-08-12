@@ -268,7 +268,9 @@ def main() -> int:
             if old_rec is None:
                 drift.append(f"new entry: {name}")
                 continue
-            for new_url, old_url in zip(rec["urls"], old_rec.get("urls", []), strict=False):
+            for new_url, old_url in zip(
+                rec["urls"], old_rec.get("urls", []), strict=False
+            ):
                 for key in ("status", "exists", "match_count", "zarr_format"):
                     if new_url.get(key) != old_url.get(key):
                         drift.append(

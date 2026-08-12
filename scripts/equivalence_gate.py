@@ -117,16 +117,12 @@ def compare(name: str, spec: dict) -> tuple[str, list[str]]:
         verdict = "FAIL"
         lines.append("  - MISMATCH: NaN fractions diverge (partial upload?)")
     if tail_a.shape == tail_b.shape:
-        close = np.allclose(
-            tail_a.values, tail_b.values, equal_nan=True, rtol=1e-5
-        )
+        close = np.allclose(tail_a.values, tail_b.values, equal_nan=True, rtol=1e-5)
         lines.append(f"- tail values allclose: {close}")
         if not close:
             verdict = "FAIL"
     else:
-        lines.append(
-            f"  - shape mismatch old={tail_a.shape} new={tail_b.shape}"
-        )
+        lines.append(f"  - shape mismatch old={tail_a.shape} new={tail_b.shape}")
         verdict = "FAIL"
     return verdict, lines
 
@@ -146,7 +142,7 @@ def main() -> int:
                 "Gate could not run: the hub bucket denied access. Re-run",
                 "`python scripts/equivalence_gate.py` with read credentials.",
             ]
-        except Exception as exc:  # noqa: BLE001 - verdict captures the failure
+        except Exception as exc:  # verdict captures the failure
             verdict = "ERROR"
             lines = [
                 f"# Equivalence report: {name}",
