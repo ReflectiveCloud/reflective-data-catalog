@@ -74,11 +74,12 @@ pytest --cov=reflective_data_catalog --cov-report=term-missing
 Run a specific test file or test:
 
 ```bash
-pytest tests/test_flexible_sources.py
+pytest tests/test_catalog.py
+pytest tests/test_catalog_entries.py
 pytest tests/test_catalog.py::TestSearch::test_search_by_term
 ```
 
-All external services (S3, ESGF, intake-esm) are mocked in the test suite — no network access or cloud credentials are needed.
+Tests use the real packaged `data-catalog.yaml` through the real registration path and mock storage I/O only — no network access or cloud credentials are needed. `tests/test_catalog_entries.py` instantiates every shipped catalog entry unmocked (instantiation renders URLs without opening data, so it runs offline too).
 
 ### Writing Tests
 
@@ -89,64 +90,91 @@ All external services (S3, ESGF, intake-esm) are mocked in the test suite — no
 
 ## Adding a New Data Source
 
-To add a new flexible data source, create a `FlexibleSourceConfig` entry in `src/reflective_data_catalog/reflective_data.py`:
+Sources are registered in one place: `src/reflective_data_catalog/data-catalog.yaml` (entry schema v2). There is no Python configuration to write — add a YAML entry and it is automatically available as `catalog.<entry_name>()`.
 
-```python
-FlexibleSourceConfig(
-    name='model_experiment',                    # Snake-case identifier
-    base='s3://bucket/path/to/data',            # Cloud storage base URL (s3://, gs://, az://, r2://)
-    pattern='{base}/{ensemble}/{table_path}',   # Directory pattern
-    filename_pattern='{variable}.*.nc',         # Filename pattern
-    table_mapping={'Amon': 'Amon'},             # Table name mapping
-    default_table='Amon',
-    default_variable='tas',
-    default_ensemble='r1i1p1f1',
-    driver='netcdf',
-    description='Model experiment description'
-)
+### 1. Add the catalog entry
+
+Add an entry under `sources:` following the governed schema:
+
+```yaml
+my_model_experiment:
+  driver: zarr            # zarr or netcdf — nothing else
+  description: "MyModel my-experiment: one-line human description"
+  args:
+    urlpath: "s3://bucket/path/{{ensemble}}/{{table}}/{{variable}}.zarr"
+    consolidated: true    # zarr entries only
+    storage_options:
+      anon: false         # 'anon' is the ONLY allowed storage_options key
+  parameters:
+    ensemble:
+      description: "Ensemble member identifier"
+      type: str
+      default: "r1i1p1f1"
+    table:
+      description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+      type: str
+      default: "Amon"
+    variable:
+      description: "Climate variable name"
+      type: str
+      default: "tas"
+  metadata:
+    model: "MyModel"
+    experiment: "my-experiment"
+    tags: ["example"]
 ```
 
-The source will automatically be available as `catalog.model_experiment()`.
+Schema rules (the loader validates all of these at catalog load and fails fast on violations):
 
-### Configuration Fields
+- **`driver`** must be `zarr` or `netcdf`.
+- **`args`** allows only: `urlpath`, `combine`, `concat_dim`, `xarray_kwargs`, `storage_options`, and `consolidated` (zarr only). NetCDF entries may use `combine` (`by_coords` or `nested`) with `concat_dim` for multi-file globs, and `xarray_kwargs` (e.g. `engine: h5netcdf`). `urlpath` may be a single template or a list.
+- **`storage_options`** allows only `anon`. Endpoints are derived from the URL scheme in code — never entry-supplied, so an entry cannot smuggle in a custom endpoint.
+- **Parameter names** use the canonical vocabulary — `ensemble`, `table`, `variable` — plus per-entry extras declared in `parameters` (e.g. `variant`, `realm`, `time_frequency`, `version`). Each parameter takes `type`, `default`, `description`, and optionally an `allowed` list. Users get the aliases (`member_id`, `table_id`, `variable_id`, ...) for free.
+- **Custom fields** (`value_map`, `data_access`, `status`, `tags`, papers, buckets, ...) live under the entry's `metadata` block so intake-v1 parsers tolerate the file. `metadata.value_map` declares derived parameters (e.g. `ensemble` → `ensemble_id` filename ids on the CESM2 entries) — derived parameters are set automatically by the loader and cannot be passed by users.
 
-| Field | Description |
-|-------|-------------|
-| `name` | Unique snake_case identifier |
-| `base` | Cloud storage base URL (`s3://`, `gs://`, `az://`, `r2://`) |
-| `pattern` | Directory path template with `{base}`, `{ensemble}`, `{table_path}`, `{variable}`, `{time}` placeholders |
-| `filename_pattern` | Filename template with `{variable}`, `{ensemble}`, `{variant}`, `{ensemble_id}`, `{time}`, and `*` wildcards |
-| `table_mapping` | Dict mapping table names to S3 directory names |
-| `ensemble_mapping` | Optional dict mapping ensemble names to filename IDs (e.g. `{'r1': '001'}`) |
-| `default_table` | Default table when none is specified |
-| `default_variable` | Default variable when none is specified |
-| `default_ensemble` | Default ensemble member |
-| `default_variant` | Optional default variant (e.g. `'baseline'`) |
-| `default_time` | Optional default time/frequency (e.g. `'AERmon'`) |
-| `driver` | `'netcdf'` or `'zarr'` |
-| `combine_files` | How to combine multi-file sources: `'by_coords'`, `'nested'`, or `'first'` |
-| `concat_dim` | Dimension to concatenate along (default: `'time'`) |
-| `description` | Human-readable description |
+### 2. Verify the entry against the bucket
+
+Run the audit script, which renders every entry's default URL and checks it exists via delimiter listings (read-only credentials suffice; entries your credentials cannot reach are recorded as unverified, not failed):
+
+```bash
+python scripts/bucket_audit.py --diff
+```
+
+### 3. Add a stability row to the migration matrix
+
+Every catalog entry has a stability disposition (`stable` or `experimental`) in `src/reflective_data_catalog/migration_matrix.yaml` under `stability:`. Add a row for your entry — new or unverified data typically starts `experimental`.
+
+### 4. Run the entry tests
+
+```bash
+pytest tests/test_catalog_entries.py
+```
+
+This instantiates every catalog entry unmocked through the real registration path, so a schema violation or a broken template fails here before it fails for a user.
 
 ## Project Structure
 
 ```
 src/reflective_data_catalog/
-├── __init__.py          # Package exports
-├── main.py              # ReflectiveCatalog class
-├── flexible_sources.py   # FlexibleSourceConfig, FlexibleSource, SourceDiscovery
-├── reflective_data.py   # Default source configurations
-├── esgf.py              # ESGF data access helper
-├── esm.py               # intake-esm Google Cloud CMIP6/GeoMIP access
-├── storage.py           # CloudFileSystem (obstore wrapper)
-└── help_text.py         # Help text utilities
+├── __init__.py             # Package exports
+├── main.py                 # ReflectiveCatalog class
+├── loader.py               # load_catalog() + CatalogSource (self-parsed YAML runtime)
+├── exceptions.py           # CatalogError, SourceNotFoundError, DataNotFoundError, MissingCredentialsError
+├── storage.py              # CloudFileSystem (obstore wrapper)
+├── esgf.py                 # ESGF data access helper ([esgf] extra)
+├── esm.py                  # Google Cloud CMIP6/GeoMIP via intake-esm ([esm] extra)
+├── help_text.py            # Help text (generated from the loaded catalog)
+├── data-catalog.yaml       # THE source registry (schema v2) — ships in the wheel
+└── migration_matrix.yaml   # Old→new dispositions + entry stability — ships in the wheel
+scripts/
+└── bucket_audit.py         # Rerunnable audit of catalog entries against the buckets
 tests/
-├── conftest.py              # Shared fixtures and mocks
-├── test_flexible_sources.py # FlexibleSourceConfig, Registry, Discovery
-├── test_storage.py          # CloudFileSystem
-├── test_esgf.py             # ESGFHelper (mocked)
-├── test_esm.py              # ESMCatalog, GeoMIPCloudHelper (mocked)
-└── test_catalog.py          # ReflectiveCatalog integration
+├── conftest.py             # Shared fixtures and mocks
+├── test_catalog.py         # ReflectiveCatalog integration
+├── test_catalog_entries.py # Instantiates every shipped catalog entry
+├── test_storage.py         # CloudFileSystem
+├── test_esgf.py            # ESGFHelper (mocked)
+└── test_esm.py             # ESMCatalog, GeoMIPCloudHelper (mocked)
 ```
 
 ## Reporting Issues
