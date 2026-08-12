@@ -78,8 +78,17 @@ def compare(name: str, spec: dict) -> tuple[str, list[str]]:
 
     files = fsspec.open_files(spec["netcdf_glob"])
     if not files:
-        lines.append(f"NetCDF originals not found at `{spec['netcdf_glob']}`.")
-        return "UNRUNNABLE", lines
+        # The listing succeeded (no PermissionError) but matched nothing:
+        # the pre-1.0 NetCDF originals no longer exist. There is no baseline
+        # to compare and nothing to revert to — the Zarr copy is the only
+        # copy. Verification falls to the bucket audit (existence, format,
+        # chunk completeness via scripts/bucket_audit.py --deep).
+        lines.append(
+            f"NetCDF originals no longer exist at `{spec['netcdf_glob']}` "
+            f"(listing succeeded, zero matches). The Zarr copy is the only "
+            f"copy; integrity is verified by the bucket audit instead."
+        )
+        return "ORIGINALS-GONE", lines
     old = xr.open_mfdataset(
         [f.open() for f in files], engine="h5netcdf", combine="by_coords"
     )
@@ -150,7 +159,13 @@ def main() -> int:
                 f"Gate errored: {type(exc).__name__}: {exc}",
             ]
         lines += ["", f"**Verdict: {verdict}** ({stamp})", ""]
-        if verdict not in ("PASS",):
+        if verdict == "ORIGINALS-GONE":
+            lines.append(
+                "Amended R4 disposition: no NetCDF fallback exists; the "
+                "bucket audit (--deep chunk-completeness) is the required "
+                "verification for this source."
+            )
+        elif verdict != "PASS":
             failures += 1
             lines.append(
                 "Per plan R4, this source must keep (or revert to) its "

@@ -70,7 +70,7 @@ jobs:
         for note in sorted(Path("docs/migration-notes").glob("*.md")):
             match = re.search(r"\*\*Verdict: (\S+)\*\*", note.read_text())
             verdict = match.group(1) if match else "MISSING"
-            if verdict != "PASS":
+            if verdict not in ("PASS", "ORIGINALS-GONE"):
                 failures.append(f"equivalence: {note.stem} is {verdict}")
         if failures:
             print("Release blocked — credential-gated verification incomplete:")

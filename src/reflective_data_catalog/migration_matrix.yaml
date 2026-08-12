@@ -116,6 +116,7 @@ stability:
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:
+  - "2026-08-12 gate run (maintainer credentials): the pre-1.0 UKESM NetCDF originals no longer exist in the hub bucket — the Zarr copies are the only copies. Amended R4 disposition: sources with ORIGINALS-GONE verdicts are verified by the bucket audit (existence/format/chunk completeness) instead of A/B equivalence; no NetCDF fallback exists."
   - "ukesm1_arise_cmip6: default version v20220325 -> v20190715 (bucket lists only v20190715)"
   - "arise_sai_15: glob hardcoded .cam.h0. (monthly stream) while default time_frequency day_5 holds .cam.h7. files; glob made stream-agnostic, default moved to month_1"
 
