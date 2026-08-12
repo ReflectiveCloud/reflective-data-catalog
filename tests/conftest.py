@@ -9,98 +9,28 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from reflective_data_catalog.flexible_sources import (
-    FlexibleSourceConfig,
-    FlexibleSourceRegistry,
-)
+from reflective_data_catalog import ReflectiveCatalog
 
 # ---------------------------------------------------------------------------
-# FlexibleSourceConfig fixtures
+# Catalog fixtures
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture()
-def simple_config():
-    """A minimal single-file flexible source config."""
-    return FlexibleSourceConfig(
-        name="test_source",
-        base="s3://test-bucket/model/experiment",
-        pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="{variable}.nc",
-        table_mapping={"Amon": "Amon", "Omon": "Omon"},
-        default_table="Amon",
-        default_variable="tas",
-        default_ensemble="r1i1p1f1",
-        driver="netcdf",
-        description="Test source for unit tests",
-    )
+def real_catalog() -> ReflectiveCatalog:
+    """A ReflectiveCatalog over the real shipped data-catalog.yaml."""
+    return ReflectiveCatalog()
 
 
 @pytest.fixture()
-def multi_file_config():
-    """A multi-file flexible source config (like CESM2)."""
-    return FlexibleSourceConfig(
-        name="test_multi",
-        base="s3://test-bucket/CESM2/G6-HiLLA",
-        pattern="{base}/{ensemble}/{table_path}",
-        filename_pattern="model.{ensemble_id}.h0.{variable}.*.nc",
-        table_mapping={"ADAY": "ADAY", "AMON": "AMON"},
-        ensemble_mapping={"r1": "001", "r2": "002", "r3": "003"},
-        default_table="ADAY",
-        default_variable="T",
-        default_ensemble="r1",
-        driver="netcdf",
-        combine_files="by_coords",
-        concat_dim="time",
-        description="Test multi-file source",
-    )
-
-
-@pytest.fixture()
-def variant_config():
-    """A config with a variant parameter (like MIROC)."""
-    return FlexibleSourceConfig(
-        name="test_variant",
-        base="s3://test-bucket/MIROC/G6-HiLLA",
-        pattern="{base}/{table_path}",
-        filename_pattern="{variable}_{variant}_{ensemble}.nc",
-        table_mapping={"Amon": "Amon", "Omon": "Omon"},
-        default_table="Amon",
-        default_variable="SurfT",
-        default_ensemble="r01",
-        default_variant="baseline",
-        driver="netcdf",
-        description="Test variant source",
-    )
-
-
-@pytest.fixture()
-def time_config():
-    """A config with {time} and {variable} in pattern (like UKESM1)."""
-    return FlexibleSourceConfig(
-        name="test_time",
-        base="s3://test-bucket/UKESM1/G6-HiLLA",
-        pattern="{base}/{ensemble}/{table_path}/{time}/{variable}",
-        filename_pattern="{variable}_{time}_UKESM1_g6-hilla_{ensemble}_gn_*.nc",
-        table_mapping={"ap5": "ap5", "ap6": "ap6"},
-        default_table="ap5",
-        default_variable="ua",
-        default_ensemble="r12i1p1f2",
-        default_time="AERmon",
-        driver="netcdf",
-        combine_files="by_coords",
-        concat_dim="time",
-        description="Test time source",
-    )
-
-
-@pytest.fixture()
-def populated_registry(simple_config, multi_file_config):
-    """A registry with two sources registered."""
-    registry = FlexibleSourceRegistry()
-    registry.register(simple_config)
-    registry.register(multi_file_config)
-    return registry
+def mock_fs():
+    """A CloudFileSystem stand-in: storage I/O mocked with sensible defaults."""
+    fs = MagicMock(name="CloudFileSystem")
+    fs.ls.return_value = []
+    fs.glob.return_value = []
+    fs.exists.return_value = True
+    fs.fsspec_info.side_effect = lambda url: (url, {})
+    return fs
 
 
 # ---------------------------------------------------------------------------

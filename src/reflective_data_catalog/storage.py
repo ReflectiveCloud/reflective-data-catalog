@@ -206,11 +206,7 @@ class CloudFileSystem:
         accepted from options.
         """
         translated: dict[str, Any] = {}
-        if (
-            storage_options
-            and storage_options.get("anon")
-            and scheme in ("s3", "r2")
-        ):
+        if storage_options and storage_options.get("anon") and scheme in ("s3", "r2"):
             translated["skip_signature"] = True
         return translated
 
@@ -261,9 +257,7 @@ class CloudFileSystem:
 
         return self._stores[cache_key], store_key, rel_path
 
-    def glob(
-        self, pattern: str, storage_options: dict | None = None
-    ) -> list[str]:
+    def glob(self, pattern: str, storage_options: dict | None = None) -> list[str]:
         """
         Find all paths matching a glob pattern.
 

@@ -118,10 +118,21 @@ class CatalogSource:
     :func:`load_catalog`.
     """
 
-    def __init__(self, name: str, entry: dict, fs, **kwargs: Any):
+    def __init__(
+        self,
+        name: str,
+        entry: dict,
+        fs,
+        *,
+        matrix_hints: dict[str, str] | None = None,
+        **kwargs: Any,
+    ):
         self._name = name
         self._entry = entry
         self._fs = fs
+        #: Migration-matrix redirect text for removed kwargs (plan R12/AE2):
+        #: {kwarg: guidance}; appended to the unknown-kwarg TypeError.
+        self._matrix_hints = matrix_hints or {}
         self._discovery_cache: dict[tuple, list[str]] = {}
         self._params = self._resolve_params(kwargs)
 
@@ -161,11 +172,19 @@ class CatalogSource:
         if unknown:
             valid = sorted(set(declared) - set(derived))
             aliases = sorted(a for a, c in CANONICAL_ALIASES.items() if c in declared)
-            raise TypeError(
+            message = (
                 f"{self._name}: unknown parameter(s) {sorted(unknown)}. "
                 f"Valid parameters: {valid}"
                 + (f" (aliases accepted: {aliases})" if aliases else "")
             )
+            hints = [
+                f"{key!r}: {self._matrix_hints[key]}"
+                for key in sorted(unknown)
+                if key in self._matrix_hints
+            ]
+            if hints:
+                message += ". Migration note — " + "; ".join(hints)
+            raise TypeError(message)
 
         for key, value in normalized.items():
             if key in derived:

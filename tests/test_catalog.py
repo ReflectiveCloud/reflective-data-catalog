@@ -1,428 +1,289 @@
-"""Integration tests for ReflectiveCatalog."""
+"""Integration tests for the ReflectiveCatalog façade.
+
+These tests run the real shipped ``data-catalog.yaml`` through the real
+loader — no per-test catalog stubbing. Only storage I/O (CloudFileSystem)
+is ever mocked.
+"""
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+import shutil
+from pathlib import Path
 
 import pytest
+import yaml
 
-from reflective_data_catalog.flexible_sources import FlexibleSourceConfig
-from reflective_data_catalog.main import IntakeSource, ReflectiveCatalog
+from reflective_data_catalog import ReflectiveCatalog
+from reflective_data_catalog.exceptions import (
+    CatalogError,
+    SourceNotFoundError,
+)
+from reflective_data_catalog.loader import CatalogSource
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+PACKAGE = Path(__file__).parent.parent / "src" / "reflective_data_catalog"
+CATALOG_PATH = PACKAGE / "data-catalog.yaml"
 
-
-def _make_catalog(**kwargs) -> ReflectiveCatalog:
-    """Create a ReflectiveCatalog with ESGF and ESM helpers mocked."""
-    with (
-        patch("reflective_data_catalog.main.ESGFHelper") as mock_esgf_cls,
-        patch("reflective_data_catalog.main.ESMCatalog") as mock_esm_cls,
-        patch("reflective_data_catalog.main.GeoMIPCloudHelper") as mock_geomip_cls,
-    ):
-        mock_esgf_cls.return_value = MagicMock(name="ESGFHelper")
-        mock_esm_cls.return_value = MagicMock(name="ESMCatalog")
-        mock_geomip_cls.return_value = MagicMock(name="GeoMIPCloudHelper")
-        return ReflectiveCatalog(**kwargs)
+with CATALOG_PATH.open() as _f:
+    ALL_ENTRY_NAMES = sorted(yaml.safe_load(_f)["sources"])
 
 
 # =========================================================================
-# Initialisation
+# Construction
 # =========================================================================
 
 
-class TestCatalogInit:
-    """Tests for ReflectiveCatalog.__init__."""
+class TestConstruction:
+    """ReflectiveCatalog.__init__ parses and validates eagerly (R13)."""
 
-    def test_default_catalog_path(self):
-        cat = _make_catalog()
-        assert str(cat._catalog_path).endswith("data-catalog.yaml")
+    def test_default_packaged_path(self, real_catalog):
+        assert str(real_catalog._catalog_path).endswith("data-catalog.yaml")
+        assert len(real_catalog._entries) == len(ALL_ENTRY_NAMES)
 
-    def test_custom_catalog_path(self):
-        cat = _make_catalog(catalog_path="/tmp/custom.yaml")
-        assert cat._catalog_path == "/tmp/custom.yaml"
+    def test_custom_catalog_path(self, tmp_path):
+        custom = tmp_path / "my-catalog.yaml"
+        shutil.copy(CATALOG_PATH, custom)
+        cat = ReflectiveCatalog(catalog_path=custom)
+        assert cat._catalog_path == custom
+        assert len(cat.list_sources(verbose=False)) == len(ALL_ENTRY_NAMES)
 
-    def test_flexible_sources_registered(self):
-        cat = _make_catalog()
-        # Should have all DEFAULT_FLEXIBLE_SOURCES registered
-        assert len(cat._flexible_registry) > 0
-        assert "cesm2_waccm_g6_1p5k_hilla" in cat._flexible_registry
-        assert "ukesm1_ssp245" in cat._flexible_registry
+    def test_corrupt_yaml_fails_at_construction(self, tmp_path):
+        corrupt = tmp_path / "corrupt.yaml"
+        corrupt.write_text("sources: [unclosed\n  nonsense: {{{\n")
+        with pytest.raises(CatalogError):
+            ReflectiveCatalog(catalog_path=corrupt)
 
-    def test_helpers_initialised(self):
-        cat = _make_catalog()
-        assert cat.esgf is not None
-        assert cat.esm is not None
-        assert cat.geomip_cloud is not None
+    def test_wrong_schema_version_fails_at_construction(self, tmp_path):
+        stale = tmp_path / "stale.yaml"
+        stale.write_text("metadata:\n  reflective_schema_version: 1\nsources: {}\n")
+        with pytest.raises(CatalogError, match="schema version"):
+            ReflectiveCatalog(catalog_path=stale)
 
-    def test_miroc_hilla_rejects_sai_variant_on_wrong_source(self):
-        cat = _make_catalog()
-        cfg = cat.get_source_config("miroc_es2h_g6_1p5k_hilla")
-        assert cfg is not None
-        with pytest.raises(ValueError, match="miroc_es2h_g6_1p5k_sai"):
-            cat._load_flexible(cfg, variant="G6-1.5K-SAI")
+    def test_missing_file_fails_at_construction(self, tmp_path):
+        with pytest.raises(CatalogError, match="not readable"):
+            ReflectiveCatalog(catalog_path=tmp_path / "does-not-exist.yaml")
+
+    def test_helpers_initialised(self, real_catalog):
+        assert real_catalog.esgf is not None
+        assert real_catalog.esm is not None
+        assert real_catalog.geomip_cloud is not None
+
+    def test_geomip_cloud_shares_esm_catalog(self, real_catalog):
+        # One ESMCatalog per ReflectiveCatalog: geomip_cloud reuses it.
+        assert real_catalog.geomip_cloud.catalog is real_catalog.esm
 
 
 # =========================================================================
-# __getattr__
+# Attribute dispatch
 # =========================================================================
 
 
-class TestCatalogGetattr:
-    """Tests for dynamic attribute access."""
+class TestGetattr:
+    """Dynamic attribute access dispatches to catalog entries."""
 
-    def test_access_flexible_source(self):
-        cat = _make_catalog()
-        loader = cat.cesm2_waccm_g6_1p5k_hilla
-        assert callable(loader)
+    def test_entry_returns_callable(self, real_catalog):
+        loader_fn = real_catalog.miroc_es2h_g6_1p5k_hilla
+        assert callable(loader_fn)
+        source = loader_fn()
+        assert isinstance(source, CatalogSource)
+        assert source.name == "miroc_es2h_g6_1p5k_hilla"
 
-    def test_flexible_source_returns_flexible_source(self):
-        from reflective_data_catalog.flexible_sources import FlexibleSource
+    @pytest.mark.parametrize("name", ALL_ENTRY_NAMES)
+    def test_getattr_works_for_every_entry(self, real_catalog, name):
+        source = getattr(real_catalog, name)()
+        assert isinstance(source, CatalogSource)
+        assert source.name == name
 
-        cat = _make_catalog()
-        source = cat.cesm2_waccm_g6_1p5k_hilla()
-        assert isinstance(source, FlexibleSource)
+    def test_unknown_name_raises_with_suggestion(self, real_catalog):
+        with pytest.raises(SourceNotFoundError, match="cesm2_waccm_ssp245"):
+            _ = real_catalog.cesm2_waccm_ssp246
 
-    def test_nonexistent_attribute_raises(self):
-        cat = _make_catalog()
-        with pytest.raises(AttributeError, match="not found"):
-            _ = cat.totally_nonexistent_source
+    def test_unknown_name_mentions_list_sources(self, real_catalog):
+        with pytest.raises(SourceNotFoundError, match="list_sources"):
+            _ = real_catalog.totally_nonexistent_source
 
-    def test_private_attribute_raises(self):
-        cat = _make_catalog()
+    def test_hasattr_is_false_for_unknown(self, real_catalog):
+        assert not hasattr(real_catalog, "nope")
+
+    def test_source_not_found_is_attribute_error(self, real_catalog):
+        assert issubclass(SourceNotFoundError, AttributeError)
         with pytest.raises(AttributeError):
-            _ = cat._nonexistent
+            _ = real_catalog.nope
 
-    def test_intake_source_returns_intake_source_wrapper(self):
-        cat = _make_catalog()
+    def test_private_attribute_raises_plain_attribute_error(self, real_catalog):
+        with pytest.raises(AttributeError):
+            _ = real_catalog._nonexistent
 
-        mock_ds = MagicMock(name="dataset")
-        mock_source = MagicMock(name="source")
-        mock_source.to_dask.return_value = mock_ds
-
-        mock_entry = MagicMock(name="entry")
-        mock_entry.return_value = mock_source
-        mock_entry._params = {
-            "parameters": {
-                "variable": {
-                    "type": "str",
-                    "default": "tas",
-                    "allowed": ["tas", "pr"],
-                    "description": "variable",
-                },
-                "table": {
-                    "type": "str",
-                    "default": "Amon",
-                    "allowed": ["Amon", "day"],
-                    "description": "table",
-                },
+    def test_dir_is_exactly_entries_plus_public_surface(self, real_catalog):
+        # An exact match proves removed accessors (e.g. the old config
+        # getter) are gone from the advertised surface, not just present.
+        expected = sorted(
+            set(ALL_ENTRY_NAMES)
+            | {
+                "esm",
+                "esgf",
+                "geomip_cloud",
+                "list_sources",
+                "list_tags",
+                "search",
+                "help",
+                "get_parameters",
+                "show_parameters",
+                "get_source",
             }
-        }
-        mock_entry._open_args = {"urlpath": "s3://bucket/{{table}}/{{variable}}.zarr"}
-
-        cat._get_intake_catalog = MagicMock(return_value={"yaml_source": mock_entry})
-
-        loader = cat.yaml_source
-        source = loader(variable="tas")
-
-        assert isinstance(source, IntakeSource)
-        assert source.to_dask() is mock_ds
-        assert source.list_variables() == ["tas", "pr"]
-        assert source.list_tables() == ["Amon", "day"]
-        assert source.url == "s3://bucket/Amon/tas.zarr"
-
-    def test_intake_list_tables_uses_default_when_allowed_missing(self):
-        cat = _make_catalog()
-
-        class Param:
-            def __init__(
-                self, name, default, allowed=None, description="", ptype="str"
-            ):
-                self.name = name
-                self.default = default
-                self.allowed = allowed
-                self.description = description
-                self.type = ptype
-
-        mock_entry = MagicMock(name="entry")
-        mock_entry._user_parameters = [
-            Param("variable", "tas"),
-            Param("member_id", "r1i1p1f2", ["r1i1p1f2", "r2i1p1f2"]),
-            Param("table_id", "day", None),
-        ]
-        mock_entry._open_args = {
-            "urlpath": "s3://bucket/{{member_id}}/{{table_id}}/{{variable}}/*"
-        }
-        mock_entry.return_value = MagicMock(name="source")
-
-        cat._get_intake_catalog = MagicMock(
-            return_value={"ukesm1_arise_sai": mock_entry}
         )
-
-        source = cat.ukesm1_arise_sai()
-        assert source.list_tables() == ["day"]
-        assert source.list_ensembles() == ["r1i1p1f2", "r2i1p1f2"]
-        assert source.url == "s3://bucket/r1i1p1f2/day/tas/*"
-
-    def test_intake_list_methods_scan_cloud_from_url_template(self):
-        cat = _make_catalog()
-
-        class Param:
-            def __init__(
-                self, name, default, allowed=None, description="", ptype="str"
-            ):
-                self.name = name
-                self.default = default
-                self.allowed = allowed
-                self.description = description
-                self.type = ptype
-
-        mock_entry = MagicMock(name="entry")
-        mock_entry._user_parameters = [
-            Param("member_id", "r1i1p1f2"),
-            Param("table_id", "day"),
-            Param("variable", "tas"),
-        ]
-        mock_entry._open_args = {
-            "urlpath": (
-                "s3://bucket/arise/{{member_id}}/{{table_id}}/{{variable}}/"
-                "gn/v20220325/*"
-            )
-        }
-        mock_entry.return_value = MagicMock(name="source")
-        cat._get_intake_catalog = MagicMock(
-            return_value={"ukesm1_arise_sai": mock_entry}
-        )
-
-        mock_fs = MagicMock()
-        mock_fs.glob.side_effect = [
-            [
-                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-                "s3://bucket/arise/r2i1p1f2/Amon/pr/gn/v20220325/file2.nc",
-            ],
-            [
-                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-            ],
-            [
-                "s3://bucket/arise/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-                "s3://bucket/arise/r1i1p1f2/day/pr/gn/v20220325/file2.nc",
-            ],
-        ]
-        cat._fs = mock_fs
-
-        source = cat.ukesm1_arise_sai()
-        assert source.list_ensembles() == ["r1i1p1f2", "r2i1p1f2"]
-        assert source.list_tables(ensemble="r1i1p1f2") == ["day"]
-        assert source.list_variables(ensemble="r1i1p1f2", table="day") == ["pr", "tas"]
-
-    def test_intake_discovery_cache_and_refresh(self):
-        cat = _make_catalog()
-
-        class Param:
-            def __init__(self, name, default):
-                self.name = name
-                self.default = default
-                self.allowed = None
-                self.description = ""
-                self.type = "str"
-
-        mock_entry = MagicMock(name="entry")
-        mock_entry._user_parameters = [Param("member_id", "r1i1p1f2")]
-        mock_entry._open_args = {"urlpath": "s3://bucket/arise/{{member_id}}/*"}
-        mock_entry.return_value = MagicMock(name="source")
-        cat._get_intake_catalog = MagicMock(
-            return_value={"ukesm1_arise_sai": mock_entry}
-        )
-
-        mock_fs = MagicMock()
-        mock_fs.glob.side_effect = [
-            ["s3://bucket/arise/r1i1p1f2/file1.nc"],
-            ["s3://bucket/arise/r2i1p1f2/file2.nc"],
-        ]
-        cat._fs = mock_fs
-
-        source = cat.ukesm1_arise_sai()
-        assert source.list_ensembles() == ["r1i1p1f2"]
-        # Cached result: no extra glob call
-        assert source.list_ensembles() == ["r1i1p1f2"]
-        assert mock_fs.glob.call_count == 1
-
-        # refresh=True bypasses cache
-        assert source.list_ensembles(refresh=True) == ["r2i1p1f2"]
-        assert mock_fs.glob.call_count == 2
+        assert dir(real_catalog) == expected
 
 
 # =========================================================================
-# __dir__
+# get_source
 # =========================================================================
 
 
-class TestCatalogDir:
-    """Tests for tab-completion / dir()."""
+class TestGetSource:
+    """String-keyed access mirrors attribute dispatch."""
 
-    def test_dir_includes_flexible_sources(self):
-        cat = _make_catalog()
-        d = dir(cat)
-        assert "cesm2_waccm_g6_1p5k_hilla" in d
-        assert "ukesm1_ssp245" in d
+    def test_round_trip(self, real_catalog):
+        source = real_catalog.get_source("ukesm1_ssp245", variable="pr")
+        assert isinstance(source, CatalogSource)
+        assert source.url.endswith("pr.zarr")
 
-    def test_dir_includes_builtins(self):
-        cat = _make_catalog()
-        d = dir(cat)
-        for name in [
-            "search",
-            "list_sources",
-            "help",
-            "show_parameters",
-            "esgf",
-            "esm",
-            "geomip_cloud",
-        ]:
-            assert name in d
+    def test_matches_attribute_dispatch(self, real_catalog):
+        via_attr = real_catalog.ukesm1_ssp245(variable="pr").url
+        via_name = real_catalog.get_source("ukesm1_ssp245", variable="pr").url
+        assert via_attr == via_name
 
+    def test_unknown_raises_source_not_found(self, real_catalog):
+        with pytest.raises(SourceNotFoundError, match="ukesm1_ssp245"):
+            real_catalog.get_source("ukesm1_ssp254")
 
-# =========================================================================
-# get_source_config
-# =========================================================================
-
-
-class TestGetSourceConfig:
-    """Tests for get_source_config."""
-
-    def test_existing(self):
-        cat = _make_catalog()
-        cfg = cat.get_source_config("cesm2_waccm_g6_1p5k_hilla")
-        assert isinstance(cfg, FlexibleSourceConfig)
-        assert cfg.name == "cesm2_waccm_g6_1p5k_hilla"
-
-    def test_missing(self):
-        cat = _make_catalog()
-        assert cat.get_source_config("nope") is None
+    def test_every_search_entry_resolves(self, real_catalog):
+        records = real_catalog.search(verbose=False)
+        entry_records = [r for r in records if r["kind"] == "entry"]
+        assert len(entry_records) == len(ALL_ENTRY_NAMES)
+        for record in entry_records:
+            source = real_catalog.get_source(record["name"])
+            assert isinstance(source, CatalogSource)
 
 
 # =========================================================================
-# get_parameters
+# Keyword arguments: typos, aliases, removed kwargs
 # =========================================================================
 
 
-class TestGetParameters:
-    """Tests for get_parameters."""
+class TestKwargs:
+    """Unknown kwargs fail loudly (AE1) with migration guidance (R12/AE2)."""
 
-    def test_flexible_source(self):
-        cat = _make_catalog()
-        info = cat.get_parameters("cesm2_waccm_g6_1p5k_hilla")
-        assert info["has_parameters"] is True
-        assert info["is_flexible"] is True
-        assert "variable" in info["parameters"]
-        assert "table" in info["parameters"]
-        assert "ensemble" in info["parameters"]
+    def test_typo_raises_typeerror_naming_kwarg_and_valid_params(self, real_catalog):
+        with pytest.raises(TypeError) as excinfo:
+            real_catalog.cesm2_waccm_ssp245(varaible="SALT")
+        message = str(excinfo.value)
+        assert "varaible" in message
+        assert "variable" in message  # valid parameter listing
+        assert "ensemble" in message
+        assert "table" in message
 
-    def test_not_found_raises(self):
-        cat = _make_catalog()
-        with pytest.raises(ValueError, match="not found"):
-            cat.get_parameters("definitely_not_here")
+    def test_alias_ensemble_member_gives_same_url(self, real_catalog):
+        canonical = real_catalog.cesm2_waccm_ssp245(ensemble="r2").url
+        aliased = real_catalog.cesm2_waccm_ssp245(ensemble_member="r2").url
+        assert canonical == aliased
 
+    def test_alias_member_id_gives_same_url(self, real_catalog):
+        canonical = real_catalog.ukesm1_g6_1p5k_hilla(ensemble="r2i1p1f2").url
+        aliased = real_catalog.ukesm1_g6_1p5k_hilla(member_id="r2i1p1f2").url
+        assert canonical == aliased
 
-# =========================================================================
-# show_parameters
-# =========================================================================
+    def test_removed_time_kwarg_redirects_to_migration_guide(self, real_catalog):
+        with pytest.raises(TypeError) as excinfo:
+            real_catalog.ukesm1_g6_1p5k_hilla(time="AERmon")
+        message = str(excinfo.value)
+        assert "time" in message
+        assert "migration" in message.lower()
 
-
-class TestShowParameters:
-    """Tests for show_parameters."""
-
-    def test_prints_output(self, capsys):
-        cat = _make_catalog()
-        cat.show_parameters("cesm2_waccm_g6_1p5k_hilla")
-        captured = capsys.readouterr()
-        assert "PARAMETERS" in captured.out
-        assert "cesm2_waccm_g6_1p5k_hilla" in captured.out
-
-    def test_not_found_prints_error(self, capsys):
-        cat = _make_catalog()
-        cat.show_parameters("nope")
-        captured = capsys.readouterr()
-        assert "Error" in captured.out
-
-    def test_discover_intake_source_uses_wrapper_methods(self, capsys):
-        cat = _make_catalog()
-
-        mock_fs = MagicMock()
-        mock_fs.glob.side_effect = [
-            [
-                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
-                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
-                "arise-sai-1p5/r2i1p1f2/day/tas/gn/v20220325/file2.nc",
-            ],
-            [
-                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
-                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-            ],
-            [
-                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
-                "arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/file1.nc",
-                "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/"
-                "arise-sai-1p5/r1i1p1f2/day/pr/gn/v20220325/file2.nc",
-            ],
-        ]
-        cat._fs = mock_fs
-
-        cat.show_parameters("ukesm1_arise_sai", discover=True)
-        captured = capsys.readouterr()
-        assert "AVAILABLE DATA (from cloud storage scan):" in captured.out
-        assert "r1i1p1f2" in captured.out
-        assert "day (default)" in captured.out
-        assert "tas" in captured.out
+    def test_removed_time_kwarg_on_ukesm_ssp245(self, real_catalog):
+        with pytest.raises(TypeError, match=r"[Mm]igration"):
+            real_catalog.ukesm1_ssp245(time="AERmon")
 
 
 # =========================================================================
-# list_sources
+# value_map derivation
+# =========================================================================
+
+
+class TestValueMap:
+    """Derived parameters (R4) render into URLs."""
+
+    def test_cesm_historical_ensemble_r2_maps_to_002(self, real_catalog):
+        url = real_catalog.cesm2_waccm_historical(ensemble="r2").url
+        assert "/r2/" in url
+        assert ".002.pop." in url
+
+    def test_derived_param_cannot_be_set_directly(self, real_catalog):
+        with pytest.raises(TypeError, match="derived"):
+            real_catalog.cesm2_waccm_historical(ensemble_id="007")
+
+
+# =========================================================================
+# list_sources / list_tags
 # =========================================================================
 
 
 class TestListSources:
-    """Tests for list_sources."""
+    """list_sources returns records and only prints when verbose."""
 
-    def test_prints_flexible_sources(self, capsys):
-        cat = _make_catalog()
-        cat.list_sources(include_esgf=False)
-        captured = capsys.readouterr()
-        assert "FLEXIBLE SOURCES" in captured.out
-        assert "cesm2_waccm_g6_1p5k_hilla" in captured.out
+    def test_returns_one_record_per_entry(self, real_catalog):
+        records = real_catalog.list_sources(verbose=False)
+        assert len(records) == len(ALL_ENTRY_NAMES)
+        for record in records:
+            assert set(record) == {
+                "name",
+                "kind",
+                "driver",
+                "stability",
+                "tags",
+                "description",
+            }
+            assert record["kind"] == "entry"
+            assert record["driver"] in {"zarr", "netcdf"}
 
-    def test_prints_esm_section(self, capsys):
-        cat = _make_catalog()
-        cat.list_sources(include_esgf=False)
-        captured = capsys.readouterr()
-        assert "GOOGLE CLOUD" in captured.out
+    def test_stability_comes_from_matrix(self, real_catalog):
+        by_name = {r["name"]: r for r in real_catalog.list_sources(verbose=False)}
+        assert by_name["ukesm1_g6_1p5k_hilla"]["stability"] == "stable"
+        assert by_name["ukesm1_g6_1p5k_sai"]["stability"] == "experimental"
 
-    def test_prints_esgf_section(self, capsys):
-        cat = _make_catalog()
-        cat.list_sources(include_esgf=True)
-        captured = capsys.readouterr()
-        assert "ESGF DATA SOURCES" in captured.out
+    def test_verbose_false_prints_nothing(self, real_catalog, capsys):
+        real_catalog.list_sources(verbose=False)
+        assert capsys.readouterr().out == ""
 
-    def test_driver_filter(self, capsys):
-        cat = _make_catalog()
-        cat.list_sources(driver="zarr", include_esgf=False)
-        captured = capsys.readouterr()
-        # The FLEXIBLE SOURCES section should not list any netcdf sources
-        # when filtered by zarr
-        lines = captured.out.split("\n")
-        in_flexible = False
-        for line in lines:
-            if "FLEXIBLE SOURCES" in line:
-                in_flexible = True
-            elif "---" in line and in_flexible:
-                # New section started
-                in_flexible = False
-            if in_flexible and "cesm2_waccm_g6_1p5k_hilla" in line:
-                pytest.fail(
-                    "cesm2_waccm_g6_1p5k_hilla should not appear in "
-                    "FLEXIBLE SOURCES with driver='zarr'"
-                )
+    def test_verbose_true_prints_listing(self, real_catalog, capsys):
+        records = real_catalog.list_sources()
+        out = capsys.readouterr().out
+        assert "AVAILABLE DATA SOURCES" in out
+        assert "cesm2_waccm_g6_1p5k_hilla" in out
+        assert len(records) == len(ALL_ENTRY_NAMES)  # returned even when printing
+
+    def test_tag_filter(self, real_catalog):
+        records = real_catalog.list_sources(tag="ocean", verbose=False)
+        names = {r["name"] for r in records}
+        assert names == {"cesm2_waccm_historical", "cesm2_waccm_ssp245"}
+
+    def test_driver_filter(self, real_catalog):
+        records = real_catalog.list_sources(driver="netcdf", verbose=False)
+        assert records
+        assert all(r["driver"] == "netcdf" for r in records)
+
+
+class TestListTags:
+    """list_tags returns sorted unique tags."""
+
+    def test_returns_sorted_unique(self, real_catalog):
+        tags = real_catalog.list_tags(verbose=False)
+        assert tags == sorted(set(tags))
+        assert "SAI" in tags
+        assert "ocean" in tags
+
+    def test_verbose_false_prints_nothing(self, real_catalog, capsys):
+        real_catalog.list_tags(verbose=False)
+        assert capsys.readouterr().out == ""
 
 
 # =========================================================================
@@ -431,52 +292,107 @@ class TestListSources:
 
 
 class TestSearch:
-    """Tests for the search method."""
+    """search returns records; entries resolve, helper rows are suggestions."""
 
-    def test_search_by_term(self):
-        cat = _make_catalog()
-        results = cat.search(term="ukesm")
-        assert any("ukesm" in r for r in results)
+    def test_search_by_term(self, real_catalog):
+        records = real_catalog.search(term="miroc", verbose=False)
+        names = {r["name"] for r in records if r["kind"] == "entry"}
+        assert names == {"miroc_es2h_g6_1p5k_hilla", "miroc_es2h_g6_1p5k_sai"}
 
-    def test_search_by_variable(self):
-        cat = _make_catalog()
-        results = cat.search(variable="T")
-        # All matching sources should have default_variable 'T'
-        for name in results:
-            cfg = cat.get_source_config(name)
-            if cfg:
-                assert cfg.default_variable == "T"
+    def test_search_by_variable(self, real_catalog):
+        records = real_catalog.search(variable="TEMP", verbose=False)
+        entry_names = {r["name"] for r in records if r["kind"] == "entry"}
+        assert entry_names == {"cesm2_waccm_historical", "cesm2_waccm_ssp245"}
 
-    def test_search_by_term_and_variable(self):
-        cat = _make_catalog()
-        results = cat.search(term="cesm", variable="T")
-        assert len(results) > 0
-        for name in results:
-            assert "cesm" in name.lower() or "CESM" in name
+    def test_search_by_tag(self, real_catalog):
+        records = real_catalog.search(tag="ocean", verbose=False)
+        # Tag filtering excludes helper suggestions entirely.
+        assert all(r["kind"] == "entry" for r in records)
+        assert {r["name"] for r in records} == {
+            "cesm2_waccm_historical",
+            "cesm2_waccm_ssp245",
+        }
 
-    def test_search_no_matches(self):
-        cat = _make_catalog()
-        results = cat.search(term="zzzzz_no_match_zzzzz")
-        assert len(results) == 0
+    def test_search_no_matches(self, real_catalog):
+        assert real_catalog.search(term="zzzzz_no_match", verbose=False) == []
 
-    def test_search_esgf_shortcuts(self):
-        cat = _make_catalog()
-        results = cat.search(term="g6sulfur")
-        esgf_results = [r for r in results if r.startswith("esgf.")]
-        assert len(esgf_results) > 0
+    def test_record_shape(self, real_catalog):
+        for record in real_catalog.search(verbose=False):
+            assert set(record) == {"name", "kind", "driver", "description"}
+            assert record["kind"] in {"entry", "esm", "esgf"}
 
-    def test_search_tag_filters_out_flexible(self):
-        cat = _make_catalog()
-        results = cat.search(tag="SAI")
-        # Flexible sources don't have tags, so any that appear must have
-        # come from the intake catalog (which has a separate entry).
-        # Just verify the search completes and returns a list.
-        assert isinstance(results, list)
+    def test_helper_suggestions_present_but_cheap(self, real_catalog):
+        records = real_catalog.search(term="g6sulfur", verbose=False)
+        kinds = {r["kind"] for r in records}
+        assert "esgf" in kinds  # static suggestion rows survive
+        # and none of them claim to be resolvable entries
+        for record in records:
+            if record["kind"] != "entry":
+                assert record["name"] not in ALL_ENTRY_NAMES
 
-    def test_search_returns_list(self):
-        cat = _make_catalog()
-        results = cat.search()
-        assert isinstance(results, list)
+    def test_verbose_false_prints_nothing(self, real_catalog, capsys):
+        real_catalog.search(term="miroc", verbose=False)
+        assert capsys.readouterr().out == ""
+
+    def test_verbose_true_prints_results(self, real_catalog, capsys):
+        real_catalog.search(term="miroc")
+        out = capsys.readouterr().out
+        assert "SEARCH RESULTS" in out
+        assert "miroc_es2h_g6_1p5k_sai" in out
+
+
+# =========================================================================
+# get_parameters / show_parameters
+# =========================================================================
+
+
+class TestGetParameters:
+    """get_parameters has one unified shape for every entry."""
+
+    def test_unified_shape(self, real_catalog):
+        info = real_catalog.get_parameters("miroc_es2h_g6_1p5k_sai")
+        assert set(info) == {"name", "driver", "description", "parameters"}
+        assert info["name"] == "miroc_es2h_g6_1p5k_sai"
+        assert info["driver"] == "netcdf"
+        assert "variant" in info["parameters"]
+        assert "is_flexible" not in info
+
+    @pytest.mark.parametrize("name", ALL_ENTRY_NAMES)
+    def test_every_entry_has_parameters(self, real_catalog, name):
+        info = real_catalog.get_parameters(name)
+        assert info["parameters"], name
+
+    def test_unknown_raises_source_not_found(self, real_catalog):
+        with pytest.raises(SourceNotFoundError):
+            real_catalog.get_parameters("definitely_not_here")
+
+
+class TestShowParameters:
+    """show_parameters prints the unified parameter dict."""
+
+    def test_prints_parameters(self, real_catalog, capsys):
+        real_catalog.show_parameters("cesm2_waccm_g6_1p5k_hilla")
+        out = capsys.readouterr().out
+        assert "PARAMETERS" in out
+        assert "cesm2_waccm_g6_1p5k_hilla" in out
+        assert "ensemble" in out
+
+    def test_unknown_raises_source_not_found(self, real_catalog):
+        with pytest.raises(SourceNotFoundError):
+            real_catalog.show_parameters("nope")
+
+    @pytest.mark.filterwarnings("ignore::UserWarning")  # empty variable scan
+    def test_discover_uses_mocked_storage(self, real_catalog, mock_fs, capsys):
+        mock_fs.ls.return_value = [
+            "reflective-persistent-prod-large/UKESM1-1/SSP245/r1i1p1f2",
+            "reflective-persistent-prod-large/UKESM1-1/SSP245/r2i1p1f2",
+        ]
+        real_catalog._fs = mock_fs
+        real_catalog.show_parameters("ukesm1_ssp245", discover=True)
+        out = capsys.readouterr().out
+        assert "AVAILABLE DATA (from cloud storage scan):" in out
+        assert "r2i1p1f2" in out
+        assert mock_fs.ls.called  # only storage I/O was mocked
 
 
 # =========================================================================
@@ -485,52 +401,19 @@ class TestSearch:
 
 
 class TestHelp:
-    """Tests for the help method."""
+    """help() output is generated from the loaded catalog."""
 
-    def test_general_help(self, capsys):
-        cat = _make_catalog()
-        cat.help()
-        captured = capsys.readouterr()
-        assert "DATA CATALOG" in captured.out
+    def test_general_help_lists_catalog_entries(self, real_catalog, capsys):
+        real_catalog.help()
+        out = capsys.readouterr().out
+        assert "DATA CATALOG" in out
+        # Generated from the catalog, not hand-maintained text:
+        assert "miroc_es2h_g6_1p5k_hilla" in out
+        for name in ALL_ENTRY_NAMES:
+            assert name in out
 
-    def test_source_help(self, capsys):
-        cat = _make_catalog()
-        cat.help("cesm2_waccm_g6_1p5k_hilla")
-        captured = capsys.readouterr()
-        assert "PARAMETERS" in captured.out
-
-
-# =========================================================================
-# Reflective Data - DEFAULT_FLEXIBLE_SOURCES
-# =========================================================================
-
-
-class TestDefaultSources:
-    """Smoke tests ensuring all default source configs are valid."""
-
-    def test_all_defaults_valid(self):
-        from reflective_data_catalog.reflective_data import (
-            DEFAULT_FLEXIBLE_SOURCES,
-        )
-
-        for cfg in DEFAULT_FLEXIBLE_SOURCES:
-            errors = cfg.validate()
-            assert errors == [], f"{cfg.name} has validation errors: {errors}"
-
-    def test_all_defaults_build_url(self):
-        from reflective_data_catalog.reflective_data import (
-            DEFAULT_FLEXIBLE_SOURCES,
-        )
-
-        for cfg in DEFAULT_FLEXIBLE_SOURCES:
-            url = cfg.build_url()
-            assert url, f"{cfg.name} produced an empty URL"
-            assert "://" in url, f"{cfg.name} URL missing scheme: {url}"
-
-    def test_all_defaults_have_description(self):
-        from reflective_data_catalog.reflective_data import (
-            DEFAULT_FLEXIBLE_SOURCES,
-        )
-
-        for cfg in DEFAULT_FLEXIBLE_SOURCES:
-            assert cfg.description, f"{cfg.name} missing description"
+    def test_source_help_prints_parameters(self, real_catalog, capsys):
+        real_catalog.help("cesm2_waccm_g6_1p5k_hilla")
+        out = capsys.readouterr().out
+        assert "PARAMETERS" in out
+        assert "cesm2_waccm_g6_1p5k_hilla" in out

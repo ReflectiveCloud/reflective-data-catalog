@@ -1,4 +1,12 @@
-HELP_TEXT = """
+"""Help text for ReflectiveCatalog.
+
+The SOURCES section is generated from the loaded catalog so it can never
+drift from ``data-catalog.yaml``; only the general usage text is static.
+"""
+
+from __future__ import annotations
+
+_GENERAL_TEXT = """
 Reflective DATA CATALOG
 =============================
 
@@ -11,8 +19,9 @@ QUICK START:
 -----------
     from reflective_data_catalog import ReflectiveCatalog
 
-    # List all sources
     catalog = ReflectiveCatalog()
+
+    # List all sources (returns records; prints unless verbose=False)
     catalog.list_sources()
 
     # Search for data
@@ -21,9 +30,10 @@ QUICK START:
 
     # Get parameters for a source
     catalog.show_parameters('source_name')
+    catalog.get_parameters('source_name')   # same information, as a dict
 
-    # Load data
-    ds = catalog.ukesm1_g6_1p5k_hilla(table='ap5', variable='ua').to_dask()
+    # String-keyed access
+    src = catalog.get_source('ukesm1_g6_1p5k_hilla', variable='tas')
 
 DISCOVERING AVAILABLE DATA:
 --------------------------
@@ -38,24 +48,8 @@ DISCOVERING AVAILABLE DATA:
     # Full discovery summary
     source.discover()
 
-FLEXIBLE SOURCES (Data in the Reflective Cloud Hub S3 bucket):
-----------------
-    # These support any valid table/variable combination
-    ds = catalog.ukesm1_g6_1p5k_hilla(
-        table='ap5',        # Table / frequency
-        variable='ua',      # Any variable in the table
-        ensemble='r12i1p1f2' # Ensemble member
-    ).to_dask()
-
-    # MIROC: HiLLA and SAI are separate storage prefixes — use the matching source
-    ds = catalog.miroc_es2h_g6_1p5k_hilla(
-        variable='SurfT',
-        variant='baseline',
-    ).to_dask()
-    ds = catalog.miroc_es2h_g6_1p5k_sai(variable='SurfT').to_dask()
-
-CMIP6/GeoMIP (intake-esm):
----------------------------------------
+CMIP6/GeoMIP (Google Cloud; needs the [esm] extra):
+---------------------------------------------------
     # Search and load cloud-optimized Zarr data
     datasets = catalog.esm.load(
         experiment_id=['G6sulfur', 'ssp245'],
@@ -65,26 +59,20 @@ CMIP6/GeoMIP (intake-esm):
 
     # GeoMIP convenience helpers
     ds = catalog.geomip_cloud.g6sulfur(variable='tas')
-    ds = catalog.geomip_cloud.load_ensemble(
-        experiments=['G6sulfur', 'ssp245', 'ssp585'],
-        variable='tas',
-    )
-
-    # Explore what's available
     catalog.geomip_cloud.list_models()
-    catalog.geomip_cloud.list_variables(experiment_id='G6sulfur')
     catalog.geomip_cloud.summary()
 
-ESGF DATA:
----------
+ESGF DATA (needs the [esgf] extra):
+-----------------------------------
     ds = catalog.esgf.geomip.g6sulfur(model='UKESM1-0-LL', variable='tas')
     ds = catalog.esgf.ssp.ssp245(model='UKESM1-0-LL', variable='tas')
     catalog.esgf.search(project='CMIP6', experiment_id='G6sulfur')
 
 CLOUD STORAGE:
 -------------
-    Data stored across S3, GCS, Azure, and Cloudflare R2 can be accessed using this Data Catalog.
-    The CloudFileSystem auto-detects the provider from the URL scheme:
+    Data stored across S3, GCS, Azure, and Cloudflare R2 can be accessed
+    using this Data Catalog. The CloudFileSystem auto-detects the provider
+    from the URL scheme:
         s3://  -> AWS S3
         gs://  -> Google Cloud Storage
         az://  -> Azure Blob Storage
@@ -94,3 +82,23 @@ For help with a specific source:
     catalog.help('source_name')
     catalog.show_parameters('source_name')
 """
+
+
+def render_help(sources: dict) -> str:
+    """Render the catalog help text.
+
+    The general usage text is static; the SOURCES section is built from
+    the loaded catalog entries (name plus a one-line description).
+    """
+    lines = [_GENERAL_TEXT.rstrip(), "", "SOURCES:", "--------"]
+    for name in sorted(sources):
+        entry = sources[name] or {}
+        description = (entry.get("description") or "").strip()
+        one_line = description.splitlines()[0] if description else ""
+        if len(one_line) > 76:
+            one_line = one_line[:73] + "..."
+        lines.append(f"    {name}")
+        if one_line:
+            lines.append(f"        {one_line}")
+    lines.append("")
+    return "\n".join(lines)
