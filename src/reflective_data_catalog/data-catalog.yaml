@@ -54,23 +54,26 @@ sources:
     driver: zarr
     description: "CESM2-WACCM G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
     args:
-      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/{{ensemble}}/{{table}}/{{variable}}.zarr"
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-HiLLA.zarr"
+      group: "{{table}}/{{realm}}"
       consolidated: true
-      storage_options:
-        anon: false
     parameters:
-      ensemble:
-        description: "Ensemble member identifier"
-        type: str
-        default: "r1i1p1f1"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
         type: str
-        default: "Aday"
-      variable:
-        description: "Climate variable name"
+        default: "Amon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_3d, ocean_2d, ocean_3d, land_2d, seaice_2d)"
         type: str
-        default: "tas"
+        default: "atmos_3d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
     metadata:
       model: "CESM2-WACCM"
       experiment: "G6-1.5K-HiLLA"
@@ -82,9 +85,16 @@ sources:
       temperature_target: "1.5K"
       variables_list: "https://docs.google.com/spreadsheets/d/1GfkOx6W6U5lxMb1f-xBPEtvKZZ0IDu2xtyVH7ppAQ6M/edit?usp=sharing"
       paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
-      hosted_on: "AWS (cloudhub)"
-      s3_bucket: "s3://reflective-persistent-prod-large"
-      tags: ["geoengineering", "SAI", "high-latitude", "CESM2-WACCM", "G6-1.5K-HiLLA", "feedback-control"]
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["geoengineering", "SAI", "high-latitude", "CESM2-WACCM", "G6-1.5K-HiLLA", "feedback-control", "public"]
   
   e3smv3_g6_1p5k_hilla:
     driver: zarr
@@ -124,27 +134,27 @@ sources:
       tags: ["geoengineering", "SAI", "high-latitude", "E3SMv3", "G6-1.5K-HiLLA", "unstructured-grid", "feedback-control"]
   
   miroc_es2h_g6_1p5k_hilla:
-    driver: netcdf
-    description: "MIROC-ES2H G6-1.5K-HiLLA: SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K. variant='baseline' selects the SSP2-4.5 reference outputs stored under this experiment prefix; variant='G6-1.5K-HiLLA' selects the experiment."
+    driver: zarr
+    description: "MIROC-ES2H G6-1.5K-HiLLA (Zarr, public Cloudflare R2): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K. variant='baseline' (default) selects the SSP2-4.5 reference store; variant='G6-1.5K-HiLLA' selects the experiment store, whose realm groups are member-suffixed (e.g. atmos_2d_r03)."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_{{variant}}_{{ensemble}}.nc"
-      xarray_kwargs:
-        engine: h5netcdf
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_{{variant}}.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
     parameters:
-      table:
-        description: "Output table (Amon, Omon, day)"
-        type: str
-        default: "Amon"
-      variable:
-        description: "Climate variable name (MIROC-native, e.g. SurfT)"
-        type: str
-        default: "SurfT"
       variant:
-        description: "Experiment variant: baseline (SSP2-4.5 reference) or G6-1.5K-HiLLA"
+        description: "Experiment variant store: baseline (SSP2-4.5 reference) or G6-1.5K-HiLLA"
         type: str
         default: "baseline"
+      table:
+        description: "Output table group (baseline/SAI stores: Mon, day, MAM3; the G6-1.5K-HiLLA store: Amon, Omon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (e.g. atmos_2d, ocean_2d; the G6-1.5K-HiLLA store uses member-suffixed groups such as atmos_2d_r03 — use list_tables()/discover())"
+        type: str
+        default: "atmos_2d"
       ensemble:
-        description: "Ensemble member identifier (e.g. r01)"
+        description: "Ensemble member (r01-r10), selected along the member dimension; pass 'all' for the full ensemble"
         type: str
         default: "r01"
     metadata:
@@ -155,9 +165,12 @@ sources:
       feedback_control: true
       years: "2035-2085"
       temperature_target: "1.5K"
-      hosted_on: "AWS (cloudhub)"
-      s3_bucket: "s3://reflective-persistent-prod-large"
-      tags: ["geoengineering", "SAI", "high-latitude", "MIROC", "G6-1.5K-HiLLA", "feedback-control"]
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["geoengineering", "SAI", "high-latitude", "MIROC", "G6-1.5K-HiLLA", "feedback-control", "public"]
 
 
   ukesm1_ssp245:
@@ -274,33 +287,29 @@ sources:
       tags: ["CESM2-WACCM", "historical", "reference", "ocean"]
 
   cesm2_waccm_ssp245:
-    driver: netcdf
-    description: "CESM2-WACCM SSP2-4.5 reference (POP ocean output). NetCDF entry preserving the pre-1.0 paths and r1->001 ensemble filename mapping; switches to a Zarr copy once one is verified in the bucket inventory."
+    driver: zarr
+    description: "CESM2-WACCM SSP2-4.5 reference (Zarr, public Cloudflare R2). One store per experiment; tables and realms are Zarr groups; the ensemble is a dataset dimension."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/SSP2-4.5/{{ensemble}}/{{table}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
-      combine: by_coords
-      concat_dim: time
-      xarray_kwargs:
-        engine: h5netcdf
-      storage_options:
-        anon: false
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_SSP2-4.5.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
     parameters:
+      table:
+        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
+        type: str
+        default: "Omon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_3d, ocean_2d, ocean_3d, land_2d, seaice_2d)"
+        type: str
+        default: "ocean_3d"
       ensemble:
-        description: "Ensemble member (r1, r2, r3)"
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
         type: str
         default: "r1"
       ensemble_id:
-        description: "Filename member id (001, 002, 003); derived from ensemble via metadata.value_map — set automatically by the loader"
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
         type: str
         default: "001"
-      table:
-        description: "Output table (OMON)"
-        type: str
-        default: "OMON"
-      variable:
-        description: "Climate variable name (CESM POP-native, e.g. TEMP)"
-        type: str
-        default: "TEMP"
     metadata:
       model: "CESM2-WACCM"
       experiment: "SSP2-4.5"
@@ -309,9 +318,12 @@ sources:
         ensemble_id:
           from: ensemble
           map: {r1: "001", r2: "002", r3: "003"}
-      hosted_on: "AWS (cloudhub)"
-      s3_bucket: "s3://reflective-persistent-prod-large"
-      tags: ["CESM2-WACCM", "SSP2-4.5", "reference", "ocean"]
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["CESM2-WACCM", "SSP2-4.5", "reference", "ocean", "public"]
 
   # ============================================================================
   # G6-1.5K-SAI Experiments
@@ -360,23 +372,26 @@ sources:
     driver: zarr
     description: "CESM2-WACCM G6-1.5K-SAI: SAI 30°N/S injection at 21km to hold global mean temperature to 1.5K"
     args:
-      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/{{ensemble}}/{{table}}/{{variable}}.zarr"
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
       consolidated: true
-      storage_options:
-        anon: false
     parameters:
-      ensemble:
-        description: "Ensemble member identifier"
-        type: str
-        default: "r1i1p1f1"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
         type: str
-        default: "Aday"
-      variable:
-        description: "Climate variable name"
+        default: "Amon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_3d, ocean_2d, ocean_3d, land_2d, seaice_2d)"
         type: str
-        default: "tas"
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
     metadata:
       model: "CESM2-WACCM"
       experiment: "G6-1.5K-SAI"
@@ -389,10 +404,16 @@ sources:
       variables_status: "TBD"
       paper: "https://egusphere.copernicus.org/preprints/2025/egusphere-2025-5742/"
       documentation: "to be added"
-      hosted_on: "AWS (cloudhub)"
-      s3_bucket: "s3://reflective-persistent-prod-large"
-      status: "coming_soon"
-      tags: ["geoengineering", "SAI", "mid-latitude", "CESM2-WACCM", "G6-1.5K-SAI", "feedback-control"]
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["geoengineering", "SAI", "mid-latitude", "CESM2-WACCM", "G6-1.5K-SAI", "feedback-control", "public"]
   
   e3smv3_g6_1p5k_sai:
     driver: zarr
@@ -434,27 +455,27 @@ sources:
       tags: ["geoengineering", "SAI", "mid-latitude", "E3SMv3", "G6-1.5K-SAI", "unstructured-grid", "feedback-control"]
 
   miroc_es2h_g6_1p5k_sai:
-    driver: netcdf
-    description: "MIROC-ES2H G6-1.5K-SAI: SAI with 30°N/S injection at 21km to hold global mean temperature to 1.5K. variant='baseline' selects the SSP2-4.5 reference outputs stored under this experiment prefix; variant='G6-1.5K-SAI' selects the experiment."
+    driver: zarr
+    description: "MIROC-ES2H G6-1.5K-SAI (Zarr, public Cloudflare R2): SAI with 30°N/S injection at 21km to hold global mean temperature to 1.5K. variant='G6-1.5K-SAI' (default) selects the experiment store; variant='baseline' selects the SSP2-4.5 reference store. The ensemble (r01-r10) is a dataset dimension."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_{{variant}}_{{ensemble}}.nc"
-      xarray_kwargs:
-        engine: h5netcdf
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_{{variant}}.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
     parameters:
-      table:
-        description: "Output table (Mon, MAM3, day)"
-        type: str
-        default: "Mon"
-      variable:
-        description: "Climate variable name (MIROC-native, e.g. SurfT)"
-        type: str
-        default: "SurfT"
       variant:
-        description: "Experiment variant: baseline (SSP2-4.5 reference) or G6-1.5K-SAI"
+        description: "Experiment variant store: G6-1.5K-SAI or baseline (SSP2-4.5 reference)"
         type: str
         default: "G6-1.5K-SAI"
+      table:
+        description: "Output table group (Mon, day, MAM3)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_half, ocean_2d, zm_*)"
+        type: str
+        default: "atmos_2d"
       ensemble:
-        description: "Ensemble member identifier (e.g. r01)"
+        description: "Ensemble member (r01-r10), selected along the member dimension; pass 'all' for the full ensemble"
         type: str
         default: "r01"
     metadata:
@@ -465,9 +486,12 @@ sources:
       feedback_control: true
       years: "2035-2085"
       temperature_target: "1.5K"
-      hosted_on: "AWS (cloudhub)"
-      s3_bucket: "s3://reflective-persistent-prod-large"
-      tags: ["geoengineering", "SAI", "mid-latitude", "MIROC", "G6-1.5K-SAI", "feedback-control"]
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["geoengineering", "SAI", "mid-latitude", "MIROC", "G6-1.5K-SAI", "feedback-control", "public"]
 
     
   # ============================================================================

@@ -152,6 +152,46 @@ def observe_facets(fs, template: str, values: dict) -> dict:
     return facets
 
 
+def audit_https_zarr(rendered: str, entry: dict, defaults: dict) -> dict:
+    """Audit a public HTTPS Zarr store via its consolidated metadata.
+
+    r2.dev public URLs serve objects but cannot list, so existence and the
+    group vocabulary come from one zarr.json fetch. Sends a curl-like UA:
+    r2.dev returns 403 to urllib's default agent.
+    """
+    import json
+    import urllib.error
+    import urllib.request
+
+    result: dict = {}
+    request = urllib.request.Request(
+        rendered.rstrip("/") + "/zarr.json",
+        headers={"User-Agent": "reflective-data-catalog-audit/1.0"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            meta = json.load(response)
+    except urllib.error.HTTPError as exc:
+        result["exists"] = False
+        result["status"] = f"unverified:HTTP{exc.code}"
+        return result
+    except Exception as exc:
+        result["status"] = f"unverified:{type(exc).__name__}"
+        return result
+    result["exists"] = True
+    result["zarr_format"] = meta.get("zarr_format")
+    consolidated = (meta.get("consolidated_metadata") or {}).get("metadata") or {}
+    result["consolidated"] = bool(consolidated)
+    groups = sorted(k for k, v in consolidated.items() if v.get("node_type") == "group")
+    result["facets"] = {"group": groups[:50]}
+    group_template = (entry.get("args") or {}).get("group")
+    if group_template:
+        rendered_group = render(group_template, defaults)
+        result["default_group_exists"] = rendered_group in consolidated
+    result["status"] = "verified"
+    return result
+
+
 def audit_entry(name: str, entry: dict, deep: bool) -> dict:
     args = entry.get("args") or {}
     urlpaths = args.get("urlpath")
@@ -171,6 +211,10 @@ def audit_entry(name: str, entry: dict, deep: bool) -> dict:
         rendered = render(template, defaults)
         url_rec: dict = {"template": template, "rendered_default": rendered}
         opts = dict(storage_options)
+        if scheme in ("http", "https"):
+            url_rec.update(audit_https_zarr(rendered, entry, defaults))
+            record["urls"].append(url_rec)
+            continue
         if scheme == "r2":
             endpoint = r2_endpoint()
             if not endpoint:

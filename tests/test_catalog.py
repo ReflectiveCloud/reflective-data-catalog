@@ -178,7 +178,7 @@ class TestKwargs:
             real_catalog.cesm2_waccm_ssp245(varaible="SALT")
         message = str(excinfo.value)
         assert "varaible" in message
-        assert "variable" in message  # valid parameter listing
+        assert "realm" in message  # valid parameter listing
         assert "ensemble" in message
         assert "table" in message
 
@@ -302,7 +302,9 @@ class TestSearch:
     def test_search_by_variable(self, real_catalog):
         records = real_catalog.search(variable="TEMP", verbose=False)
         entry_names = {r["name"] for r in records if r["kind"] == "entry"}
-        assert entry_names == {"cesm2_waccm_historical", "cesm2_waccm_ssp245"}
+        # Only the NetCDF fallback still declares variable as a parameter;
+        # grouped Zarr stores select variables from the opened dataset.
+        assert entry_names == {"cesm2_waccm_historical"}
 
     def test_search_by_tag(self, real_catalog):
         records = real_catalog.search(tag="ocean", verbose=False)
@@ -353,7 +355,7 @@ class TestGetParameters:
         info = real_catalog.get_parameters("miroc_es2h_g6_1p5k_sai")
         assert set(info) == {"name", "driver", "description", "parameters"}
         assert info["name"] == "miroc_es2h_g6_1p5k_sai"
-        assert info["driver"] == "netcdf"
+        assert info["driver"] == "zarr"
         assert "variant" in info["parameters"]
         assert "is_flexible" not in info
 
@@ -430,7 +432,7 @@ class TestValueGuidance:
         message = str(excinfo.value)
         assert "cesm2_waccm_g6_1p5k_hilla" in message
         assert "'AMON'" in message
-        assert "'Aday'" in message
+        assert "'Amon'" in message
         assert "migration" in message.lower()
 
     def test_old_ukesm_stream_table_guided(self, real_catalog):
@@ -446,4 +448,5 @@ class TestValueGuidance:
 
     def test_new_vocabulary_passes_untouched(self, real_catalog):
         src = real_catalog.cesm2_waccm_g6_1p5k_hilla(table="Amon")
-        assert "/Amon/" in src.url
+        group = src._render(src.config["args"]["group"])
+        assert group.startswith("Amon/")

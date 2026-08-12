@@ -61,6 +61,27 @@ SWITCHED = {
         ),
         "old_default_variable": "T",
     },
+    "cesm2_waccm_ssp245": {
+        "netcdf_glob": (
+            "s3://reflective-persistent-prod-large/CESM2-WACCM/SSP2-4.5/"
+            "r1/OMON/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.pop.*.TEMP.*.nc"
+        ),
+        "old_default_variable": "TEMP",
+    },
+    "miroc_es2h_g6_1p5k_hilla": {
+        "netcdf_glob": (
+            "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/"
+            "Amon/SurfT_baseline_r01.nc"
+        ),
+        "old_default_variable": "SurfT",
+    },
+    "miroc_es2h_g6_1p5k_sai": {
+        "netcdf_glob": (
+            "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/"
+            "Mon/SurfT_G6-1.5K-SAI_r01.nc"
+        ),
+        "old_default_variable": "SurfT",
+    },
 }
 
 

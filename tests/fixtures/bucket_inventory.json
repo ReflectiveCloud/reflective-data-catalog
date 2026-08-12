@@ -1,6 +1,6 @@
 {
-  "audited_at": "2026-08-12T17:27:17+00:00",
-  "catalog_version": 2,
+  "audited_at": "2026-08-12T23:52:50+00:00",
+  "catalog_version": 1,
   "entries": {
     "arise_15_cesm2_waccm_ssp245": {
       "anon": true,
@@ -268,9 +268,33 @@
       "driver": "zarr",
       "urls": [
         {
-          "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/r1i1p1f1/Aday/tas.zarr",
-          "status": "unverified:access_denied",
-          "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/{{ensemble}}/{{table}}/{{variable}}.zarr"
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Amon",
+              "Amon/atmos_2d",
+              "Amon/atmos_3d",
+              "Lday",
+              "Lmon",
+              "Lmon/land_2d",
+              "Omon",
+              "Omon/ocean_2d",
+              "Omon/ocean_3d",
+              "Oyr",
+              "SIday",
+              "SIday/seaice_2d",
+              "SImon",
+              "SImon/seaice_2d",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-HiLLA.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-HiLLA.zarr",
+          "zarr_format": 3
         }
       ]
     },
@@ -279,9 +303,33 @@
       "driver": "zarr",
       "urls": [
         {
-          "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/r1i1p1f1/Aday/tas.zarr",
-          "status": "unverified:access_denied",
-          "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/{{ensemble}}/{{table}}/{{variable}}.zarr"
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Amon",
+              "Amon/atmos_2d",
+              "Amon/atmos_3d",
+              "Lday",
+              "Lmon",
+              "Lmon/land_2d",
+              "Omon",
+              "Omon/ocean_2d",
+              "Omon/ocean_3d",
+              "Oyr",
+              "SIday",
+              "SIday/seaice_2d",
+              "SImon",
+              "SImon/seaice_2d",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_G6-1.5K-SAI.zarr",
+          "zarr_format": 3
         }
       ]
     },
@@ -298,12 +346,36 @@
     },
     "cesm2_waccm_ssp245": {
       "anon": false,
-      "driver": "netcdf",
+      "driver": "zarr",
       "urls": [
         {
-          "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/SSP2-4.5/r1/OMON/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.pop.*.TEMP.*.nc",
-          "status": "unverified:access_denied",
-          "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/SSP2-4.5/{{ensemble}}/{{table}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Amon",
+              "Amon/atmos_2d",
+              "Amon/atmos_3d",
+              "Lday",
+              "Lmon",
+              "Lmon/land_2d",
+              "Omon",
+              "Omon/ocean_2d",
+              "Omon/ocean_3d",
+              "Oyr",
+              "SIday",
+              "SIday/seaice_2d",
+              "SImon",
+              "SImon/seaice_2d",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_SSP2-4.5.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_SSP2-4.5.zarr",
+          "zarr_format": 3
         }
       ]
     },
@@ -342,23 +414,67 @@
     },
     "miroc_es2h_g6_1p5k_hilla": {
       "anon": false,
-      "driver": "netcdf",
+      "driver": "zarr",
       "urls": [
         {
-          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/Amon/SurfT_baseline_r01.nc",
-          "status": "unverified:access_denied",
-          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_{{variant}}_{{ensemble}}.nc"
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "MAM3",
+              "MAM3/zm_p90_t600",
+              "MAM3/zm_p90_t600_mass",
+              "MAM3/zm_p90_t780_conc",
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_half",
+              "Mon/ocean_2d",
+              "Mon/zm_p38",
+              "Mon/zm_p39_lat128",
+              "Mon/zm_p39_lat64",
+              "Mon/zm_p90",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_baseline.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_{{variant}}.zarr",
+          "zarr_format": 3
         }
       ]
     },
     "miroc_es2h_g6_1p5k_sai": {
       "anon": false,
-      "driver": "netcdf",
+      "driver": "zarr",
       "urls": [
         {
-          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/Mon/SurfT_G6-1.5K-SAI_r01.nc",
-          "status": "unverified:access_denied",
-          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_{{variant}}_{{ensemble}}.nc"
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "MAM3",
+              "MAM3/zm_p90_t600",
+              "MAM3/zm_p90_t600_conc",
+              "MAM3/zm_p90_t600_mass",
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_half",
+              "Mon/ocean_2d",
+              "Mon/zm_p38",
+              "Mon/zm_p39_lat128",
+              "Mon/zm_p39_lat64",
+              "Mon/zm_p90",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_G6-1.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/MIROC-ES2H/MIROC-ES2H_{{variant}}.zarr",
+          "zarr_format": 3
         }
       ]
     },

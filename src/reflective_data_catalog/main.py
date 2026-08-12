@@ -205,10 +205,13 @@ class ReflectiveCatalog:
                 continue
             old = row.get("old_defaults") or {}
             new = row.get("new_defaults") or {}
+            exempt = set(row.get("hint_exempt") or [])
             return {
                 param: (str(old_value), str(new[param]))
                 for param, old_value in old.items()
-                if new.get(param) is not None and new[param] != old_value
+                if param not in exempt
+                and new.get(param) is not None
+                and new[param] != old_value
             }
         return {}
 

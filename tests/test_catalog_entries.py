@@ -84,9 +84,13 @@ class TestCatalogIntegrity:
 
     def test_every_entry_renders_defaults(self, catalog):
         for name, entry in catalog["sources"].items():
-            urls = CatalogSource(name, entry, FakeFS()).url
+            src = CatalogSource(name, entry, FakeFS())
+            urls = src.url
             urls = urls if isinstance(urls, list) else [urls]
             assert all("{{" not in u for u in urls), f"{name}: unrendered"
+            group = (entry.get("args") or {}).get("group")
+            if group:
+                assert "{{" not in src._render(group), f"{name}: group unrendered"
 
     def test_every_entry_renders_one_override(self, catalog):
         for name, entry in catalog["sources"].items():
@@ -271,3 +275,72 @@ def test_facet_regex_word_chars():
     ]
     with pytest.raises(Exception, match="mixed selection"):
         src._assert_selection_purity(mixed_variant)
+
+
+def test_select_map_member_selection():
+    """Grouped public stores: the ensemble parameter selects along a dim."""
+    import numpy as np
+    import xarray as xr
+
+    from reflective_data_catalog.exceptions import DataNotFoundError
+
+    entry = {
+        "driver": "zarr",
+        "args": {
+            "urlpath": "https://example.invalid/store.zarr",
+            "group": "{{table}}/{{realm}}",
+        },
+        "parameters": {
+            "table": {"type": "str", "default": "Mon"},
+            "realm": {"type": "str", "default": "atmos_2d"},
+            "ensemble": {"type": "str", "default": "r01"},
+        },
+        "metadata": {"select_map": {"member": "ensemble"}},
+    }
+    ds = xr.Dataset(
+        {"SurfT": (("member", "time"), np.zeros((3, 4)))},
+        coords={"member": ["r01", "r02", "r03"], "time": range(4)},
+    )
+    src = CatalogSource("x", entry, FakeFS())
+    selected = src._apply_selection(ds)
+    assert "member" not in selected.dims  # scalar selection applied
+
+    src_all = CatalogSource("x", entry, FakeFS(), ensemble="all")
+    assert "member" in src_all._apply_selection(ds).dims  # sentinel keeps all
+
+    src_bad = CatalogSource("x", entry, FakeFS(), ensemble="r99")
+    with pytest.raises(DataNotFoundError, match="r99"):
+        src_bad._apply_selection(ds)
+
+
+def test_value_map_chains_into_selection():
+    """CESM: ensemble r2 -> ensemble_id 002 -> member selection."""
+    import numpy as np
+    import xarray as xr
+
+    entry = {
+        "driver": "zarr",
+        "args": {
+            "urlpath": "https://example.invalid/s.zarr",
+            "group": "{{table}}/{{realm}}",
+        },
+        "parameters": {
+            "table": {"type": "str", "default": "Amon"},
+            "realm": {"type": "str", "default": "atmos_3d"},
+            "ensemble": {"type": "str", "default": "r1"},
+            "ensemble_id": {"type": "str", "default": "001"},
+        },
+        "metadata": {
+            "value_map": {
+                "ensemble_id": {"from": "ensemble", "map": {"r1": "001", "r2": "002"}}
+            },
+            "select_map": {"member": "ensemble_id"},
+        },
+    }
+    ds = xr.Dataset(
+        {"T": (("member", "time"), np.zeros((2, 3)))},
+        coords={"member": ["001", "002"], "time": range(3)},
+    )
+    src = CatalogSource("x", entry, FakeFS(), ensemble="r2")
+    selected = src._apply_selection(ds)
+    assert selected["T"].shape == (3,)

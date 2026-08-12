@@ -48,13 +48,14 @@ rdc = ReflectiveCatalog()
 # Public data — works with no credentials at all
 ds = rdc.arise_sai_15(variable="TREFHT", time_frequency="month_1").to_dask()
 
-# Reflective hub data (AWS credentials required — see the credentials matrix)
-ds = rdc.cesm2_waccm_g6_1p5k_hilla(
-    variable="tas", table="Aday", ensemble="r1i1p1f1"
-).to_dask()
+# Public Zarr stores on Cloudflare R2 — also no credentials. Tables and
+# realms are Zarr groups; variables are selected from the opened dataset.
+ds = rdc.cesm2_waccm_g6_1p5k_hilla(table="Amon", realm="atmos_3d", ensemble="r1").to_dask()
+temperature = ds["T"]
 
 # Load into memory instead of lazily
-ds = rdc.miroc_es2h_g6_1p5k_sai(variable="SurfT", table="Mon").read()
+ds = rdc.miroc_es2h_g6_1p5k_sai(table="Mon", ensemble="r01").read()
+surface_temp = ds["SurfT"]
 ```
 
 ## Credentials
@@ -63,9 +64,9 @@ Three access classes cover every source in the catalog:
 
 | Access class | Credentials needed | Sources |
 |---|---|---|
-| **Public (anonymous)** | None — works out of the box | `arise_sai_15`, `arise_15_cesm2_waccm_ssp245`, `ukesm1_arise_sai`, `ukesm1_arise_cmip6` |
-| **Reflective hub** (private S3 bucket) | AWS credentials via environment variables (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) or `~/.aws`; provided automatically on the Reflective Cloud Hub | All other catalog sources (UKESM1.1, CESM2-WACCM, E3SMv3, MIROC-ES2H, GAUSS entries) |
-| **Cloudflare R2** (`r2://` URLs) | `CLOUDFLARE_R2_ACCOUNT_ID` (or `CLOUDFLARE_ACCOUNT_ID`) environment variable, plus R2 access keys | No shipped v1.0 entries use R2 today; support is built in for future entries |
+| **Public (anonymous)** | None — works out of the box | The CESM2-WACCM and MIROC-ES2H entries (public Cloudflare R2 Zarr stores: `cesm2_waccm_g6_1p5k_hilla`, `cesm2_waccm_g6_1p5k_sai`, `cesm2_waccm_ssp245`, `miroc_es2h_g6_1p5k_hilla`, `miroc_es2h_g6_1p5k_sai`) and the ARISE entries (`arise_sai_15`, `arise_15_cesm2_waccm_ssp245`, `ukesm1_arise_sai`, `ukesm1_arise_cmip6`) |
+| **Reflective hub** (private S3 bucket) | AWS credentials via environment variables (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) or `~/.aws`; provided automatically on the Reflective Cloud Hub | UKESM1.1, E3SMv3, `cesm2_waccm_historical`, and GAUSS entries |
+| **Cloudflare R2 S3 API** (`r2://` URLs) | `CLOUDFLARE_R2_ACCOUNT_ID` (or `CLOUDFLARE_ACCOUNT_ID`) environment variable, plus R2 access keys | No shipped entry needs this — the public R2 stores are served over plain HTTPS; support is built in for future private R2 entries |
 
 Missing credentials raise a `MissingCredentialsError` that names the missing configuration (for example the `CLOUDFLARE_R2_ACCOUNT_ID` environment variable) rather than a provider stack trace.
 
@@ -76,16 +77,16 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 | Source | Model | Experiment | Driver | Access | Stability |
 |--------|-------|------------|--------|--------|-----------|
 | `ukesm1_g6_1p5k_hilla` | UKESM1.1 | G6-1.5K-HiLLA | zarr | Hub | stable |
-| `cesm2_waccm_g6_1p5k_hilla` | CESM2-WACCM | G6-1.5K-HiLLA | zarr | Hub | stable |
+| `cesm2_waccm_g6_1p5k_hilla` | CESM2-WACCM | G6-1.5K-HiLLA | zarr | Public | stable |
 | `e3smv3_g6_1p5k_hilla` | E3SMv3 | G6-1.5K-HiLLA | zarr | Hub | stable |
-| `miroc_es2h_g6_1p5k_hilla` | MIROC-ES2H | G6-1.5K-HiLLA (`variant=`) | netcdf | Hub | stable |
+| `miroc_es2h_g6_1p5k_hilla` | MIROC-ES2H | G6-1.5K-HiLLA (`variant=`) | zarr | Public | stable |
 | `ukesm1_ssp245` | UKESM1.1 | SSP2-4.5 reference | zarr | Hub | stable |
 | `e3smv3_ssp245` | E3SMv3 | SSP2-4.5 reference | zarr | Hub | stable |
 | `cesm2_waccm_historical` | CESM2-WACCM | Historical (POP ocean) | netcdf | Hub | stable |
-| `cesm2_waccm_ssp245` | CESM2-WACCM | SSP2-4.5 (POP ocean) | netcdf | Hub | stable |
-| `miroc_es2h_g6_1p5k_sai` | MIROC-ES2H | G6-1.5K-SAI (`variant=`) | netcdf | Hub | stable |
+| `cesm2_waccm_ssp245` | CESM2-WACCM | SSP2-4.5 (POP ocean) | zarr | Public | stable |
+| `miroc_es2h_g6_1p5k_sai` | MIROC-ES2H | G6-1.5K-SAI (`variant=`) | zarr | Public | stable |
 | `ukesm1_g6_1p5k_sai` | UKESM1.1 | G6-1.5K-SAI | zarr | Hub | **experimental** |
-| `cesm2_waccm_g6_1p5k_sai` | CESM2-WACCM | G6-1.5K-SAI | zarr | Hub | **experimental** |
+| `cesm2_waccm_g6_1p5k_sai` | CESM2-WACCM | G6-1.5K-SAI | zarr | Public | stable |
 | `e3smv3_g6_1p5k_sai` | E3SMv3 | G6-1.5K-SAI | zarr | Hub | **experimental** |
 | `cesm2_waccm6_gauss_historical` | CESM2-WACCM | GAUSS | zarr | Hub | **experimental** |
 | `arise_sai_15` | CESM2-WACCM | ARISE-SAI-1.5 | netcdf | Public | stable |
@@ -115,17 +116,22 @@ rdc.cesm2_waccm_ssp245(varaible="SALT")
 # TypeError: cesm2_waccm_ssp245: unknown parameter(s) ['varaible']. ...
 ```
 
-The MIROC-ES2H entries take a `variant=` parameter. `variant='baseline'` selects the SSP2-4.5 reference outputs stored under each experiment prefix (it is the default on the HiLLA entry); the experiment name selects the experiment itself:
+The CESM2-WACCM and MIROC-ES2H entries open grouped public Zarr stores: `table` and `realm` select the Zarr group, the ensemble is a dataset dimension (`ensemble="all"` keeps every member), and variables are picked from the opened dataset. The MIROC entries additionally take `variant=` — `'baseline'` selects the SSP2-4.5 reference store (the default on the HiLLA entry); the experiment name selects the experiment store:
 
 ```python
 # SSP2-4.5 reference outputs (the default variant on the HiLLA entry)
-ds = rdc.miroc_es2h_g6_1p5k_hilla(
-    variable="SurfT", table="Amon", variant="baseline", ensemble="r01"
-).to_dask()
+ds = rdc.miroc_es2h_g6_1p5k_hilla(table="Mon", ensemble="r01").to_dask()
+surface_temp = ds["SurfT"]
 
-# The experiments themselves
-ds = rdc.miroc_es2h_g6_1p5k_hilla(variant="G6-1.5K-HiLLA").to_dask()
-ds = rdc.miroc_es2h_g6_1p5k_sai(variant="G6-1.5K-SAI").to_dask()   # its default
+# The experiments themselves (the HiLLA experiment store uses
+# member-suffixed realm groups — use .discover() to list them)
+ds = rdc.miroc_es2h_g6_1p5k_hilla(
+    variant="G6-1.5K-HiLLA", table="Amon", realm="atmos_2d_r03"
+).to_dask()
+ds = rdc.miroc_es2h_g6_1p5k_sai().to_dask()   # variant='G6-1.5K-SAI' default
+
+# The full ten-member ensemble as one dataset
+ds = rdc.miroc_es2h_g6_1p5k_sai(ensemble="all").to_dask()
 ```
 
 ### Discovering Available Data

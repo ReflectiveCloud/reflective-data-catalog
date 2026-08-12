@@ -39,6 +39,7 @@ CANONICAL_ALIASES = {
 #: Governed args surface (plan KTD8); unknown args keys fail catalog load.
 ALLOWED_ARGS = {
     "urlpath",
+    "group",
     "combine",
     "concat_dim",
     "xarray_kwargs",
@@ -308,12 +309,48 @@ class CatalogSource:
         args = self._entry.get("args") or {}
         consolidated = args.get("consolidated")
         kwargs = dict(args.get("xarray_kwargs") or {})
-        return xr.open_zarr(
-            fsspec_url,
-            storage_options=so,
-            consolidated=consolidated,
-            **kwargs,
-        )
+        group_template = args.get("group")
+        if group_template:
+            kwargs["group"] = self._render(group_template)
+        try:
+            ds = xr.open_zarr(
+                fsspec_url,
+                storage_options=so,
+                consolidated=consolidated,
+                **kwargs,
+            )
+        except (FileNotFoundError, KeyError) as exc:
+            detail = f" (group {kwargs['group']!r})" if "group" in kwargs else ""
+            raise DataNotFoundError(
+                f"{self._name}: could not open {fsspec_url}{detail}. Use "
+                f"list_tables()/list_variables() for available groups, or "
+                f"see the migration guide (docs/migration-matrix.md)"
+            ) from exc
+        return self._apply_selection(ds)
+
+    def _apply_selection(self, ds):
+        """Select coordinate values per metadata.select_map (plan R12 parity).
+
+        ``select_map`` maps a dataset dimension to the parameter that selects
+        along it (e.g. ``{member: ensemble}``): grouped public stores carry
+        the ensemble as a dimension, not a path segment. The sentinel value
+        ``"all"`` skips selection and returns the full ensemble.
+        """
+        select_map = ((self._entry.get("metadata") or {}).get("select_map")) or {}
+        for dim, param in select_map.items():
+            value = self._params.get(param)
+            if value is None or value == "all" or dim not in ds.dims:
+                continue
+            try:
+                ds = ds.sel({dim: value})
+            except KeyError as exc:
+                available = [str(v) for v in ds[dim].values.tolist()]
+                raise DataNotFoundError(
+                    f"{self._name}: {value!r} is not a value of the "
+                    f"{dim!r} dimension; available: {available} "
+                    f"(pass {param}='all' for the full ensemble)"
+                ) from exc
+        return ds
 
     def _open_netcdf(self):
         import fsspec
@@ -462,6 +499,16 @@ class CatalogSource:
         if not refresh and cache_key in self._discovery_cache:
             return self._discovery_cache[cache_key]
 
+        group_template = (self._entry.get("args") or {}).get("group") or ""
+        if f"{{{{{param}}}}}" in group_template:
+            found = self._scan_store_groups(param, overrides)
+            self._discovery_cache[cache_key] = found
+            return found
+        select_values = self._scan_selectable(param)
+        if select_values is not None:
+            self._discovery_cache[cache_key] = select_values
+            return select_values
+
         template = self._urlpaths()[0]
         marker = f"\x00{param}\x00"
         values = dict(self._params)
@@ -505,6 +552,89 @@ class CatalogSource:
             )
         self._discovery_cache[cache_key] = found
         return found
+
+    def _store_metadata(self) -> dict:
+        """Fetch and cache the store's consolidated zarr v3 metadata."""
+        cache_key = ("__store_metadata__", self._render(self._urlpaths()[0]))
+        if cache_key in self._discovery_cache:
+            return self._discovery_cache[cache_key]  # type: ignore[return-value]
+        import json
+
+        import fsspec
+
+        url = self._render(self._urlpaths()[0]).rstrip("/") + "/zarr.json"
+        fsspec_url, so = self._fsspec_target(url)
+        try:
+            with fsspec.open(fsspec_url, **so) as f:
+                meta = json.load(f)
+        except Exception:  # scan failures degrade to empty
+            meta = {}
+        consolidated = (meta.get("consolidated_metadata") or {}).get("metadata") or {}
+        self._discovery_cache[cache_key] = consolidated  # type: ignore[assignment]
+        return consolidated
+
+    def _scan_store_groups(self, param: str, overrides: dict | None) -> list:
+        """Enumerate group names at ``param``'s depth in the group template."""
+        group_template = (self._entry.get("args") or {}).get("group") or ""
+        segments = group_template.split("/")
+        depth = next(
+            (i for i, seg in enumerate(segments) if f"{{{{{param}}}}}" in seg),
+            None,
+        )
+        if depth is None:
+            return []
+        values = dict(self._params)
+        if overrides:
+            values.update({k: v for k, v in overrides.items() if v is not None})
+        prefix_segments = [
+            _PLACEHOLDER.sub(lambda m: str(values.get(m.group(1), "")), seg)
+            for seg in segments[:depth]
+        ]
+        prefix = "/".join(s for s in prefix_segments if s)
+        consolidated = self._store_metadata()
+        found = set()
+        for key, node in consolidated.items():
+            if node.get("node_type") != "group":
+                continue
+            if prefix and not key.startswith(prefix + "/"):
+                continue
+            remainder = key[len(prefix) + 1 :] if prefix else key
+            if "/" not in remainder and remainder:
+                found.add(remainder)
+        result = sorted(found)
+        if not result:
+            warnings.warn(
+                f"{self._name}: no groups found for {param!r} in the store "
+                f"metadata; check the variant/table values",
+                stacklevel=3,
+            )
+        return result
+
+    def _scan_selectable(self, param: str) -> list | None:
+        """Values for a parameter that selects along a dataset dimension.
+
+        Returns ``None`` when ``param`` is not selection-backed. For a
+        value-mapped chain (ensemble -> ensemble_id -> member) the
+        user-facing values are the value_map keys; for a direct selection
+        the values are read from the dimension coordinate (one lazy open).
+        """
+        select_map = ((self._entry.get("metadata") or {}).get("select_map")) or {}
+        derived = self._derived_params()
+        for dim, select_param in select_map.items():
+            if param == select_param and param in derived:
+                return None  # derived params are not user-scanned directly
+            spec = derived.get(select_param)
+            if spec and spec.get("from") == param:
+                return sorted(spec.get("map") or {})
+            if param == select_param:
+                try:
+                    ds = self._open()
+                except Exception:  # degrade to empty
+                    return []
+                if dim in ds.coords:
+                    return [str(v) for v in ds[dim].values.tolist()]
+                return []
+        return None
 
     def discover(self, refresh: bool = False) -> dict:
         """Summarize scanned availability. Returns data; printing is main's job."""

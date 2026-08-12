@@ -14,15 +14,14 @@ version: 1
 sources:
   cesm2_waccm_g6_1p5k_hilla:
     new_entry: cesm2_waccm_g6_1p5k_hilla
-    backend: netcdf->zarr
-    status: pending_verification
+    backend: "netcdf->zarr (public Cloudflare R2, one store per experiment)"
+    status: verified  # live-opened 2026-08-12 (public store)
     old_defaults: {table: AMON, variable: T, ensemble: r1}
-    new_defaults: {table: Aday, variable: tas, ensemble: r1i1p1f1}
-    default_change: "recorded; Zarr vocabulary pending inventory verification"
+    new_defaults: {table: Amon, ensemble: r1}
     value_notes:
-      ensemble: "r1/r2/r3 mapped to filename ids 001/002/003 in NetCDF; Zarr member directories pending inventory"
-      table: "NetCDF tables ADAY/AMON/LDAY/LMON/ODAY/OMON; Zarr table vocabulary pending inventory"
-      variable: "CESM-native names (T, TEMP, ...); Zarr vocabulary pending inventory"
+      ensemble: "r1/r2/r3 preserved; selected along the member dimension (coordinate values 001/002/003 via value_map); pass ensemble='all' for the full ensemble"
+      table: "case fix AMON->Amon; tables are Zarr groups (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday) with realm subgroups"
+      variable: "no longer a parameter — CESM-native variables (T, TREFHT, ...) are selected from the opened dataset; default realm atmos_3d carries T"
   cesm2_waccm_historical:
     new_entry: cesm2_waccm_historical
     backend: "netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping"
@@ -31,10 +30,13 @@ sources:
     new_defaults: {table: OMON, variable: TEMP, ensemble: r1}  # fallback preserves
   cesm2_waccm_ssp245:
     new_entry: cesm2_waccm_ssp245
-    backend: "netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping"
-    status: pending_verification
+    backend: "netcdf->zarr (public Cloudflare R2, one store per experiment)"
+    status: verified  # live-opened 2026-08-12 (public store)
     old_defaults: {table: OMON, variable: TEMP, ensemble: r1}
-    new_defaults: {table: OMON, variable: TEMP, ensemble: r1}  # fallback preserves
+    new_defaults: {table: Omon, ensemble: r1}
+    value_notes:
+      table: "case fix OMON->Omon; default realm ocean_3d carries TEMP"
+      variable: "no longer a parameter — selected from the opened dataset"
   e3smv3_g6_1p5k_hilla:
     new_entry: e3smv3_g6_1p5k_hilla
     backend: netcdf->zarr
@@ -48,20 +50,27 @@ sources:
     new_entry: miroc_es2h_g6_1p5k_hilla
     renamed_from_yaml: miroc_g6_1p5k_hilla
     absorbs: "miroc_ssp245_(g6_1p5k_hilla)"
-    backend: netcdf (unchanged)
-    status: pending_verification
+    backend: "netcdf->zarr (public Cloudflare R2, one store per variant)"
+    status: verified  # live-opened 2026-08-12 (public store)
     old_defaults: {table: Amon, variable: SurfT, ensemble: r01, variant: baseline}
-    new_defaults: {table: Amon, variable: SurfT, ensemble: r01, variant: baseline}
+    new_defaults: {table: Mon, ensemble: r01, variant: baseline}
+    hint_exempt: [table]  # Amon is still valid on the G6-1.5K-HiLLA variant store
     value_notes:
-      variant: "baseline (SSP2-4.5 reference) or G6-1.5K-HiLLA (experiment); the absorbed standalone baseline entry is variant=baseline"
+      variant: "baseline (default; the SSP2-4.5 reference store) or G6-1.5K-HiLLA (member-suffixed realm groups, sparse member coverage)"
+      table: "baseline/SAI stores use Mon/day/MAM3 (old Amon -> Mon); the HiLLA variant store keeps Amon/Omon/day"
+      variable: "no longer a parameter — SurfT and friends are selected from the opened dataset (Mon/atmos_2d)"
+      ensemble: "r01-r10 as a member dimension (ten members, up from three)"
   miroc_es2h_g6_1p5k_sai:
     new_entry: miroc_es2h_g6_1p5k_sai
     renamed_from_yaml: miroc_g6_1p5k_sai
     absorbs: "miroc_ssp245_(g6_1p5k_sai)"
-    backend: netcdf (unchanged)
-    status: pending_verification
+    backend: "netcdf->zarr (public Cloudflare R2, one store per variant)"
+    status: verified  # live-opened 2026-08-12 (public store)
     old_defaults: {table: Mon, variable: SurfT, ensemble: r01, variant: G6-1.5K-SAI}
-    new_defaults: {table: Mon, variable: SurfT, ensemble: r01, variant: G6-1.5K-SAI}
+    new_defaults: {table: Mon, ensemble: r01, variant: G6-1.5K-SAI}
+    value_notes:
+      variable: "no longer a parameter — SurfT and friends are selected from the opened dataset (Mon/atmos_2d)"
+      ensemble: "r01-r10 as a member dimension"
   ukesm1_g6_1p5k_hilla:
     new_entry: ukesm1_g6_1p5k_hilla
     renamed_from_yaml: ukesm1_g6_1p5k_hilla_zarr
@@ -87,7 +96,7 @@ sources:
 kwargs:
   ensemble: "canonical; aliases: ensemble_member, member_id"
   table: "canonical; aliases: table_id"
-  variable: "canonical; aliases: variable_id"
+  variable: "canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC) variables are selected from the opened dataset, not a path parameter"
   variant: "kept as a per-entry parameter on the MIROC entries"
   time: "removed with the UKESM Zarr switch; the stream/time split collapses into CMOR tables — error redirects to the migration guide"
   realm: "per-entry parameter on ARISE CESM entries"
@@ -106,7 +115,7 @@ stability:
   ukesm1_ssp245: stable
   e3smv3_ssp245: stable
   ukesm1_g6_1p5k_sai: experimental   # status coming_soon in entry metadata
-  cesm2_waccm_g6_1p5k_sai: experimental  # status coming_soon
+  cesm2_waccm_g6_1p5k_sai: stable  # public R2 store live-opened 2026-08-12
   e3smv3_g6_1p5k_sai: experimental   # status coming_soon
   cesm2_waccm6_gauss_historical: experimental  # TODO paths; excluded from R3 gate
   arise_15_cesm2_waccm_ssp245: stable  # verified 2026-08-12 (public)
@@ -116,6 +125,7 @@ stability:
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:
+  - "2026-08-12: CESM and MIROC zarrified copies located in the PUBLIC Cloudflare R2 bucket reflective-data-store (one zarr-v3 store per model x experiment; tables/realms as groups; ensemble as a member dimension — CESM members 001-003, MIROC r01-r10). Five entries re-pointed to public HTTPS URLs needing no credentials; cesm2_waccm_historical has no public store and keeps its hub NetCDF entry."
   - "2026-08-12 gate run (maintainer credentials): the pre-1.0 UKESM NetCDF originals no longer exist in the hub bucket — the Zarr copies are the only copies. Amended R4 disposition: sources with ORIGINALS-GONE verdicts are verified by the bucket audit (existence/format/chunk completeness) instead of A/B equivalence; no NetCDF fallback exists."
   - "ukesm1_arise_cmip6: default version v20220325 -> v20190715 (bucket lists only v20190715)"
   - "arise_sai_15: glob hardcoded .cam.h0. (monthly stream) while default time_frequency day_5 holds .cam.h7. files; glob made stream-agnostic, default moved to month_1"
