@@ -1,5 +1,6 @@
 metadata:
-  version: 2
+  version: 1  # intake YAML catalog format discriminator — must stay 1
+  reflective_schema_version: 2  # our entry-schema version; loader asserts this
   description: "Climate Model Experiments - Solar Geoengineering (SAI) Simulations"
   documentation: "https://reflectivecloud.github.io/Book/"
   # Schema v2 (2026-08): entries renamed to the documented public source

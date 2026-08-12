@@ -24,11 +24,10 @@ appear in the catalog. Least-privilege read/list-only credentials suffice.
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -43,7 +42,7 @@ PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 
 
 def load_catalog() -> dict:
-    with open(CATALOG) as f:
+    with CATALOG.open() as f:
         return yaml.safe_load(f)
 
 
@@ -100,7 +99,11 @@ def audit_zarr(fs, path: str, deep: bool) -> dict:
         return result
     children = {c.rsplit("/", 1)[-1] for c in fs.ls(path, detail=False)}
     result["zarr_format"] = (
-        3 if "zarr.json" in children else 2 if ".zgroup" in children or ".zmetadata" in children else None
+        3
+        if "zarr.json" in children
+        else 2
+        if ".zgroup" in children or ".zmetadata" in children
+        else None
     )
     result["consolidated"] = ".zmetadata" in children or "zarr.json" in children
     if deep:
@@ -137,11 +140,9 @@ def observe_facets(fs, template: str, values: dict) -> dict:
             listing_path = "/".join(built)
             try:
                 listing = fs.ls(listing_path, detail=False)
-                names = sorted(
-                    p.rstrip("/").rsplit("/", 1)[-1] for p in listing
-                )[:50]
+                names = sorted(p.rstrip("/").rsplit("/", 1)[-1] for p in listing)[:50]
                 facets[param] = names
-            except Exception as exc:  # noqa: BLE001 - record, don't fail
+            except Exception as exc:
                 facets[param] = f"unlisted: {type(exc).__name__}"
             built.append(render(seg, values))
         else:
@@ -191,7 +192,7 @@ def audit_entry(name: str, entry: dict, deep: bool) -> dict:
             url_rec["status"] = "verified"
         except PermissionError:
             url_rec["status"] = "unverified:access_denied"
-        except Exception as exc:  # noqa: BLE001 - record, don't fail
+        except Exception as exc:
             url_rec["status"] = f"unverified:{type(exc).__name__}"
         record["urls"].append(url_rec)
     return record
@@ -200,7 +201,7 @@ def audit_entry(name: str, entry: dict, deep: bool) -> dict:
 def run_audit(deep: bool) -> dict:
     catalog = load_catalog()
     inventory = {
-        "audited_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "audited_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "catalog_version": (catalog.get("metadata") or {}).get("version"),
         "entries": {},
     }
@@ -211,7 +212,7 @@ def run_audit(deep: bool) -> dict:
 
 
 def render_docs() -> None:
-    with open(MATRIX) as f:
+    with MATRIX.open() as f:
         matrix = yaml.safe_load(f)
     lines = [
         "# Migration matrix (rendered)",
@@ -267,7 +268,7 @@ def main() -> int:
             if old_rec is None:
                 drift.append(f"new entry: {name}")
                 continue
-            for new_url, old_url in zip(rec["urls"], old_rec.get("urls", [])):
+            for new_url, old_url in zip(rec["urls"], old_rec.get("urls", []), strict=False):
                 for key in ("status", "exists", "match_count", "zarr_format"):
                     if new_url.get(key) != old_url.get(key):
                         drift.append(
