@@ -1,0 +1,128 @@
+# Migration matrix: single owner of old->new dispositions for the v1.0
+# migration from FlexibleSource configs to the YAML catalog (plan KTD5).
+#
+# Ships in the wheel; the guidance errors (R12), docs/migration-matrix.md,
+# and the README migration guide all render from this file. CI cross-checks
+# mapped values against tests/fixtures/bucket_inventory.json.
+#
+# Row status vocabulary:
+#   verified              - confirmed against a bucket listing
+#   pending_verification  - awaiting hub/R2 credentials (U1 audit rerun)
+version: 1
+
+# One row per pre-1.0 flexible source (the documented public names).
+sources:
+  cesm2_waccm_g6_1p5k_hilla:
+    new_entry: cesm2_waccm_g6_1p5k_hilla
+    backend: netcdf->zarr
+    status: pending_verification
+    old_defaults: {table: AMON, variable: T, ensemble: r1}
+    new_defaults: {table: null, variable: null, ensemble: null}  # from inventory
+    value_notes:
+      ensemble: "r1/r2/r3 mapped to filename ids 001/002/003 in NetCDF; Zarr member directories pending inventory"
+      table: "NetCDF tables ADAY/AMON/LDAY/LMON/ODAY/OMON; Zarr table vocabulary pending inventory"
+      variable: "CESM-native names (T, TEMP, ...); Zarr vocabulary pending inventory"
+  cesm2_waccm_historical:
+    new_entry: cesm2_waccm_historical
+    backend: "netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping"
+    status: pending_verification
+    old_defaults: {table: OMON, variable: TEMP, ensemble: r1}
+    new_defaults: {table: OMON, variable: TEMP, ensemble: r1}  # fallback preserves
+  cesm2_waccm_ssp245:
+    new_entry: cesm2_waccm_ssp245
+    backend: "netcdf->zarr planned; NetCDF fallback preserves today's paths and r1->001 mapping"
+    status: pending_verification
+    old_defaults: {table: OMON, variable: TEMP, ensemble: r1}
+    new_defaults: {table: OMON, variable: TEMP, ensemble: r1}  # fallback preserves
+  e3smv3_g6_1p5k_hilla:
+    new_entry: e3smv3_g6_1p5k_hilla
+    backend: netcdf->zarr
+    status: pending_verification
+    old_defaults: {table: Amon, variable: T, ensemble: v3.LR.ssp245.g6_hilla.sai.0101}
+    new_defaults: {table: null, variable: null, ensemble: "0101"}
+    value_notes:
+      ensemble: "Zarr urlpath carries the literal prefix v3.LR.ssp245.g6_hilla.sai.; the member parameter is the suffix (0101), not r1i1p1f1"
+  miroc_es2h_g6_1p5k_hilla:
+    new_entry: miroc_es2h_g6_1p5k_hilla
+    renamed_from_yaml: miroc_g6_1p5k_hilla
+    absorbs: "miroc_ssp245_(g6_1p5k_hilla)"
+    backend: netcdf (unchanged)
+    status: pending_verification
+    old_defaults: {table: Amon, variable: SurfT, ensemble: r01, variant: baseline}
+    new_defaults: {table: Amon, variable: SurfT, ensemble: r01, variant: baseline}
+    value_notes:
+      variant: "baseline (SSP2-4.5 reference) or G6-1.5K-HiLLA (experiment); the absorbed standalone baseline entry is variant=baseline"
+  miroc_es2h_g6_1p5k_sai:
+    new_entry: miroc_es2h_g6_1p5k_sai
+    renamed_from_yaml: miroc_g6_1p5k_sai
+    absorbs: "miroc_ssp245_(g6_1p5k_sai)"
+    backend: netcdf (unchanged)
+    status: pending_verification
+    old_defaults: {table: Mon, variable: SurfT, ensemble: r01, variant: G6-1.5K-SAI}
+    new_defaults: {table: Mon, variable: SurfT, ensemble: r01, variant: G6-1.5K-SAI}
+  ukesm1_g6_1p5k_hilla:
+    new_entry: ukesm1_g6_1p5k_hilla
+    renamed_from_yaml: ukesm1_g6_1p5k_hilla_zarr
+    backend: netcdf->zarr
+    status: pending_verification
+    old_defaults: {table: ap4, variable: ua, ensemble: r12i1p1f2, time: AERmon}
+    new_defaults: {table: null, variable: null, ensemble: null}  # from inventory
+    value_notes:
+      table: "NetCDF used UM stream names (ap4..onm) plus a time kwarg (AERmon); Zarr uses CMOR tables — mapping pending inventory"
+      ensemble: "flexible default r12i1p1f2 vs YAML r1i1p1f2 — pending inventory"
+  ukesm1_ssp245:
+    new_entry: ukesm1_ssp245
+    renamed_from_yaml: ukesm1_ssp245_g6_1p5k_hilla
+    backend: netcdf->zarr
+    status: pending_verification
+    old_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
+    new_defaults: {table: null, variable: null, ensemble: null}  # from inventory
+
+# Kwarg dispositions (R11): canonical vocabulary, permanent aliases,
+# per-entry extras, removals with redirects.
+kwargs:
+  ensemble: "canonical; aliases: ensemble_member, member_id"
+  table: "canonical; aliases: table_id"
+  variable: "canonical; aliases: variable_id"
+  variant: "kept as a per-entry parameter on the MIROC entries"
+  time: "removed with the UKESM Zarr switch; the stream/time split collapses into CMOR tables — error redirects to the migration guide"
+  realm: "per-entry parameter on ARISE CESM entries"
+  time_frequency: "per-entry parameter on ARISE CESM entries"
+  version: "per-entry parameter on ukesm1_arise_cmip6"
+
+# Stability dispositions for every catalog entry at v1.0 (deliberate freeze).
+stability:
+  ukesm1_g6_1p5k_hilla: stable
+  cesm2_waccm_g6_1p5k_hilla: stable
+  e3smv3_g6_1p5k_hilla: stable
+  miroc_es2h_g6_1p5k_hilla: stable
+  miroc_es2h_g6_1p5k_sai: stable
+  cesm2_waccm_historical: stable
+  cesm2_waccm_ssp245: stable
+  ukesm1_ssp245: stable
+  e3smv3_ssp245: stable
+  ukesm1_g6_1p5k_sai: experimental   # status coming_soon in entry metadata
+  cesm2_waccm_g6_1p5k_sai: experimental  # status coming_soon
+  e3smv3_g6_1p5k_sai: experimental   # status coming_soon
+  miroc_g6_1p5k_sai: absorbed        # renamed to miroc_es2h_g6_1p5k_sai
+  cesm2_waccm6_gauss_historical: experimental  # TODO paths; excluded from R3 gate
+  arise_15_cesm2_waccm_ssp245: stable  # verified 2026-08-12 (public)
+  arise_sai_15: stable               # verified 2026-08-12 after U2 glob/default fix
+  ukesm1_arise_sai: stable           # verified 2026-08-12 (public)
+  ukesm1_arise_cmip6: stable         # verified 2026-08-12 after default version fix
+
+# Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
+verified_corrections:
+  - "ukesm1_arise_cmip6: default version v20220325 -> v20190715 (bucket lists only v20190715)"
+  - "arise_sai_15: glob hardcoded .cam.h0. (monthly stream) while default time_frequency day_5 holds .cam.h7. files; glob made stream-agnostic, default moved to month_1"
+
+# Method-level API changes at v1.0 (rendered into the migration guide and
+# CHANGELOG alongside the source rows).
+api:
+  - "get_source_config() removed; use get_source(name) and get_parameters(name)"
+  - "get_parameters() drops the is_flexible key and unifies on {name, driver, description, parameters}"
+  - "search()/list_sources()/list_tags() return structured records; printing moves behind verbose=True"
+  - "unknown source names raise SourceNotFoundError (an AttributeError subclass) instead of bare AttributeError/ValueError"
+  - "unknown keyword arguments raise TypeError (previously silently ignored)"
+  - "old parameter values on renamed backends raise a guidance error carrying rows from this matrix"
+  - "get_source(name) added for string-keyed and typed access"

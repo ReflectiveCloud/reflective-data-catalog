@@ -1,0 +1,563 @@
+{
+  "audited_at": "2026-08-12T17:15:01+00:00",
+  "catalog_version": 1,
+  "entries": {
+    "arise_15_cesm2_waccm_ssp245": {
+      "anon": true,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "exists": true,
+          "facets": {
+            "member_id": [
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ABSORB.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ABSORB.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACBZO2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACBZO2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACTREL.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACTREL.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADRAIN.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADRAIN.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADSNOW.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADSNOW.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AEROD_v.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AEROD_v.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKNIT.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKNIT.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKO2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKO2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKOOH.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKOOH.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANRAIN.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANRAIN.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANSNOW.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANSNOW.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA1.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA1.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA_NH.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA_NH.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODABSdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODABSdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODBCdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODBCdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST1.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST1.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST3.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST3.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODNIRstdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODNIRstdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODPOMdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODPOMdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSO4dn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSO4dn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSOAdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSOAdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSSdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSSdn.206501-210012.nc"
+            ],
+            "realm": [
+              "atm",
+              "glc",
+              "ice",
+              "lnd",
+              "ocn",
+              "rof"
+            ],
+            "time_frequency": [
+              "day_1",
+              "day_5",
+              "hour_1",
+              "month_1"
+            ]
+          },
+          "match_count": 1,
+          "rendered_default": "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001/atm/proc/tseries/month_1/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.TREFHT.201501-206412.nc",
+          "sample": [
+            "ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001/atm/proc/tseries/month_1/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.TREFHT.201501-206412.nc"
+          ],
+          "status": "verified",
+          "template": "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.201501-206412.nc"
+        },
+        {
+          "exists": true,
+          "facets": {
+            "member_id": [
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ABSORB.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ABSORB.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACBZO2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACBZO2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACTREL.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ACTREL.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADRAIN.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADRAIN.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADSNOW.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ADSNOW.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AEROD_v.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AEROD_v.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKNIT.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKNIT.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKO2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKO2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKOOH.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ALKOOH.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANRAIN.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANRAIN.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANSNOW.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.ANSNOW.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA1.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA1.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA_NH.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AOA_NH.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODABSdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODABSdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODBCdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODBCdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST1.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST1.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST2.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST2.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST3.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODDUST3.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODNIRstdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODNIRstdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODPOMdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODPOMdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSO4dn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSO4dn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSOAdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSOAdn.206501-210012.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSSdn.201501-206412.nc",
+              "b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.AODSSdn.206501-210012.nc"
+            ],
+            "realm": [
+              "atm",
+              "glc",
+              "ice",
+              "lnd",
+              "ocn",
+              "rof"
+            ],
+            "time_frequency": [
+              "day_1",
+              "day_5",
+              "hour_1",
+              "month_1"
+            ]
+          },
+          "match_count": 1,
+          "rendered_default": "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001/atm/proc/tseries/month_1/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.TREFHT.206501-210012.nc",
+          "sample": [
+            "ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001/atm/proc/tseries/month_1/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.cam.h0.TREFHT.206501-210012.nc"
+          ],
+          "status": "verified",
+          "template": "s3://ncar-cesm2-arise/CESM2-WACCM-SSP245/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.{{member_id}}.cam.h0.{{variable}}.206501-210012.nc"
+        }
+      ]
+    },
+    "arise_sai_15": {
+      "anon": true,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "exists": false,
+          "facets": {
+            "member_id": [
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.AODVISstdn.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.AODVISstdn.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.AODVISstdn.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.AODVISstdn.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.CO2.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.CO2.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.CO2.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.CO2.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.FRONTGF.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.FRONTGF.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.FRONTGF.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.FRONTGF.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.H.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.H.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.H.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.H.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NITROP_PD.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NITROP_PD.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NITROP_PD.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NITROP_PD.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NO.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NO.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NO.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.NO.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O2.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O2.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O2.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O2.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O3.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O3.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O3.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.O3.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.OMEGA.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.OMEGA.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.OMEGA.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.OMEGA.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PHIS.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PHIS.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PHIS.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PHIS.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PS.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PS.20450101-20541227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PS.20550101-20641227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PS.20650101-20691226.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PSL.20350101-20441227.nc",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h7.PSL.20450101-20541227.nc"
+            ],
+            "realm": [
+              "atm",
+              "b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001",
+              "controller",
+              "glc",
+              "ice",
+              "lnd",
+              "ocn",
+              "rof"
+            ],
+            "time_frequency": [
+              "day_1",
+              "day_5",
+              "hour_1",
+              "hour_3",
+              "month_1",
+              "tseries"
+            ]
+          },
+          "match_count": 0,
+          "rendered_default": "s3://ncar-cesm2-arise/ARISE-SAI-1.5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001/atm/proc/tseries/day_5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.001.cam.h0.TREFHT.*",
+          "sample": [],
+          "status": "verified",
+          "template": "s3://ncar-cesm2-arise/ARISE-SAI-1.5/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}/{{realm}}/proc/tseries/{{time_frequency}}/b.e21.BW.f09_g17.SSP245-TSMLT-GAUSS-DEFAULT.{{member_id}}.cam.h0.{{variable}}.*"
+        }
+      ]
+    },
+    "cesm2_waccm6_gauss_historical": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod/gauss/tas/historical/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod/gauss/{{variable}}/historical/{{variable}}.zarr"
+        }
+      ]
+    },
+    "cesm2_waccm_g6_1p5k_hilla_zarr": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/r1i1p1f1/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "cesm2_waccm_g6_1p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/r1i1p1f1/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "e3smv3_g6_1p5k_hilla_zarr": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.r1i1p1f1/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "e3smv3_g6_1p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-SAI/r1i1p1f1/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "e3smv3_ssp245": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_r1i1p1f1/day/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "miroc_g6_1p5k_hilla": {
+      "anon": false,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/Aday/tas_G6-1.5K-HiLLA_*.nc",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_G6-1.5K-HiLLA_*.nc"
+        }
+      ]
+    },
+    "miroc_g6_1p5k_sai": {
+      "anon": false,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/day/tas_G6-1.5K-SAI_*.nc",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_G6-1.5K-SAI_*.nc"
+        }
+      ]
+    },
+    "miroc_ssp245_(g6_1p5k_hilla)": {
+      "anon": false,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/day/tas_baseline_*.nc",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-HiLLA/{{table}}/{{variable}}_baseline_*.nc"
+        }
+      ]
+    },
+    "miroc_ssp245_(g6_1p5k_sai)": {
+      "anon": false,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/day/tas_baseline_*.nc",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/MIROC-ES2H/G6-1.5K-SAI/{{table}}/{{variable}}_baseline_*.nc"
+        }
+      ]
+    },
+    "ukesm1_arise_cmip6": {
+      "anon": true,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "exists": false,
+          "facets": {
+            "member_id": [
+              "r1i1p1f2",
+              "r2i1p1f2",
+              "r3i1p1f2",
+              "r4i1p1f2",
+              "r8i1p1f2"
+            ],
+            "table_id": [
+              "3hr",
+              "6hrPlevPt",
+              "AERmon",
+              "AERmonZ",
+              "Amon",
+              "CFday",
+              "CFmon",
+              "E3hr",
+              "Eday",
+              "EdayZ",
+              "Emon",
+              "EmonZ",
+              "LImon",
+              "Lmon",
+              "Oday",
+              "Omon",
+              "SIday",
+              "SImon",
+              "day"
+            ],
+            "variable": [
+              "clt",
+              "hfls",
+              "hfss",
+              "hur",
+              "hurs",
+              "hus",
+              "huss",
+              "mrro",
+              "mrso",
+              "mrsos",
+              "pr",
+              "prc",
+              "prsn",
+              "psl",
+              "rlds",
+              "rlus",
+              "rlut",
+              "rsds",
+              "rsus",
+              "sfcWind",
+              "sfcWindmax",
+              "snc",
+              "snw",
+              "ta",
+              "tas",
+              "tasmax",
+              "tasmin",
+              "ua",
+              "uas",
+              "va",
+              "vas",
+              "wap",
+              "zg"
+            ],
+            "version": [
+              "v20190715"
+            ]
+          },
+          "match_count": 0,
+          "rendered_default": "s3://met-office-ukesm1-arise/CMIP6/ScenarioMIP/MOHC/UKESM1-0-LL/ssp245/r1i1p1f2/day/tas/gn/v20220325/*",
+          "sample": [],
+          "status": "verified",
+          "template": "s3://met-office-ukesm1-arise/CMIP6/ScenarioMIP/MOHC/UKESM1-0-LL/ssp245/{{member_id}}/{{table_id}}/{{variable}}/gn/{{version}}/*"
+        }
+      ]
+    },
+    "ukesm1_arise_sai": {
+      "anon": true,
+      "driver": "netcdf",
+      "urls": [
+        {
+          "exists": true,
+          "facets": {
+            "member_id": [
+              "r1i1p1f2",
+              "r2i1p1f2",
+              "r3i1p1f2",
+              "r4i1p1f2",
+              "r8i1p1f2"
+            ],
+            "table_id": [
+              "3hr",
+              "6hrPlevPt",
+              "AERmon",
+              "AERmonZ",
+              "Amon",
+              "CFday",
+              "CFmon",
+              "E3hr",
+              "Eday",
+              "EdayZ",
+              "Emon",
+              "EmonZ",
+              "LImon",
+              "Lmon",
+              "Oday",
+              "Ofx",
+              "Omon",
+              "SIday",
+              "SImon",
+              "day",
+              "fx"
+            ],
+            "variable": [
+              "clt",
+              "hfls",
+              "hfss",
+              "hur",
+              "hurs",
+              "hus",
+              "huss",
+              "mrro",
+              "mrso",
+              "mrsos",
+              "pr",
+              "prc",
+              "prsn",
+              "psl",
+              "rlds",
+              "rlus",
+              "rlut",
+              "rsds",
+              "rsus",
+              "sfcWind",
+              "sfcWindmax",
+              "snc",
+              "snw",
+              "ta",
+              "tas",
+              "tasmax",
+              "tasmin",
+              "ua",
+              "uas",
+              "va",
+              "vas",
+              "wap",
+              "zg"
+            ]
+          },
+          "match_count": 2,
+          "rendered_default": "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/*",
+          "sample": [
+            "met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/tas_day_UKESM1-0-LL_arise-sai-1p5_r1i1p1f2_gn_20350101-20491230.nc",
+            "met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/r1i1p1f2/day/tas/gn/v20220325/tas_day_UKESM1-0-LL_arise-sai-1p5_r1i1p1f2_gn_20500101-20701230.nc"
+          ],
+          "status": "verified",
+          "template": "s3://met-office-ukesm1-arise/ARISE/ARISE/MOHC/UKESM1-0-LL/arise-sai-1p5/{{member_id}}/{{table_id}}/{{variable}}/gn/v20220325/*"
+        }
+      ]
+    },
+    "ukesm1_g6_1p5k_hilla_zarr": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/r1i1p1f2/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "ukesm1_g6_1p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-SAI/r1i1p1f2/Aday/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-SAI/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    },
+    "ukesm1_ssp245_g6_1p5k_hilla": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/r1i1p1f2/day/tas.zarr",
+          "status": "unverified:access_denied",
+          "template": "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/{{ensemble_member}}/{{table}}/{{variable}}.zarr"
+        }
+      ]
+    }
+  }
+}
