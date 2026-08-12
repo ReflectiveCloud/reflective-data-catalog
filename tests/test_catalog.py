@@ -417,3 +417,33 @@ class TestHelp:
         out = capsys.readouterr().out
         assert "PARAMETERS" in out
         assert "cesm2_waccm_g6_1p5k_hilla" in out
+
+
+class TestValueGuidance:
+    """AE2: pre-1.0 parameter values raise guidance naming the new vocabulary."""
+
+    def test_old_table_value_names_new_vocabulary(self, real_catalog):
+        from reflective_data_catalog.exceptions import DataNotFoundError
+
+        with pytest.raises(DataNotFoundError) as excinfo:
+            real_catalog.cesm2_waccm_g6_1p5k_hilla(table="AMON")
+        message = str(excinfo.value)
+        assert "cesm2_waccm_g6_1p5k_hilla" in message
+        assert "'AMON'" in message
+        assert "'Aday'" in message
+        assert "migration" in message.lower()
+
+    def test_old_ukesm_stream_table_guided(self, real_catalog):
+        from reflective_data_catalog.exceptions import DataNotFoundError
+
+        with pytest.raises(DataNotFoundError, match=r"pre-1\.0 vocabulary"):
+            real_catalog.ukesm1_g6_1p5k_hilla(table="ap4")
+
+    def test_preserved_vocabulary_still_accepted(self, real_catalog):
+        # NetCDF-preserving entries kept their values: no false guidance.
+        src = real_catalog.cesm2_waccm_historical(table="OMON", variable="TEMP")
+        assert "/OMON/" in src.url
+
+    def test_new_vocabulary_passes_untouched(self, real_catalog):
+        src = real_catalog.cesm2_waccm_g6_1p5k_hilla(table="Amon")
+        assert "/Amon/" in src.url

@@ -193,12 +193,32 @@ class ReflectiveCatalog:
             if isinstance(text, str) and "removed" in text
         }
 
+    def _value_hints(self, name: str) -> dict[str, tuple[str, str]]:
+        """Old->new value pairs for this entry from the migration matrix.
+
+        Only pairs whose value actually changed produce guidance; sources
+        that kept their vocabulary (e.g. the NetCDF-preserving entries) get
+        no hints and accept their historical values unchanged.
+        """
+        for row in (self._matrix.get("sources") or {}).values():
+            if row.get("new_entry") != name:
+                continue
+            old = row.get("old_defaults") or {}
+            new = row.get("new_defaults") or {}
+            return {
+                param: (str(old_value), str(new[param]))
+                for param, old_value in old.items()
+                if new.get(param) is not None and new[param] != old_value
+            }
+        return {}
+
     def _make_source(self, name: str, kwargs: dict) -> CatalogSource:
         return CatalogSource(
             name,
             self._entries[name],
             self.fs,
             matrix_hints=self._removed_kwargs(),
+            value_hints=self._value_hints(name),
             **kwargs,
         )
 

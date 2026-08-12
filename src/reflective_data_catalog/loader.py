@@ -125,6 +125,7 @@ class CatalogSource:
         fs,
         *,
         matrix_hints: dict[str, str] | None = None,
+        value_hints: dict[str, tuple[str, str]] | None = None,
         **kwargs: Any,
     ):
         self._name = name
@@ -133,6 +134,10 @@ class CatalogSource:
         #: Migration-matrix redirect text for removed kwargs (plan R12/AE2):
         #: {kwarg: guidance}; appended to the unknown-kwarg TypeError.
         self._matrix_hints = matrix_hints or {}
+        #: Migration-matrix value guidance (plan R12/AE2):
+        #: {param: (old_value, new_value)} — a supplied pre-1.0 value raises
+        #: a guidance error naming the new vocabulary, never a silent load.
+        self._value_hints = value_hints or {}
         self._discovery_cache: dict[tuple, list[str]] = {}
         self._params = self._resolve_params(kwargs)
 
@@ -191,6 +196,14 @@ class CatalogSource:
                 raise TypeError(
                     f"{self._name}: parameter {key!r} is derived automatically "
                     f"and cannot be set directly"
+                )
+            hint = self._value_hints.get(key)
+            if hint is not None and value == hint[0] and hint[0] != hint[1]:
+                raise DataNotFoundError(
+                    f"{self._name}: {value!r} is the pre-1.0 vocabulary for "
+                    f"{key!r}; this source now uses {hint[1]!r} (the backend "
+                    f"switched with the v1.0 migration). See the migration "
+                    f"guide (docs/migration-matrix.md) for the full mapping"
                 )
             values[key] = value
 
