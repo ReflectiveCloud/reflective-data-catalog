@@ -447,7 +447,11 @@ class CatalogSource:
         try:
             names = [
                 item.rsplit("/", 1)[-1]
-                for item in self._fs.ls(listing_at, detail=False)
+                for item in self._fs.ls(
+                    listing_at,
+                    detail=False,
+                    storage_options=self._storage_options(),
+                )
             ]
         except Exception:
             names = []

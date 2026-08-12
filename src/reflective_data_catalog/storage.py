@@ -7,17 +7,43 @@ via URL scheme detection.
 
 from __future__ import annotations
 
-import fnmatch
 import io
 import os
+import re
 from typing import Any
 from urllib.parse import urlparse
 
 import obstore
 from obstore.store import S3Store, from_url
 
+from .exceptions import MissingCredentialsError
+
 # Cloudflare R2 endpoint template
 _R2_ENDPOINT = "https://{account_id}.r2.cloudflarestorage.com"
+
+
+def _glob_to_regex(pattern: str) -> re.Pattern:
+    """Translate a glob to a regex where ``*`` does not cross ``/``.
+
+    ``**`` matches across directories, ``*`` within one segment, ``?`` a
+    single non-separator character — matching fsspec's glob semantics.
+    """
+    out = []
+    i = 0
+    while i < len(pattern):
+        ch = pattern[i]
+        if ch == "*":
+            if pattern[i : i + 2] == "**":
+                out.append(".*")
+                i += 2
+                continue
+            out.append("[^/]*")
+        elif ch == "?":
+            out.append("[^/]")
+        else:
+            out.append(re.escape(ch))
+        i += 1
+    return re.compile("".join(out) + "$")
 
 
 class CloudFileSystem:
@@ -75,7 +101,8 @@ class CloudFileSystem:
             (e.g., config, client_options, retry_config).
         """
         self._store_kwargs = kwargs
-        self._stores: dict[str, Any] = {}
+        self._stores: dict[Any, Any] = {}
+        self._s3_regions: dict[str, str | None] = {}
         self._r2_account_id = (
             r2_account_id
             or os.environ.get("CLOUDFLARE_R2_ACCOUNT_ID")
@@ -97,11 +124,11 @@ class CloudFileSystem:
 
         Raises
         ------
-        ValueError
+        MissingCredentialsError
             If no account ID has been configured.
         """
         if not self._r2_account_id:
-            raise ValueError(
+            raise MissingCredentialsError(
                 "Cloudflare R2 account ID is required for r2:// URLs. "
                 "Pass r2_account_id to CloudFileSystem() or set the "
                 "CLOUDFLARE_R2_ACCOUNT_ID environment variable."
@@ -141,7 +168,55 @@ class CloudFileSystem:
 
         return store_key, bucket, rel_path
 
-    def _get_store(self, url: str) -> tuple[Any, str, str]:
+    def _resolve_s3_region(self, bucket: str) -> str | None:
+        """Resolve an S3 bucket's region from the x-amz-bucket-region header.
+
+        obstore does not follow S3's cross-region redirects, so listing a
+        bucket outside the default region fails ("Received redirect without
+        LOCATION"). One unsigned HEAD per bucket per session resolves it;
+        the response carries the header even on 403/404.
+        """
+        if bucket in self._s3_regions:
+            return self._s3_regions[bucket]
+        import urllib.error
+        import urllib.request
+
+        region: str | None = None
+        request = urllib.request.Request(
+            f"https://{bucket}.s3.amazonaws.com", method="HEAD"
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                region = response.headers.get("x-amz-bucket-region")
+        except urllib.error.HTTPError as exc:
+            region = exc.headers.get("x-amz-bucket-region")
+        except Exception:
+            region = None
+        self._s3_regions[bucket] = region
+        return region
+
+    @staticmethod
+    def _translate_options(scheme: str, storage_options: dict | None) -> dict:
+        """Translate catalog storage options into obstore constructor kwargs.
+
+        This is the single translation point between the catalog's
+        (fsspec-flavored) option vocabulary and obstore's: ``anon: true``
+        becomes ``skip_signature=True`` on S3-compatible stores. Endpoint
+        selection is code-owned (derived from the URL scheme) and never
+        accepted from options.
+        """
+        translated: dict[str, Any] = {}
+        if (
+            storage_options
+            and storage_options.get("anon")
+            and scheme in ("s3", "r2")
+        ):
+            translated["skip_signature"] = True
+        return translated
+
+    def _get_store(
+        self, url: str, storage_options: dict | None = None
+    ) -> tuple[Any, str, str]:
         """
         Get or create an obstore store for the given URL.
 
@@ -152,6 +227,10 @@ class CloudFileSystem:
         ----------
         url : str
             Full URL or bare path.
+        storage_options : dict, optional
+            Per-entry options from the catalog (allowlisted upstream).
+            Stores are cached per (scheme, bucket, options) so entries
+            with different options on the same bucket never share a store.
 
         Returns
         -------
@@ -159,32 +238,46 @@ class CloudFileSystem:
             (store, store_key, rel_path)
         """
         store_key, bucket, rel_path = self._parse_url(url)
+        scheme = store_key.split("://")[0]
+        translated = self._translate_options(scheme, storage_options)
+        cache_key = (store_key, tuple(sorted(translated.items())))
 
-        if store_key not in self._stores:
-            scheme = store_key.split("://")[0]
+        if cache_key not in self._stores:
+            kwargs = {**self._store_kwargs, **translated}
             if scheme == "r2":
                 endpoint = self._get_r2_endpoint()
-                self._stores[store_key] = S3Store(
+                self._stores[cache_key] = S3Store(
                     bucket=bucket,
                     endpoint=endpoint,
                     region="auto",
-                    **self._store_kwargs,
+                    **kwargs,
                 )
             else:
-                self._stores[store_key] = from_url(store_key, **self._store_kwargs)
+                if scheme == "s3" and "region" not in kwargs:
+                    region = self._resolve_s3_region(bucket)
+                    if region:
+                        kwargs["region"] = region
+                self._stores[cache_key] = from_url(store_key, **kwargs)
 
-        return self._stores[store_key], store_key, rel_path
+        return self._stores[cache_key], store_key, rel_path
 
-    def glob(self, pattern: str) -> list[str]:
+    def glob(
+        self, pattern: str, storage_options: dict | None = None
+    ) -> list[str]:
         """
         Find all paths matching a glob pattern.
+
+        ``*`` and ``?`` do not cross ``/`` (use ``**`` for recursive
+        matches), matching fsspec's glob semantics.
 
         Parameters
         ----------
         pattern : str
-            Glob pattern with wildcards (* and ?).
+            Glob pattern with wildcards (*, ** and ?).
             Can be a full URL (e.g., "s3://bucket/path/*.nc") or
             a bare path (e.g., "bucket/path/*.nc", assumes S3).
+        storage_options : dict, optional
+            Per-entry options (e.g. ``{"anon": True}``).
 
         Returns
         -------
@@ -192,7 +285,7 @@ class CloudFileSystem:
             Full URLs including the scheme prefix,
             e.g. "s3://bucket/path/to/file".
         """
-        store, store_key, rel_pattern = self._get_store(pattern)
+        store, store_key, rel_pattern = self._get_store(pattern, storage_options)
 
         # Find the static prefix (everything before the first wildcard)
         # Truncate at the last '/' to ensure we use a directory-level prefix
@@ -204,16 +297,20 @@ class CloudFileSystem:
         for chunk in obstore.list(store, prefix=prefix):
             all_files.extend(chunk)
 
-        # Filter with fnmatch and prepend full scheme://bucket prefix
+        # Filter and prepend full scheme://bucket prefix
+        regex = _glob_to_regex(rel_pattern)
         matched = [
-            f"{store_key}/{f['path']}"
-            for f in all_files
-            if fnmatch.fnmatch(f["path"], rel_pattern)
+            f"{store_key}/{f['path']}" for f in all_files if regex.match(f["path"])
         ]
 
         return sorted(matched)
 
-    def ls(self, path: str, detail: bool = False) -> list[dict | str]:
+    def ls(
+        self,
+        path: str,
+        detail: bool = False,
+        storage_options: dict | None = None,
+    ) -> list[dict | str]:
         """
         List directory contents (one level, not recursive).
 
@@ -231,7 +328,7 @@ class CloudFileSystem:
             Directory contents as full URLs including the scheme
             prefix, e.g., "s3://bucket/path/to/dir".
         """
-        store, store_key, rel_path = self._get_store(path)
+        store, store_key, rel_path = self._get_store(path, storage_options)
 
         if rel_path and not rel_path.endswith("/"):
             rel_path += "/"
@@ -261,7 +358,7 @@ class CloudFileSystem:
 
         return items
 
-    def exists(self, path: str) -> bool:
+    def exists(self, path: str, storage_options: dict | None = None) -> bool:
         """
         Check if a path exists.
 
@@ -272,12 +369,14 @@ class CloudFileSystem:
         ----------
         path : str
             Path to check (full URL or bare path).
+        storage_options : dict, optional
+            Per-entry options (e.g. ``{"anon": True}``).
 
         Returns
         -------
         bool
         """
-        store, _store_key, rel_path = self._get_store(path)
+        store, _store_key, rel_path = self._get_store(path, storage_options)
 
         # First try as a file
         try:
@@ -328,7 +427,12 @@ class CloudFileSystem:
 
         return fsspec_url, storage_options
 
-    def open(self, path: str, mode: str = "rb") -> io.BytesIO:
+    def open(
+        self,
+        path: str,
+        mode: str = "rb",
+        storage_options: dict | None = None,
+    ) -> io.BytesIO:
         """
         Open a file for reading (downloads entire file into memory).
 
@@ -357,6 +461,6 @@ class CloudFileSystem:
         if mode != "rb":
             raise ValueError(f"Only 'rb' mode is supported, got '{mode}'")
 
-        store, _store_key, rel_path = self._get_store(path)
+        store, _store_key, rel_path = self._get_store(path, storage_options)
         result = obstore.get(store, rel_path)
         return io.BytesIO(bytes(result.bytes()))
