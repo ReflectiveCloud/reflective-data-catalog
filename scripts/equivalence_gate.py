@@ -98,6 +98,11 @@ def compare(name: str, spec: dict) -> tuple[str, list[str]]:
     catalog = ReflectiveCatalog()
 
     files = fsspec.open_files(spec["netcdf_glob"])
+    if files and "*" not in spec["netcdf_glob"]:
+        # open_files does not existence-check exact paths; a missing
+        # original must classify as ORIGINALS-GONE, not ERROR.
+        fs = files.fs
+        files = [f for f in files if fs.exists(f.path)]
     if not files:
         # The listing succeeded (no PermissionError) but matched nothing:
         # the pre-1.0 NetCDF originals no longer exist. There is no baseline
