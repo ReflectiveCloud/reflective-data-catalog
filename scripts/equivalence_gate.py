@@ -60,6 +60,8 @@ SWITCHED = {
             "v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/13112025/T_*.nc"
         ),
         "old_default_variable": "T",
+        # E3SM originals are CDF-5 (b'CDF\x05'), unreadable by h5netcdf.
+        "engine": "netcdf4",
     },
     "cesm2_waccm_ssp245": {
         "netcdf_glob": (
@@ -115,21 +117,79 @@ def compare(name: str, spec: dict) -> tuple[str, list[str]]:
             f"copy; integrity is verified by the bucket audit instead."
         )
         return "ORIGINALS-GONE", lines
-    old = xr.open_mfdataset(
-        [f.open() for f in files], engine="h5netcdf", combine="by_coords"
-    )
+    engine = spec.get("engine", "h5netcdf")
+    if engine == "netcdf4":
+        # netCDF4-python cannot read file-like objects reliably; download.
+        import tempfile
+
+        handles = []
+        for f in files:
+            with (
+                f.open() as fh,
+                tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as tmp,
+            ):
+                tmp.write(fh.read())
+                handles.append(tmp.name)
+        old = xr.open_mfdataset(handles, engine="netcdf4", combine="by_coords")
+    else:
+        old = xr.open_mfdataset(
+            [f.open() for f in files], engine=engine, combine="by_coords"
+        )
     new = catalog.get_source(name).to_dask()
 
     verdict = "PASS"
+    truncated = False
     lines.append(f"- NetCDF files: {len(files)}; Zarr store: default parameters")
     lines.append(f"- dims old={dict(old.sizes)} new={dict(new.sizes)}")
     if "time" in old.dims and "time" in new.dims:
         span_old = (str(old.time.values[0]), str(old.time.values[-1]))
         span_new = (str(new.time.values[0]), str(new.time.values[-1]))
         lines.append(f"- time span old={span_old} new={span_new}")
-        if span_old != span_new:
+        n_old, n_new = old.sizes["time"], new.sizes["time"]
+
+        def _ym(value: str) -> tuple[int, int]:
+            year, month = str(value)[:7].split("-")
+            return int(year), int(month)
+
+        def _months_apart(a: str, b: str) -> int:
+            (ya, ma), (yb, mb) = _ym(a), _ym(b)
+            return abs((ya - yb) * 12 + (ma - mb))
+
+        if n_old == n_new:
+            # Tolerate sub-interval label shifts: CESM history files stamp
+            # monthly means at the END of the interval; zarrification
+            # re-centers to mid-month. Same data, different labels.
+            if (
+                _months_apart(span_old[0], span_new[0]) <= 1
+                and _months_apart(span_old[1], span_new[1]) <= 1
+            ):
+                lines.append(
+                    "  - time labels shifted within one interval "
+                    "(end-of-interval vs mid-interval stamping) — accepted"
+                )
+            else:
+                verdict = "FAIL"
+                lines.append("  - MISMATCH: time axes disagree beyond labeling")
+        elif n_new < n_old:
+            truncated = True
+            lines.append(
+                f"  - TRUNCATED: the Zarr copy holds {n_new} of {n_old} "
+                f"time steps (ends {span_new[1][:7]} vs {span_old[1][:7]}); "
+                f"values are compared over the overlap below"
+            )
+            expected_end = spec.get("expected_end")
+            if expected_end and span_new[1][:7] == expected_end:
+                truncated = False
+                lines.append(
+                    f"  - expected window: the store intentionally ends at "
+                    f"{expected_end} (recorded in the gate spec) — accepted"
+                )
+            # Align the comparison to the overlap window (positional:
+            # both series start at the same first interval).
+            old = old.isel(time=slice(0, n_new))
+        else:
             verdict = "FAIL"
-            lines.append("  - MISMATCH: time spans differ")
+            lines.append("  - MISMATCH: the Zarr copy has MORE time steps")
 
     var_old = spec["old_default_variable"]
     candidates = [var_old, var_old.lower(), "tas"]
@@ -153,12 +213,19 @@ def compare(name: str, spec: dict) -> tuple[str, list[str]]:
         lines.append("  - MISMATCH: NaN fractions diverge (partial upload?)")
     if tail_a.shape == tail_b.shape:
         close = np.allclose(tail_a.values, tail_b.values, equal_nan=True, rtol=1e-5)
-        lines.append(f"- tail values allclose: {close}")
+        lines.append(f"- tail values allclose (overlap window): {close}")
         if not close:
             verdict = "FAIL"
     else:
         lines.append(f"  - shape mismatch old={tail_a.shape} new={tail_b.shape}")
         verdict = "FAIL"
+    if verdict == "PASS" and truncated:
+        verdict = "TRUNCATED"
+        lines.append(
+            "Overlap values agree, but the store is missing later time "
+            "steps. If the shorter window is intentional, record "
+            "expected_end in the gate spec; otherwise finish the upload."
+        )
     return verdict, lines
 
 
