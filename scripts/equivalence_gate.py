@@ -33,13 +33,6 @@ NOTES = REPO / "docs" / "migration-notes"
 # because the package no longer carries them). ensemble ids already rendered
 # with each source's old defaults.
 SWITCHED = {
-    "ukesm1_g6_1p5k_hilla": {
-        "netcdf_glob": (
-            "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/"
-            "r12i1p1f2/ap4/AERmon/ua/ua_AERmon_UKESM1-1-LL_g6-1p5-hilla_r12i1p1f2_gn_*.nc"
-        ),
-        "old_default_variable": "ua",
-    },
     "ukesm1_ssp245": {
         "netcdf_glob": (
             "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/"

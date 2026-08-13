@@ -192,12 +192,11 @@ class TestKwargs:
         aliased = real_catalog.ukesm1_g6_1p5k_hilla(member_id="r2i1p1f2").url
         assert canonical == aliased
 
-    def test_removed_time_kwarg_redirects_to_migration_guide(self, real_catalog):
-        with pytest.raises(TypeError) as excinfo:
-            real_catalog.ukesm1_g6_1p5k_hilla(time="AERmon")
-        message = str(excinfo.value)
-        assert "time" in message
-        assert "migration" in message.lower()
+    def test_time_kwarg_retained_on_netcdf_ukesm_hilla(self, real_catalog):
+        # This source stays NetCDF at the corrected G6-1p5K-HiLLA prefix;
+        # its stream/time layout keeps the time parameter.
+        src = real_catalog.ukesm1_g6_1p5k_hilla(time="AERmon")
+        assert "/AERmon/" in src.url
 
     def test_removed_time_kwarg_on_ukesm_ssp245(self, real_catalog):
         with pytest.raises(TypeError, match=r"[Mm]igration"):
@@ -247,8 +246,7 @@ class TestListSources:
 
     def test_stability_comes_from_matrix(self, real_catalog):
         by_name = {r["name"]: r for r in real_catalog.list_sources(verbose=False)}
-        # Demoted 2026-08-13: the hub prefix is empty pending data relocation.
-        assert by_name["ukesm1_g6_1p5k_hilla"]["stability"] == "experimental"
+        assert by_name["ukesm1_g6_1p5k_hilla"]["stability"] == "stable"
         assert by_name["ukesm1_g6_1p5k_sai"]["stability"] == "experimental"
 
     def test_verbose_false_prints_nothing(self, real_catalog, capsys):
@@ -436,11 +434,18 @@ class TestValueGuidance:
         assert "'Amon'" in message
         assert "migration" in message.lower()
 
-    def test_old_ukesm_stream_table_guided(self, real_catalog):
+    def test_old_ukesm_stream_table_guided_on_zarr_entry(self, real_catalog):
+        # ukesm1_ssp245 switched to Zarr (CMOR tables); the old UM stream
+        # vocabulary gets guidance there. ukesm1_g6_1p5k_hilla stayed
+        # NetCDF, so ap4 remains its valid default (checked below).
         from reflective_data_catalog.exceptions import DataNotFoundError
 
         with pytest.raises(DataNotFoundError, match=r"pre-1\.0 vocabulary"):
-            real_catalog.ukesm1_g6_1p5k_hilla(table="ap4")
+            real_catalog.ukesm1_ssp245(table="ap4")
+
+    def test_stream_table_still_valid_on_netcdf_ukesm_hilla(self, real_catalog):
+        src = real_catalog.ukesm1_g6_1p5k_hilla(table="ap5")
+        assert "/ap5/" in src.url
 
     def test_preserved_vocabulary_still_accepted(self, real_catalog):
         # NetCDF-preserving entries kept their values: no false guidance.

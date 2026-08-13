@@ -24,8 +24,9 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
   substitution.
 - Unknown keyword arguments raise `TypeError` (typos were previously
   silently ignored and loaded default data).
-- The UKESM `time=` kwarg is removed (the stream/time split collapses into
-  CMOR tables on Zarr). MIROC baseline data is `variant='baseline'` on the
+- The UKESM `time=` kwarg is removed on the Zarr-switched `ukesm1_ssp245`
+  (the stream/time split collapses into CMOR tables); `ukesm1_g6_1p5k_hilla`
+  stays NetCDF and keeps `time=`. MIROC baseline data is `variant='baseline'` on the
   two `miroc_es2h_*` entries; the standalone parenthesized SSP2-4.5 entries
   are absorbed.
 - `get_source_config()` and the `is_flexible` key are removed;

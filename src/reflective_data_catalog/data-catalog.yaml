@@ -15,26 +15,33 @@ sources:
   # ============================================================================
   
   ukesm1_g6_1p5k_hilla:
-    driver: zarr
-    description: "UKESM1.1 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    driver: netcdf
+    description: "UKESM1.1 G6-1.5K-HiLLA (NetCDF): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K. UM stream tables (ap4..onm) plus a time frequency segment — this source is NetCDF-only on the hub."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/{{ensemble}}/{{table}}/{{variable}}.zarr"
-      consolidated: true
+      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/G6-1p5K-HiLLA/{{ensemble}}/{{table}}/{{time}}/{{variable}}/{{variable}}_{{time}}_UKESM1-1-LL_g6-1p5-hilla_{{ensemble}}_gn_*.nc"
+      combine: by_coords
+      concat_dim: time
+      xarray_kwargs:
+        engine: h5netcdf
       storage_options:
         anon: false
     parameters:
       ensemble:
-        description: "Ensemble member identifier"
+        description: "Ensemble member identifier (e.g. r12i1p1f2)"
         type: str
-        default: "r1i1p1f2"
+        default: "r12i1p1f2"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "UM output stream (ap4, ap5, ap6, ap8, apa, apd, apj, apm, onm)"
         type: str
-        default: "Aday"
+        default: "ap4"
+      time:
+        description: "Time frequency segment (e.g. AERmon)"
+        type: str
+        default: "AERmon"
       variable:
-        description: "Climate variable name"
+        description: "Climate variable name (e.g. ua)"
         type: str
-        default: "tas"
+        default: "ua"
     metadata:
       model: "UKESM1.1"
       experiment: "G6-1.5K-HiLLA"
@@ -250,7 +257,7 @@ sources:
     driver: netcdf
     description: "CESM2-WACCM historical (POP ocean output). NetCDF entry preserving the pre-1.0 paths and r1->001 ensemble filename mapping; switches to a Zarr copy once one is verified in the bucket inventory."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/HISTORICAL/{{ensemble}}/{{table}}/b.e21.BW.f09_g17.HISTORICAL-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
+      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/Historical/{{ensemble}}/{{table}}/b.e21.BW.f09_g17.HISTORICAL-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
       combine: by_coords
       concat_dim: time
       xarray_kwargs:

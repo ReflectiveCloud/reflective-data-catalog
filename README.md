@@ -76,7 +76,7 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 
 | Source | Model | Experiment | Driver | Access | Stability |
 |--------|-------|------------|--------|--------|-----------|
-| `ukesm1_g6_1p5k_hilla` | UKESM1.1 | G6-1.5K-HiLLA | zarr | Hub | stable |
+| `ukesm1_g6_1p5k_hilla` | UKESM1.1 | G6-1.5K-HiLLA | netcdf | Hub | stable |
 | `cesm2_waccm_g6_1p5k_hilla` | CESM2-WACCM | G6-1.5K-HiLLA | zarr | Public | stable |
 | `e3smv3_g6_1p5k_hilla` | E3SMv3 | G6-1.5K-HiLLA | zarr | Hub | stable |
 | `miroc_es2h_g6_1p5k_hilla` | MIROC-ES2H | G6-1.5K-HiLLA (`variant=`) | zarr | Public | stable |
@@ -101,14 +101,14 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 Every source takes the canonical keyword arguments `ensemble`, `table`, and `variable`, plus per-source extras such as `variant`, `realm`, `time_frequency`, or `version`. CMIP6-style aliases are accepted permanently: `ensemble_member`/`member_id` → `ensemble`, `table_id` → `table`, `variable_id` → `variable`.
 
 ```python
-# Canonical kwargs
+# Canonical kwargs (UKESM HiLLA is NetCDF: UM stream tables + a time segment)
 ds = rdc.ukesm1_g6_1p5k_hilla(
-    variable="tas", table="Aday", ensemble="r1i1p1f2"
+    variable="ua", table="ap4", time="AERmon", ensemble="r12i1p1f2"
 ).to_dask()
 
 # Aliases work identically
 ds = rdc.ukesm1_g6_1p5k_hilla(
-    variable_id="tas", table_id="Aday", member_id="r1i1p1f2"
+    variable_id="ua", table_id="ap4", time="AERmon", member_id="r12i1p1f2"
 ).to_dask()
 
 # Typos raise a TypeError listing the valid parameters — nothing loads silently
@@ -225,7 +225,7 @@ v1.0 replaces the pre-1.0 dual registration system (flexible source configs plus
 - **Canonical kwargs plus permanent aliases.** `ensemble`/`table`/`variable` are canonical; `ensemble_member`, `member_id`, `table_id`, and `variable_id` are accepted forever.
 - **Typos now error.** Unknown keyword arguments raise `TypeError` listing the valid parameters. Previously they were silently ignored and the defaults loaded.
 - **MIROC uses `variant=`.** The old separate MIROC SSP2-4.5 sources were absorbed into the two MIROC entries as `variant='baseline'` (the default on the HiLLA entry).
-- **UKESM's `time=` kwarg is removed.** The Zarr entries use CMOR tables; the old UM stream-plus-time split collapses into `table=`. Passing `time=` raises an error that points at the migration guide.
+- **UKESM's `time=` kwarg is removed on the Zarr-switched `ukesm1_ssp245`** (streams collapse into CMOR tables; passing `time=` there raises an error pointing at the migration guide). `ukesm1_g6_1p5k_hilla` stays NetCDF and keeps its `time=` parameter.
 - **Parameter value vocabularies changed with the Zarr switches.** Old NetCDF values (e.g. `table='AMON'`, `variable='T'`, `ensemble='r1'` on CESM sources) no longer match the Zarr stores (`Aday`/`tas`/`r1i1p1f1`). Old values are never silently translated — they raise an error carrying the old→new mapping.
 - **Structured results and typed errors.** `list_sources()`/`list_tags()`/`search()` return records (printing behind `verbose=True`); `get_source_config()` is replaced by `get_source()` and `get_parameters()`; unknown sources raise `SourceNotFoundError`.
 
