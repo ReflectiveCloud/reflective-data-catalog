@@ -247,7 +247,8 @@ class TestListSources:
 
     def test_stability_comes_from_matrix(self, real_catalog):
         by_name = {r["name"]: r for r in real_catalog.list_sources(verbose=False)}
-        assert by_name["ukesm1_g6_1p5k_hilla"]["stability"] == "stable"
+        # Demoted 2026-08-13: the hub prefix is empty pending data relocation.
+        assert by_name["ukesm1_g6_1p5k_hilla"]["stability"] == "experimental"
         assert by_name["ukesm1_g6_1p5k_sai"]["stability"] == "experimental"
 
     def test_verbose_false_prints_nothing(self, real_catalog, capsys):

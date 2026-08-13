@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-08-12T23:52:50+00:00",
+  "audited_at": "2026-08-13T14:35:08+00:00",
   "catalog_version": 1,
   "entries": {
     "arise_15_cesm2_waccm_ssp245": {
@@ -257,8 +257,12 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod/gauss/tas/historical/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod/gauss/{{variable}}/historical/{{variable}}.zarr"
         }
       ]
@@ -338,8 +342,16 @@
       "driver": "netcdf",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": "unlisted: FileNotFoundError",
+            "ensemble_id": "unlisted: FileNotFoundError",
+            "table": "unlisted: FileNotFoundError"
+          },
+          "match_count": 0,
           "rendered_default": "s3://reflective-persistent-prod-large/CESM2-WACCM/HISTORICAL/r1/OMON/b.e21.BW.f09_g17.HISTORICAL-WACCM.001.pop.*.TEMP.*.nc",
-          "status": "unverified:access_denied",
+          "sample": [],
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/CESM2-WACCM/HISTORICAL/{{ensemble}}/{{table}}/b.e21.BW.f09_g17.HISTORICAL-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
         }
       ]
@@ -384,8 +396,30 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": [
+              "maps",
+              "v3.LR.ssp245.g6_hilla.sai.0101",
+              "v3.LR.ssp245.g6_hilla.sai.0151",
+              "v3.LR.ssp245.g6_hilla.sai.0201",
+              "v3.LR.ssp245_0101",
+              "v3.LR.ssp245_0151",
+              "v3.LR.ssp245_0201"
+            ],
+            "table": [
+              "3hr_avg",
+              "3hr_inst",
+              "Amon",
+              "Lmon",
+              "Omon",
+              "controller_data",
+              "day"
+            ],
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Aday/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]
@@ -395,8 +429,14 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": "unlisted: FileNotFoundError",
+            "table": "unlisted: FileNotFoundError",
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-SAI/r1i1p1f1/Aday/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-SAI/{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]
@@ -406,8 +446,22 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": [
+              "maps",
+              "v3.LR.ssp245.g6_hilla.sai.0101",
+              "v3.LR.ssp245.g6_hilla.sai.0151",
+              "v3.LR.ssp245.g6_hilla.sai.0201",
+              "v3.LR.ssp245_0101",
+              "v3.LR.ssp245_0151",
+              "v3.LR.ssp245_0201"
+            ],
+            "table": "unlisted: FileNotFoundError",
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_r1i1p1f1/day/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]
@@ -652,8 +706,14 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": "unlisted: FileNotFoundError",
+            "table": "unlisted: FileNotFoundError",
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/r1i1p1f2/Aday/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-HiLLA/{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]
@@ -663,8 +723,14 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": "unlisted: FileNotFoundError",
+            "table": "unlisted: FileNotFoundError",
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-SAI/r1i1p1f2/Aday/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/UKESM1-1/G6-1.5K-SAI/{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]
@@ -674,8 +740,18 @@
       "driver": "zarr",
       "urls": [
         {
+          "exists": false,
+          "facets": {
+            "ensemble": [
+              "r12i1p1f1",
+              "r2i1p1f1",
+              "r3i1p1f1"
+            ],
+            "table": "unlisted: FileNotFoundError",
+            "variable": "unlisted: FileNotFoundError"
+          },
           "rendered_default": "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/r1i1p1f2/day/tas.zarr",
-          "status": "unverified:access_denied",
+          "status": "verified",
           "template": "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/{{ensemble}}/{{table}}/{{variable}}.zarr"
         }
       ]

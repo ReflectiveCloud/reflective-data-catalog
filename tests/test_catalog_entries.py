@@ -207,7 +207,7 @@ class TestInventoryCrossCheck:
             urls = src.url
             urls = urls if isinstance(urls, list) else [urls]
             for url_record, rendered in zip(record["urls"], urls, strict=False):
-                if url_record.get("status") == "verified":
+                if url_record.get("status") == "verified" and url_record.get("exists"):
                     assert url_record["rendered_default"] == rendered, name
                     checked += 1
         assert checked > 0, "no verified inventory rows were cross-checked"

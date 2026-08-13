@@ -106,13 +106,13 @@ sources:
         anon: false
     parameters:
       ensemble:
-        description: "Ensemble member suffix (the urlpath carries the literal run prefix v3.LR.ssp245.g6_hilla.sai.)"
+        description: "Ensemble member suffix (0101, 0151, 0201 — the urlpath carries the literal run prefix v3.LR.ssp245.g6_hilla.sai.)"
         type: str
         default: "0101"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "Output table (Amon, Lmon, Omon, day, 3hr_avg, 3hr_inst — bucket-verified)"
         type: str
-        default: "Aday"
+        default: "Amon"
       variable:
         description: "Climate variable name"
         type: str
@@ -183,9 +183,9 @@ sources:
         anon: false
     parameters:
       ensemble:
-        description: "Ensemble member identifier"
+        description: "Ensemble member identifier (r12i1p1f1, r2i1p1f1, r3i1p1f1 — bucket-verified)"
         type: str
-        default: "r1i1p1f2"
+        default: "r12i1p1f1"
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str
@@ -219,9 +219,9 @@ sources:
         anon: false
     parameters:
       ensemble:
-        description: "Ensemble member identifier"
+        description: "Ensemble member suffix (0101, 0151, 0201 — the urlpath carries the literal run prefix v3.LR.ssp245_)"
         type: str
-        default: "r1i1p1f1"
+        default: "0101"
       table:
         description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
         type: str

@@ -40,12 +40,12 @@ sources:
   e3smv3_g6_1p5k_hilla:
     new_entry: e3smv3_g6_1p5k_hilla
     backend: netcdf->zarr
-    status: pending_verification
+    status: pending_verification  # run dirs and tables bucket-verified 2026-08-13; store contents pending
     old_defaults: {table: Amon, variable: T, ensemble: v3.LR.ssp245.g6_hilla.sai.0101}
-    new_defaults: {table: Aday, variable: tas, ensemble: "0101"}
-    default_change: "recorded; Zarr vocabulary pending inventory verification"
+    new_defaults: {table: Amon, variable: tas, ensemble: "0101"}
     value_notes:
-      ensemble: "Zarr urlpath carries the literal prefix v3.LR.ssp245.g6_hilla.sai.; the member parameter is the suffix (0101), not r1i1p1f1"
+      ensemble: "bucket-verified run suffixes: 0101, 0151, 0201 (urlpath carries the literal prefix v3.LR.ssp245.g6_hilla.sai.)"
+      table: "bucket-verified tables: Amon, Lmon, Omon, day, 3hr_avg, 3hr_inst (the pre-fix Aday default did not exist)"
   miroc_es2h_g6_1p5k_hilla:
     new_entry: miroc_es2h_g6_1p5k_hilla
     renamed_from_yaml: miroc_g6_1p5k_hilla
@@ -86,10 +86,11 @@ sources:
     new_entry: ukesm1_ssp245
     renamed_from_yaml: ukesm1_ssp245_g6_1p5k_hilla
     backend: netcdf->zarr
-    status: pending_verification
+    status: pending_verification  # members bucket-verified 2026-08-13; table/variable vocabulary pending
     old_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
-    new_defaults: {table: day, variable: tas, ensemble: r1i1p1f2}
-    default_change: "recorded; Zarr vocabulary pending inventory verification"
+    new_defaults: {table: day, variable: tas, ensemble: r12i1p1f1}
+    value_notes:
+      ensemble: "bucket-verified members: r12i1p1f1, r2i1p1f1, r3i1p1f1 (the old default was correct; the pre-fix YAML default r1i1p1f2 did not exist)"
 
 # Kwarg dispositions (R11): canonical vocabulary, permanent aliases,
 # per-entry extras, removals with redirects.
@@ -105,12 +106,12 @@ kwargs:
 
 # Stability dispositions for every catalog entry at v1.0 (deliberate freeze).
 stability:
-  ukesm1_g6_1p5k_hilla: stable
+  ukesm1_g6_1p5k_hilla: experimental  # 2026-08-13 audit: hub prefix empty (NetCDF originals AND Zarr absent); awaiting data relocation
   cesm2_waccm_g6_1p5k_hilla: stable
   e3smv3_g6_1p5k_hilla: stable
   miroc_es2h_g6_1p5k_hilla: stable
   miroc_es2h_g6_1p5k_sai: stable
-  cesm2_waccm_historical: stable
+  cesm2_waccm_historical: experimental  # 2026-08-13 audit: hub HISTORICAL prefix empty; no public R2 store; awaiting data relocation
   cesm2_waccm_ssp245: stable
   ukesm1_ssp245: stable
   e3smv3_ssp245: stable
@@ -125,6 +126,7 @@ stability:
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:
+  - "2026-08-13 maintainer audit: ukesm1_ssp245 members are r12i1p1f1/r2i1p1f1/r3i1p1f1 (default fixed); e3smv3 G6-1.5K-HiLLA tables are Amon/Lmon/Omon/day/3hr_* with run suffixes 0101/0151/0201 (Aday default fixed to Amon; e3smv3_ssp245 member default fixed to 0101); UKESM1-1/G6-1.5K-HiLLA and CESM2-WACCM/HISTORICAL hub prefixes are EMPTY — both entries marked experimental pending data relocation."
   - "2026-08-12: CESM and MIROC zarrified copies located in the PUBLIC Cloudflare R2 bucket reflective-data-store (one zarr-v3 store per model x experiment; tables/realms as groups; ensemble as a member dimension — CESM members 001-003, MIROC r01-r10). Five entries re-pointed to public HTTPS URLs needing no credentials; cesm2_waccm_historical has no public store and keeps its hub NetCDF entry."
   - "2026-08-12 gate run (maintainer credentials): the pre-1.0 UKESM NetCDF originals no longer exist in the hub bucket — the Zarr copies are the only copies. Amended R4 disposition: sources with ORIGINALS-GONE verdicts are verified by the bucket audit (existence/format/chunk completeness) instead of A/B equivalence; no NetCDF fallback exists."
   - "ukesm1_arise_cmip6: default version v20220325 -> v20190715 (bucket lists only v20190715)"
