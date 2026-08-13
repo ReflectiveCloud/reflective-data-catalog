@@ -295,7 +295,7 @@ sources:
 
   cesm2_waccm_ssp245:
     driver: zarr
-    description: "CESM2-WACCM SSP2-4.5 reference (Zarr, public Cloudflare R2). One store per experiment; tables and realms are Zarr groups; the ensemble is a dataset dimension."
+    description: "CESM2-WACCM SSP2-4.5 reference (Zarr, public Cloudflare R2), 2015-2069. One store per experiment; tables and realms are Zarr groups; the ensemble is a dataset dimension. The hub NetCDF originals extend to 2100; the public store's shorter window is a known difference."
     args:
       urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/CESM2-WACCM/CESM2-WACCM_SSP2-4.5.zarr"
       group: "{{table}}/{{realm}}"

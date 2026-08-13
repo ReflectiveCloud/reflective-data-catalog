@@ -37,6 +37,7 @@ sources:
     value_notes:
       table: "case fix OMON->Omon; default realm ocean_3d carries TEMP"
       variable: "no longer a parameter — selected from the opened dataset"
+      time_window: "the public store spans 2015-2069 (660 months); the hub NetCDF originals run to 2100 (1032 months). Accepted for v1.0 per maintainer 2026-08-13; tracked in the Cloud Hub Asana project"
   e3smv3_g6_1p5k_hilla:
     new_entry: e3smv3_g6_1p5k_hilla
     backend: netcdf->zarr

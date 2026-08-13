@@ -62,6 +62,10 @@ SWITCHED = {
             "r1/OMON/b.e21.BWSSP245cmip6.f09_g17.CMIP6-SSP2-4.5-WACCM.001.pop.*.TEMP.*.nc"
         ),
         "old_default_variable": "TEMP",
+        # Maintainer decision 2026-08-13: the public store's 2015-2069
+        # window ships as-is (the hub originals run to 2100). Tracked in
+        # the Cloud Hub Asana project.
+        "expected_end": "2069-12",
     },
     "miroc_es2h_g6_1p5k_hilla": {
         "netcdf_glob": (
