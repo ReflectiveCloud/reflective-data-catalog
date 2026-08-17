@@ -1,8 +1,7 @@
 # Equivalence report: ukesm1_ssp245
 
-Gate could not run: the hub bucket denied access. Re-run
-`python scripts/equivalence_gate.py` with read credentials.
+NetCDF originals no longer exist at `s3://reflective-persistent-prod-large/UKESM1-1/SSP245/r12i1p1f1/ap4/AERmon/mmrso4/mmrso4_AERmon_UKESM1-0-LL_ssp245_r12i1p1f1_gn_*.nc` (listing succeeded, zero matches). The Zarr copy is the only copy; integrity is verified by the bucket audit instead.
 
-**Verdict: PENDING-CREDENTIALS** (2026-08-12T18:06:58+00:00)
+**Verdict: ORIGINALS-GONE** (2026-08-13T15:47:34+00:00)
 
-Per plan R4, this source must keep (or revert to) its NetCDF entry until the gate passes.
+Amended R4 disposition: no NetCDF fallback exists; the bucket audit (--deep chunk-completeness) is the required verification for this source.

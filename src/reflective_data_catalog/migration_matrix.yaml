@@ -24,10 +24,12 @@ sources:
       variable: "no longer a parameter — CESM-native variables (T, TREFHT, ...) are selected from the opened dataset; default realm atmos_3d carries T"
   cesm2_waccm_historical:
     new_entry: cesm2_waccm_historical
-    backend: "netcdf (unchanged; the source is NetCDF-only — prefix corrected HISTORICAL -> Historical per maintainer 2026-08-13)"
-    status: pending_verification  # awaiting audit at the corrected prefix
+    backend: "netcdf (unchanged; NetCDF-only — prefix corrected HISTORICAL -> Historical per maintainer 2026-08-13; filename corrected to b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.* per the 2026-08-13 hub audit)"
+    status: pending_verification  # filename fixed from the audit listing; awaiting re-audit at the corrected glob
     old_defaults: {table: OMON, variable: TEMP, ensemble: r1}
     new_defaults: {table: OMON, variable: TEMP, ensemble: r1}
+    value_notes:
+      variable: "POP-native names preserved (TEMP, ...); the pre-1.0 filename pattern (HISTORICAL-WACCM) never matched the bucket — corrected to BWHIST.f09_g17.CMIP6-historical-WACCM"
   cesm2_waccm_ssp245:
     new_entry: cesm2_waccm_ssp245
     backend: "netcdf->zarr (public Cloudflare R2, one store per experiment)"
@@ -41,12 +43,13 @@ sources:
   e3smv3_g6_1p5k_hilla:
     new_entry: e3smv3_g6_1p5k_hilla
     backend: netcdf->zarr
-    status: pending_verification  # run dirs and tables bucket-verified 2026-08-13; store contents pending
+    status: pending_verification  # variable default corrected to T (2026-08-13 audit: no tas store); awaiting re-audit + gate
     old_defaults: {table: Amon, variable: T, ensemble: v3.LR.ssp245.g6_hilla.sai.0101}
-    new_defaults: {table: Amon, variable: tas, ensemble: "0101"}
+    new_defaults: {table: Amon, variable: T, ensemble: "0101"}
     value_notes:
       ensemble: "bucket-verified run suffixes: 0101, 0151, 0201 (urlpath carries the literal prefix v3.LR.ssp245.g6_hilla.sai.)"
       table: "bucket-verified tables: Amon, Lmon, Omon, day, 3hr_avg, 3hr_inst (the pre-fix Aday default did not exist)"
+      variable: "E3SM-native names preserved as per-variable Zarr stores (T, TREFHT, PRECT, ... — bucket-verified 2026-08-13); CMOR names like tas do not exist"
   miroc_es2h_g6_1p5k_hilla:
     new_entry: miroc_es2h_g6_1p5k_hilla
     renamed_from_yaml: miroc_g6_1p5k_hilla
@@ -76,7 +79,7 @@ sources:
     new_entry: ukesm1_g6_1p5k_hilla
     renamed_from_yaml: ukesm1_g6_1p5k_hilla_zarr
     backend: "netcdf (unchanged; the source is NetCDF-only — prefix corrected G6-1.5K-HiLLA -> G6-1p5K-HiLLA per maintainer 2026-08-13)"
-    status: pending_verification  # awaiting audit at the corrected prefix
+    status: verified  # 2026-08-13 hub audit: 3 files match the default render; members r12i1p1f2, r2i1p1f2, r3i1p1f2
     old_defaults: {table: ap4, variable: ua, ensemble: r12i1p1f2, time: AERmon}
     new_defaults: {table: ap4, variable: ua, ensemble: r12i1p1f2, time: AERmon}
     value_notes:
@@ -85,11 +88,13 @@ sources:
     new_entry: ukesm1_ssp245
     renamed_from_yaml: ukesm1_ssp245_g6_1p5k_hilla
     backend: netcdf->zarr
-    status: pending_verification  # members bucket-verified 2026-08-13; table/variable vocabulary pending
+    status: pending_verification  # 2026-08-13 audit: UM streams retained as Zarr dirs (table default fixed day -> ap4); variable vocabulary under ap4 pending a listing
     old_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
-    new_defaults: {table: day, variable: tas, ensemble: r12i1p1f1}
+    new_defaults: {table: ap4, variable: tas, ensemble: r12i1p1f1}
+    hint_exempt: [variable]  # variable vocabulary under ap4 is unconfirmed — do not steer mmrso4 to tas until it is
     value_notes:
       ensemble: "bucket-verified members: r12i1p1f1, r2i1p1f1, r3i1p1f1 (the old default was correct; the pre-fix YAML default r1i1p1f2 did not exist)"
+      table: "UM stream names carry over to the Zarr layout (ap4, ap5, ap6, apm, onm — bucket-verified 2026-08-13); the assumed CMOR collapse did not happen. Only the time-frequency path level is gone"
 
 # Kwarg dispositions (R11): canonical vocabulary, permanent aliases,
 # per-entry extras, removals with redirects.
@@ -98,7 +103,7 @@ kwargs:
   table: "canonical; aliases: table_id"
   variable: "canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC) variables are selected from the opened dataset, not a path parameter"
   variant: "kept as a per-entry parameter on the MIROC entries"
-  time: "removed on the Zarr-switched ukesm1_ssp245 entry (streams collapse into CMOR tables — error redirects to the migration guide); retained on ukesm1_g6_1p5k_hilla, which stays NetCDF"
+  time: "removed on the Zarr-switched ukesm1_ssp245 entry (the time-frequency path level is gone — one Zarr store per variable under each stream directory; error redirects to the migration guide); retained on ukesm1_g6_1p5k_hilla, which stays NetCDF"
   realm: "per-entry parameter on ARISE CESM entries"
   time_frequency: "per-entry parameter on ARISE CESM entries"
   version: "per-entry parameter on ukesm1_arise_cmip6"
@@ -125,6 +130,7 @@ stability:
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:
+  - "2026-08-13 hub audit round 2: ukesm1_g6_1p5k_hilla VERIFIED at the corrected G6-1p5K-HiLLA prefix (3 files match the default render). cesm2_waccm_historical filenames are b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.* (the pre-1.0 HISTORICAL-WACCM pattern never matched; glob corrected). E3SM Zarr stores keep E3SM-native variable names (T, TREFHT, ...) — no tas; both e3smv3 entry defaults corrected. ukesm1_ssp245 Zarr layout retains UM stream directories (ap4/ap5/ap6/apm/onm), not CMOR tables — table default fixed back to ap4; variable vocabulary under ap4 pending a listing."
   - "2026-08-13 maintainer correction: UKESM G6 HiLLA lives ONLY as NetCDF under UKESM1-1/G6-1p5K-HiLLA (1p5K, not 1.5K) and CESM historical ONLY as NetCDF under CESM2-WACCM/Historical (not HISTORICAL) — every earlier empty-prefix finding was a spelling mismatch; both entries corrected and restored to stable; ukesm1_g6_1p5k_hilla stays NetCDF with its time parameter."
   - "2026-08-13 maintainer audit: ukesm1_ssp245 members are r12i1p1f1/r2i1p1f1/r3i1p1f1 (default fixed); e3smv3 G6-1.5K-HiLLA tables are Amon/Lmon/Omon/day/3hr_* with run suffixes 0101/0151/0201 (Aday default fixed to Amon; e3smv3_ssp245 member default fixed to 0101); UKESM1-1/G6-1.5K-HiLLA and CESM2-WACCM/HISTORICAL hub prefixes are EMPTY — both entries marked experimental pending data relocation."
   - "2026-08-12: CESM and MIROC zarrified copies located in the PUBLIC Cloudflare R2 bucket reflective-data-store (one zarr-v3 store per model x experiment; tables/realms as groups; ensemble as a member dimension — CESM members 001-003, MIROC r01-r10). Five entries re-pointed to public HTTPS URLs needing no credentials; cesm2_waccm_historical has no public store and keeps its hub NetCDF entry."

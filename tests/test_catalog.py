@@ -434,14 +434,12 @@ class TestValueGuidance:
         assert "'Amon'" in message
         assert "migration" in message.lower()
 
-    def test_old_ukesm_stream_table_guided_on_zarr_entry(self, real_catalog):
-        # ukesm1_ssp245 switched to Zarr (CMOR tables); the old UM stream
-        # vocabulary gets guidance there. ukesm1_g6_1p5k_hilla stayed
-        # NetCDF, so ap4 remains its valid default (checked below).
-        from reflective_data_catalog.exceptions import DataNotFoundError
-
-        with pytest.raises(DataNotFoundError, match=r"pre-1\.0 vocabulary"):
-            real_catalog.ukesm1_ssp245(table="ap4")
+    def test_stream_table_still_valid_on_zarr_ukesm_ssp245(self, real_catalog):
+        # The 2026-08-13 audit showed the SSP245 Zarr layout retained the UM
+        # stream directories (ap4..onm) — the assumed CMOR collapse did not
+        # happen, so the old stream vocabulary stays valid on this entry.
+        src = real_catalog.ukesm1_ssp245(table="ap5", variable="pr")
+        assert src.url.endswith("/ap5/pr.zarr")
 
     def test_stream_table_still_valid_on_netcdf_ukesm_hilla(self, real_catalog):
         src = real_catalog.ukesm1_g6_1p5k_hilla(table="ap5")

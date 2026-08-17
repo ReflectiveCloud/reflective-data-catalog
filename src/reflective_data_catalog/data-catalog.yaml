@@ -121,9 +121,9 @@ sources:
         type: str
         default: "Amon"
       variable:
-        description: "Climate variable name"
+        description: "Climate variable name (E3SM-native, e.g. T, TREFHT, PRECT — one Zarr store per variable; CMOR names like tas do not exist here)"
         type: str
-        default: "tas"
+        default: "T"
     metadata:
       model: "E3SMv3"
       experiment: "G6-1.5K-HiLLA"
@@ -194,11 +194,11 @@ sources:
         type: str
         default: "r12i1p1f1"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "UM output stream directory (ap4, ap5, ap6, apm, onm — bucket-verified; the pre-1.0 stream names carry over to the Zarr layout)"
         type: str
-        default: "day"
+        default: "ap4"
       variable:
-        description: "Climate variable name"
+        description: "Climate variable name (one Zarr store per variable under the stream directory)"
         type: str
         default: "tas"
     metadata:
@@ -230,13 +230,13 @@ sources:
         type: str
         default: "0101"
       table:
-        description: "CMIP6 table (Amon, Lmon, Omon, day, etc.)"
+        description: "Output table (Amon, Lmon, Omon, day, 3hr_avg, 3hr_inst — bucket-verified)"
         type: str
         default: "day"
       variable:
-        description: "Climate variable name"
+        description: "Climate variable name (E3SM-native, e.g. TREFHT, PRECT, T — one Zarr store per variable; CMOR names like tas do not exist here)"
         type: str
-        default: "tas"
+        default: "TREFHT"
     metadata:
       model: "E3SMv3"
       experiment: "G6-1.5K-HiLLA"
@@ -255,9 +255,9 @@ sources:
   
   cesm2_waccm_historical:
     driver: netcdf
-    description: "CESM2-WACCM historical (POP ocean output). NetCDF entry preserving the pre-1.0 paths and r1->001 ensemble filename mapping; switches to a Zarr copy once one is verified in the bucket inventory."
+    description: "CESM2-WACCM historical (POP ocean output). NetCDF-only on the hub; filenames bucket-verified (b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.*) with the r1->001 ensemble filename mapping."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/Historical/{{ensemble}}/{{table}}/b.e21.BW.f09_g17.HISTORICAL-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
+      urlpath: "s3://reflective-persistent-prod-large/CESM2-WACCM/Historical/{{ensemble}}/{{table}}/b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.{{ensemble_id}}.pop.*.{{variable}}.*.nc"
       combine: by_coords
       concat_dim: time
       xarray_kwargs:
