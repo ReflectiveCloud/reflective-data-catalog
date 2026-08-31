@@ -28,9 +28,9 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
   silently ignored and loaded default data).
 - Both UKESM hub entries (`ukesm1_ssp245`, `ukesm1_g6_1p5k_hilla`) stay
   NetCDF in their pre-1.0 stream/time layouts: UM stream `table=` values
-  (ap4..onm), the `time=` kwarg, and the old defaults keep working. MIROC baseline data is `variant='baseline'` on the
-  two `miroc_es2h_*` entries; the standalone parenthesized SSP2-4.5 entries
-  are absorbed.
+  (ap4..onm), the `time=` kwarg, and the old defaults keep working.
+- MIROC baseline data is `variant='baseline'` on the two `miroc_es2h_*`
+  entries; the standalone parenthesized SSP2-4.5 entries are absorbed.
 - `get_source_config()` and the `is_flexible` key are removed;
   `get_parameters()` unifies on `{name, driver, description, parameters}`.
 - `search()`/`list_sources()`/`list_tags()` return structured records;
