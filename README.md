@@ -80,7 +80,7 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 | `cesm2_waccm_g6_1p5k_hilla` | CESM2-WACCM | G6-1.5K-HiLLA | zarr | Public | stable |
 | `e3smv3_g6_1p5k_hilla` | E3SMv3 | G6-1.5K-HiLLA | zarr | Hub | stable |
 | `miroc_es2h_g6_1p5k_hilla` | MIROC-ES2H | G6-1.5K-HiLLA (`variant=`) | zarr | Public | stable |
-| `ukesm1_ssp245` | UKESM1.1 | SSP2-4.5 reference | zarr | Hub | stable |
+| `ukesm1_ssp245` | UKESM1.1 | SSP2-4.5 reference | netcdf | Hub | stable |
 | `e3smv3_ssp245` | E3SMv3 | SSP2-4.5 reference | zarr | Hub | stable |
 | `cesm2_waccm_historical` | CESM2-WACCM | Historical (POP ocean) | netcdf | Hub | stable |
 | `cesm2_waccm_ssp245` | CESM2-WACCM | SSP2-4.5 (POP ocean) | zarr | Public | stable |
@@ -225,7 +225,7 @@ v1.0 replaces the pre-1.0 dual registration system (flexible source configs plus
 - **Canonical kwargs plus permanent aliases.** `ensemble`/`table`/`variable` are canonical; `ensemble_member`, `member_id`, `table_id`, and `variable_id` are accepted forever.
 - **Typos now error.** Unknown keyword arguments raise `TypeError` listing the valid parameters. Previously they were silently ignored and the defaults loaded.
 - **MIROC uses `variant=`.** The old separate MIROC SSP2-4.5 sources were absorbed into the two MIROC entries as `variant='baseline'` (the default on the HiLLA entry).
-- **UKESM's `time=` kwarg is removed on the Zarr-switched `ukesm1_ssp245`** (the time-frequency path level is gone — the UM stream names `ap4`..`onm` carry over as `table=` values, one Zarr store per variable; passing `time=` there raises an error pointing at the migration guide). `ukesm1_g6_1p5k_hilla` stays NetCDF and keeps its `time=` parameter.
+- **Both UKESM hub entries (`ukesm1_ssp245`, `ukesm1_g6_1p5k_hilla`) stay NetCDF** in their pre-1.0 stream/time layouts — UM stream `table=` values (`ap4`..`onm`), the `time=` parameter, and the old defaults all keep working unchanged.
 - **Parameter value vocabularies changed with the Zarr switches.** Old NetCDF values (e.g. `table='AMON'`, `variable='T'`, `ensemble='r1'` on CESM sources) no longer match the Zarr stores (`Aday`/`tas`/`r1i1p1f1`). Old values are never silently translated — they raise an error carrying the old→new mapping.
 - **Structured results and typed errors.** `list_sources()`/`list_tags()`/`search()` return records (printing behind `verbose=True`); `get_source_config()` is replaced by `get_source()` and `get_parameters()`; unknown sources raise `SourceNotFoundError`.
 

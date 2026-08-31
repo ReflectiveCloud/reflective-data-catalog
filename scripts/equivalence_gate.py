@@ -33,13 +33,10 @@ NOTES = REPO / "docs" / "migration-notes"
 # because the package no longer carries them). ensemble ids already rendered
 # with each source's old defaults.
 SWITCHED = {
-    "ukesm1_ssp245": {
-        "netcdf_glob": (
-            "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/"
-            "r12i1p1f1/ap4/AERmon/mmrso4/mmrso4_AERmon_UKESM1-0-LL_ssp245_r12i1p1f1_gn_*.nc"
-        ),
-        "old_default_variable": "mmrso4",
-    },
+    # ukesm1_ssp245 is NOT here: the 2026-08-13 hub listing showed it was
+    # never zarrified (the pre-1.0 NetCDF layout is intact; the earlier
+    # ORIGINALS-GONE verdict was a member-pinned filename-glob artifact —
+    # filenames carry r12i1p1f2 under the r12i1p1f1 directory).
     "cesm2_waccm_g6_1p5k_hilla": {
         "netcdf_glob": (
             "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/"

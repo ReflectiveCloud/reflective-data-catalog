@@ -145,7 +145,8 @@ class TestGetSource:
     def test_round_trip(self, real_catalog):
         source = real_catalog.get_source("ukesm1_ssp245", variable="pr")
         assert isinstance(source, CatalogSource)
-        assert source.url.endswith("pr.zarr")
+        assert "/pr/" in source.url
+        assert source.url.endswith(".nc")
 
     def test_matches_attribute_dispatch(self, real_catalog):
         via_attr = real_catalog.ukesm1_ssp245(variable="pr").url
@@ -198,9 +199,11 @@ class TestKwargs:
         src = real_catalog.ukesm1_g6_1p5k_hilla(time="AERmon")
         assert "/AERmon/" in src.url
 
-    def test_removed_time_kwarg_on_ukesm_ssp245(self, real_catalog):
-        with pytest.raises(TypeError, match=r"[Mm]igration"):
-            real_catalog.ukesm1_ssp245(time="AERmon")
+    def test_time_kwarg_retained_on_netcdf_ukesm_ssp245(self, real_catalog):
+        # Never zarrified (2026-08-13 hub listing): the pre-1.0 stream/time
+        # NetCDF layout is intact, so time= stays a parameter here too.
+        src = real_catalog.ukesm1_ssp245(time="AERmon")
+        assert "/AERmon/" in src.url
 
 
 # =========================================================================
@@ -434,12 +437,11 @@ class TestValueGuidance:
         assert "'Amon'" in message
         assert "migration" in message.lower()
 
-    def test_stream_table_still_valid_on_zarr_ukesm_ssp245(self, real_catalog):
-        # The 2026-08-13 audit showed the SSP245 Zarr layout retained the UM
-        # stream directories (ap4..onm) — the assumed CMOR collapse did not
-        # happen, so the old stream vocabulary stays valid on this entry.
+    def test_stream_table_still_valid_on_ukesm_ssp245(self, real_catalog):
+        # Never zarrified: the UM stream vocabulary (ap4..onm) stays valid.
         src = real_catalog.ukesm1_ssp245(table="ap5", variable="pr")
-        assert src.url.endswith("/ap5/pr.zarr")
+        assert "/ap5/" in src.url
+        assert "/pr/" in src.url
 
     def test_stream_table_still_valid_on_netcdf_ukesm_hilla(self, real_catalog):
         src = real_catalog.ukesm1_g6_1p5k_hilla(table="ap5")

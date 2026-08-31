@@ -13,7 +13,7 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `miroc_es2h_g6_1p5k_hilla` | `miroc_es2h_g6_1p5k_hilla` | netcdf->zarr (public Cloudflare R2, one store per variant) | verified | {'table': 'Amon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'baseline'} | {'table': 'Mon', 'ensemble': 'r01', 'variant': 'baseline'} |
 | `miroc_es2h_g6_1p5k_sai` | `miroc_es2h_g6_1p5k_sai` | netcdf->zarr (public Cloudflare R2, one store per variant) | verified | {'table': 'Mon', 'variable': 'SurfT', 'ensemble': 'r01', 'variant': 'G6-1.5K-SAI'} | {'table': 'Mon', 'ensemble': 'r01', 'variant': 'G6-1.5K-SAI'} |
 | `ukesm1_g6_1p5k_hilla` | `ukesm1_g6_1p5k_hilla` | netcdf (unchanged; the source is NetCDF-only — prefix corrected G6-1.5K-HiLLA -> G6-1p5K-HiLLA per maintainer 2026-08-13) | verified | {'table': 'ap4', 'variable': 'ua', 'ensemble': 'r12i1p1f2', 'time': 'AERmon'} | {'table': 'ap4', 'variable': 'ua', 'ensemble': 'r12i1p1f2', 'time': 'AERmon'} |
-| `ukesm1_ssp245` | `ukesm1_ssp245` | netcdf->zarr | pending_verification | {'table': 'ap4', 'variable': 'mmrso4', 'ensemble': 'r12i1p1f1', 'time': 'AERmon'} | {'table': 'ap4', 'variable': 'tas', 'ensemble': 'r12i1p1f1'} |
+| `ukesm1_ssp245` | `ukesm1_ssp245` | netcdf (unchanged; the source was never zarrified — the 2026-08-13 hub listing shows the pre-1.0 stream/time NetCDF layout intact) | pending_verification | {'table': 'ap4', 'variable': 'mmrso4', 'ensemble': 'r12i1p1f1', 'time': 'AERmon'} | {'table': 'ap4', 'variable': 'mmrso4', 'ensemble': 'r12i1p1f1', 'time': 'AERmon'} |
 
 ## Entry stability
 
@@ -45,7 +45,7 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `table` | canonical; aliases: table_id |
 | `variable` | canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC) variables are selected from the opened dataset, not a path parameter |
 | `variant` | kept as a per-entry parameter on the MIROC entries |
-| `time` | removed on the Zarr-switched ukesm1_ssp245 entry (the time-frequency path level is gone — one Zarr store per variable under each stream directory; error redirects to the migration guide); retained on ukesm1_g6_1p5k_hilla, which stays NetCDF |
+| `time` | per-entry parameter on both UKESM hub entries (ukesm1_ssp245 and ukesm1_g6_1p5k_hilla), whose stream/time NetCDF layouts are unchanged |
 | `realm` | per-entry parameter on ARISE CESM entries |
 | `time_frequency` | per-entry parameter on ARISE CESM entries |
 | `version` | per-entry parameter on ukesm1_arise_cmip6 |

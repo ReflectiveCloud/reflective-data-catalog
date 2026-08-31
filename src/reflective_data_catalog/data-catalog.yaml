@@ -181,26 +181,33 @@ sources:
 
 
   ukesm1_ssp245:
-    driver: zarr
-    description: "UKESM1.1 SSP2-4.5 (RunIDs: udp-902,903,904), the reference case for G6-1.5K-HiLLA runs. This version of SSP2-4.5 has strat. het. chem. ON"
+    driver: netcdf
+    description: "UKESM1.1 SSP2-4.5 (RunIDs: udp-902,903,904), the reference case for G6-1.5K-HiLLA runs. This version of SSP2-4.5 has strat. het. chem. ON. NetCDF-only on the hub in the pre-1.0 stream/time layout; filenames carry a member label that can differ from the directory member (e.g. r12i1p1f1 directory, r12i1p1f2 in filenames), so the filename member is globbed."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/{{ensemble}}/{{table}}/{{variable}}.zarr"
-      consolidated: true
+      urlpath: "s3://reflective-persistent-prod-large/UKESM1-1/SSP245/{{ensemble}}/{{table}}/{{time}}/{{variable}}/{{variable}}_{{time}}_UKESM1-0-LL_ssp245_*_gn_*.nc"
+      combine: by_coords
+      concat_dim: time
+      xarray_kwargs:
+        engine: h5netcdf
       storage_options:
         anon: false
     parameters:
       ensemble:
-        description: "Ensemble member identifier (r12i1p1f1, r2i1p1f1, r3i1p1f1 — bucket-verified)"
+        description: "Ensemble member directory (r12i1p1f1, r2i1p1f1, r3i1p1f1 — bucket-verified)"
         type: str
         default: "r12i1p1f1"
       table:
-        description: "UM output stream directory (ap4, ap5, ap6, apm, onm — bucket-verified; the pre-1.0 stream names carry over to the Zarr layout)"
+        description: "UM output stream (ap4, ap5, ap6, apm, onm — bucket-verified)"
         type: str
         default: "ap4"
-      variable:
-        description: "Climate variable name (one Zarr store per variable under the stream directory)"
+      time:
+        description: "Time frequency segment (e.g. AERmon)"
         type: str
-        default: "tas"
+        default: "AERmon"
+      variable:
+        description: "Climate variable name (e.g. mmrso4, ua, va)"
+        type: str
+        default: "mmrso4"
     metadata:
       model: "UKESM1.1"
       experiment: "G6-1.5K-HiLLA"

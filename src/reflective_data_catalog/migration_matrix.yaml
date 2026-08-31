@@ -87,14 +87,13 @@ sources:
   ukesm1_ssp245:
     new_entry: ukesm1_ssp245
     renamed_from_yaml: ukesm1_ssp245_g6_1p5k_hilla
-    backend: netcdf->zarr
-    status: pending_verification  # 2026-08-13 audit: UM streams retained as Zarr dirs (table default fixed day -> ap4); variable vocabulary under ap4 pending a listing
+    backend: "netcdf (unchanged; the source was never zarrified — the 2026-08-13 hub listing shows the pre-1.0 stream/time NetCDF layout intact)"
+    status: pending_verification  # files listed by hand 2026-08-13; awaiting audit at the corrected template
     old_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
-    new_defaults: {table: ap4, variable: tas, ensemble: r12i1p1f1}
-    hint_exempt: [variable]  # variable vocabulary under ap4 is unconfirmed — do not steer mmrso4 to tas until it is
+    new_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
     value_notes:
-      ensemble: "bucket-verified members: r12i1p1f1, r2i1p1f1, r3i1p1f1 (the old default was correct; the pre-fix YAML default r1i1p1f2 did not exist)"
-      table: "UM stream names carry over to the Zarr layout (ap4, ap5, ap6, apm, onm — bucket-verified 2026-08-13); the assumed CMOR collapse did not happen. Only the time-frequency path level is gone"
+      ensemble: "bucket-verified members: r12i1p1f1, r2i1p1f1, r3i1p1f1 (the old default was correct; the pre-fix YAML default r1i1p1f2 did not exist). Filenames carry a member label that can differ from the directory member (r12i1p1f1 dir, r12i1p1f2 in filenames); the filename member is globbed"
+      table: "UM stream names unchanged (ap4, ap5, ap6, apm, onm — bucket-verified 2026-08-13)"
 
 # Kwarg dispositions (R11): canonical vocabulary, permanent aliases,
 # per-entry extras, removals with redirects.
@@ -103,7 +102,7 @@ kwargs:
   table: "canonical; aliases: table_id"
   variable: "canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC) variables are selected from the opened dataset, not a path parameter"
   variant: "kept as a per-entry parameter on the MIROC entries"
-  time: "removed on the Zarr-switched ukesm1_ssp245 entry (the time-frequency path level is gone — one Zarr store per variable under each stream directory; error redirects to the migration guide); retained on ukesm1_g6_1p5k_hilla, which stays NetCDF"
+  time: "per-entry parameter on both UKESM hub entries (ukesm1_ssp245 and ukesm1_g6_1p5k_hilla), whose stream/time NetCDF layouts are unchanged"
   realm: "per-entry parameter on ARISE CESM entries"
   time_frequency: "per-entry parameter on ARISE CESM entries"
   version: "per-entry parameter on ukesm1_arise_cmip6"
@@ -130,6 +129,7 @@ stability:
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:
+  - "2026-08-13 hub listing round 3: ukesm1_ssp245 was NEVER zarrified — the hub holds the pre-1.0 stream/time NetCDF layout intact (ap4/AERmon/mmrso4/*.nc etc.). The 2026-08-12 ORIGINALS-GONE verdict was a glob artifact: filenames carry member label r12i1p1f2 under the r12i1p1f1 directory, so the member-pinned filename glob matched nothing. Entry reverted to NetCDF with its full pre-1.0 defaults (ap4/AERmon/mmrso4, filename member globbed); the time kwarg is retained everywhere — no entry drops it at v1.0; source dropped from the equivalence gate (backend unchanged)."
   - "2026-08-13 hub audit round 2: ukesm1_g6_1p5k_hilla VERIFIED at the corrected G6-1p5K-HiLLA prefix (3 files match the default render). cesm2_waccm_historical filenames are b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.* (the pre-1.0 HISTORICAL-WACCM pattern never matched; glob corrected). E3SM Zarr stores keep E3SM-native variable names (T, TREFHT, ...) — no tas; both e3smv3 entry defaults corrected. ukesm1_ssp245 Zarr layout retains UM stream directories (ap4/ap5/ap6/apm/onm), not CMOR tables — table default fixed back to ap4; variable vocabulary under ap4 pending a listing."
   - "2026-08-13 maintainer correction: UKESM G6 HiLLA lives ONLY as NetCDF under UKESM1-1/G6-1p5K-HiLLA (1p5K, not 1.5K) and CESM historical ONLY as NetCDF under CESM2-WACCM/Historical (not HISTORICAL) — every earlier empty-prefix finding was a spelling mismatch; both entries corrected and restored to stable; ukesm1_g6_1p5k_hilla stays NetCDF with its time parameter."
   - "2026-08-13 maintainer audit: ukesm1_ssp245 members are r12i1p1f1/r2i1p1f1/r3i1p1f1 (default fixed); e3smv3 G6-1.5K-HiLLA tables are Amon/Lmon/Omon/day/3hr_* with run suffixes 0101/0151/0201 (Aday default fixed to Amon; e3smv3_ssp245 member default fixed to 0101); UKESM1-1/G6-1.5K-HiLLA and CESM2-WACCM/HISTORICAL hub prefixes are EMPTY — both entries marked experimental pending data relocation."

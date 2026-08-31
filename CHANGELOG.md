@@ -24,10 +24,9 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
   substitution.
 - Unknown keyword arguments raise `TypeError` (typos were previously
   silently ignored and loaded default data).
-- The UKESM `time=` kwarg is removed on the Zarr-switched `ukesm1_ssp245`
-  (the time-frequency path level is gone; the UM stream names ap4..onm carry
-  over as `table=` values, one Zarr store per variable);
-  `ukesm1_g6_1p5k_hilla` stays NetCDF and keeps `time=`. MIROC baseline data is `variant='baseline'` on the
+- Both UKESM hub entries (`ukesm1_ssp245`, `ukesm1_g6_1p5k_hilla`) stay
+  NetCDF in their pre-1.0 stream/time layouts: UM stream `table=` values
+  (ap4..onm), the `time=` kwarg, and the old defaults keep working. MIROC baseline data is `variant='baseline'` on the
   two `miroc_es2h_*` entries; the standalone parenthesized SSP2-4.5 entries
   are absorbed.
 - `get_source_config()` and the `is_flexible` key are removed;
