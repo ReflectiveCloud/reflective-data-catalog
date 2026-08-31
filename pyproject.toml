@@ -62,6 +62,9 @@ dev = [
     "intake>=2.0.0",
     "intake-esm>=2025.2.3",
     "intake-esgf>=2025.5.9",
+    # scripts/equivalence_gate.py only: the E3SM NetCDF originals are CDF-5,
+    # unreadable by h5netcdf.
+    "netCDF4>=1.6",
 ]
 
 [tool.pytest.ini_options]
