@@ -25,7 +25,7 @@ sources:
   cesm2_waccm_historical:
     new_entry: cesm2_waccm_historical
     backend: "netcdf (unchanged; NetCDF-only — prefix corrected HISTORICAL -> Historical per maintainer 2026-08-13; filename corrected to b.e21.BWHIST.f09_g17.CMIP6-historical-WACCM.* per the 2026-08-13 hub audit)"
-    status: pending_verification  # filename fixed from the audit listing; awaiting re-audit at the corrected glob
+    status: verified  # 2026-08-31 hub audit: the corrected glob matches (BWHIST.f09_g17.CMIP6-historical-WACCM, 185001-201412)
     old_defaults: {table: OMON, variable: TEMP, ensemble: r1}
     new_defaults: {table: OMON, variable: TEMP, ensemble: r1}
     value_notes:
@@ -88,7 +88,7 @@ sources:
     new_entry: ukesm1_ssp245
     renamed_from_yaml: ukesm1_ssp245_g6_1p5k_hilla
     backend: "netcdf (unchanged; the source was never zarrified — the 2026-08-13 hub listing shows the pre-1.0 stream/time NetCDF layout intact)"
-    status: pending_verification  # files listed by hand 2026-08-13; awaiting audit at the corrected template
+    status: verified  # 2026-08-31 hub audit: 3 files match the default render (members r12i1p1f1, r2i1p1f1, r3i1p1f1)
     old_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
     new_defaults: {table: ap4, variable: mmrso4, ensemble: r12i1p1f1, time: AERmon}
     value_notes:
