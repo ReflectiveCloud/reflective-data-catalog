@@ -1,5 +1,5 @@
 {
-  "audited_at": "2026-08-31T17:19:06+00:00",
+  "audited_at": "2026-08-31T20:16:50+00:00",
   "catalog_version": 1,
   "entries": {
     "arise_15_cesm2_waccm_ssp245": {
@@ -403,10 +403,10 @@
     },
     "e3smv3_g6_1p5k_hilla": {
       "anon": false,
-      "driver": "zarr",
+      "driver": "netcdf",
       "urls": [
         {
-          "exists": false,
+          "exists": true,
           "facets": {
             "ensemble": [
               "maps",
@@ -468,9 +468,15 @@
               "Z3"
             ]
           },
-          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Amon/T.zarr",
+          "match_count": 10,
+          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/*/*.nc",
+          "sample": [
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/13112025/T_203501_203912.nc",
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/13112025/T_204001_204412.nc",
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/13112025/T_204501_204912.nc"
+          ],
           "status": "verified",
-          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble}}/{{table}}/{{variable}}.zarr"
+          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble}}/{{table}}/{{variable}}/gn/*/*.nc"
         }
       ]
     },
@@ -493,10 +499,10 @@
     },
     "e3smv3_ssp245": {
       "anon": false,
-      "driver": "zarr",
+      "driver": "netcdf",
       "urls": [
         {
-          "exists": false,
+          "exists": true,
           "facets": {
             "ensemble": [
               "maps",
@@ -533,9 +539,15 @@
               "V850"
             ]
           },
-          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_0101/day/TREFHT.zarr",
+          "match_count": 28,
+          "rendered_default": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_0101/day/TREFHT/gn/*/*.nc",
+          "sample": [
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_0101/day/TREFHT/gn/10112025/TREFHT_201501_201912.nc",
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_0101/day/TREFHT/gn/10112025/TREFHT_202001_202412.nc",
+            "reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_0101/day/TREFHT/gn/10112025/TREFHT_202501_202912.nc"
+          ],
           "status": "verified",
-          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble}}/{{table}}/{{variable}}.zarr"
+          "template": "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble}}/{{table}}/{{variable}}/gn/*/*.nc"
         }
       ]
     },
