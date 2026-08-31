@@ -617,6 +617,246 @@
         }
       ]
     },
+    "simulator_cesm2_waccm_ma_0p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_0.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_0.5K-SAI.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_cesm2_waccm_ma_1p0k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.0K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.0K-SAI.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_cesm2_waccm_ma_1p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.5K-SAI.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_cesm2_waccm_ma_baseline": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_baseline.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_baseline.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_cesm2_waccm_ma_historical": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax",
+              "day",
+              "day/atmos_2d"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_historical.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_historical.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_miroc_es2h_baseline": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_baseline.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_baseline.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_miroc_es2h_g6_0p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-0.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-0.5K-SAI.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_miroc_es2h_g6_1p5k_sai": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-1.5K-SAI.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-1.5K-SAI.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_miroc_es2h_historical": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_historical.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_historical.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "simulator_miroc_es2h_ssp245": {
+      "anon": false,
+      "driver": "zarr",
+      "urls": [
+        {
+          "consolidated": true,
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "Mon",
+              "Mon/atmos_2d",
+              "Mon/atmos_2d_derived",
+              "Mon/atmos_2d_tasminmax"
+            ]
+          },
+          "rendered_default": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_ssp245.zarr",
+          "status": "verified",
+          "template": "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_ssp245.zarr",
+          "zarr_format": 3
+        }
+      ]
+    },
     "ukesm1_arise_cmip6": {
       "anon": true,
       "driver": "netcdf",

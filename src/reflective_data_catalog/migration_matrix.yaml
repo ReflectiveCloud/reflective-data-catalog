@@ -126,6 +126,19 @@ stability:
   arise_sai_15: stable               # verified 2026-08-12 after U2 glob/default fix
   ukesm1_arise_sai: stable           # verified 2026-08-12 (public)
   ukesm1_arise_cmip6: stable         # verified 2026-08-12 after default version fix
+  # Simulator-input stores (public R2, simulator-inputs/): all ten
+  # live-opened credential-free 2026-08-31 (zarr v3, consolidated,
+  # Mon/atmos_2d default group, 3-member ensembles).
+  simulator_cesm2_waccm_ma_0p5k_sai: stable
+  simulator_cesm2_waccm_ma_1p0k_sai: stable
+  simulator_cesm2_waccm_ma_1p5k_sai: stable
+  simulator_cesm2_waccm_ma_baseline: stable
+  simulator_cesm2_waccm_ma_historical: stable
+  simulator_miroc_es2h_g6_0p5k_sai: stable
+  simulator_miroc_es2h_g6_1p5k_sai: stable
+  simulator_miroc_es2h_baseline: stable
+  simulator_miroc_es2h_historical: stable
+  simulator_miroc_es2h_ssp245: stable
 
 # Bucket-verified corrections applied in U2 (from tests/fixtures/bucket_inventory.json).
 verified_corrections:

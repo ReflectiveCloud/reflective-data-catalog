@@ -299,7 +299,15 @@ class TestSearch:
     def test_search_by_term(self, real_catalog):
         records = real_catalog.search(term="miroc", verbose=False)
         names = {r["name"] for r in records if r["kind"] == "entry"}
-        assert names == {"miroc_es2h_g6_1p5k_hilla", "miroc_es2h_g6_1p5k_sai"}
+        assert names == {
+            "miroc_es2h_g6_1p5k_hilla",
+            "miroc_es2h_g6_1p5k_sai",
+            "simulator_miroc_es2h_g6_0p5k_sai",
+            "simulator_miroc_es2h_g6_1p5k_sai",
+            "simulator_miroc_es2h_baseline",
+            "simulator_miroc_es2h_historical",
+            "simulator_miroc_es2h_ssp245",
+        }
 
     def test_search_by_variable(self, real_catalog):
         records = real_catalog.search(variable="TEMP", verbose=False)

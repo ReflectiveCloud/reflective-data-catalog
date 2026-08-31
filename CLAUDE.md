@@ -16,7 +16,7 @@ Reflective Data Catalog is a pip-installable Python package that provides a unif
   - `esgf.py` — `ESGFHelper` for ESGF data access (`[esgf]` extra)
   - `esm.py` — `ESMCatalog` and `GeoMIPCloudHelper` for Google Cloud CMIP6 catalog via intake-esm (`[esm]` extra)
   - `help_text.py` — Help text, generated from the loaded catalog (not hand-maintained)
-  - `data-catalog.yaml` — THE source registry (schema v2, 17 entries); ships in the wheel
+  - `data-catalog.yaml` — THE source registry (schema v2, 27 entries); ships in the wheel
   - `migration_matrix.yaml` — Machine-readable old→new dispositions and per-entry stability; ships in the wheel
   - `py.typed` — Ships in the wheel (typed public API)
 - `tests/` — Unit tests (pytest)

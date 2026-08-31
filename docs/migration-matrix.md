@@ -36,6 +36,16 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `arise_sai_15` | stable |
 | `ukesm1_arise_sai` | stable |
 | `ukesm1_arise_cmip6` | stable |
+| `simulator_cesm2_waccm_ma_0p5k_sai` | stable |
+| `simulator_cesm2_waccm_ma_1p0k_sai` | stable |
+| `simulator_cesm2_waccm_ma_1p5k_sai` | stable |
+| `simulator_cesm2_waccm_ma_baseline` | stable |
+| `simulator_cesm2_waccm_ma_historical` | stable |
+| `simulator_miroc_es2h_g6_0p5k_sai` | stable |
+| `simulator_miroc_es2h_g6_1p5k_sai` | stable |
+| `simulator_miroc_es2h_baseline` | stable |
+| `simulator_miroc_es2h_historical` | stable |
+| `simulator_miroc_es2h_ssp245` | stable |
 
 ## Kwarg dispositions
 

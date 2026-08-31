@@ -67,7 +67,7 @@ class TestCatalogIntegrity:
     def test_loads_and_validates(self, catalog):
         assert catalog["metadata"]["version"] == 1  # intake format discriminator
         assert catalog["metadata"]["reflective_schema_version"] == 2
-        assert len(catalog["sources"]) >= 17
+        assert len(catalog["sources"]) >= 27
 
     def test_every_name_is_an_identifier(self, catalog):
         bad = [n for n in catalog["sources"] if not n.isidentifier()]
@@ -219,7 +219,7 @@ class TestIntakeCompatSmoke:
     def test_intake_can_open_and_enumerate(self):
         intake = pytest.importorskip("intake")
         cat = intake.open_catalog(str(CATALOG_PATH))
-        assert len(list(cat)) >= 17
+        assert len(list(cat)) >= 27
 
 
 def _templates(entry: dict) -> list[str]:

@@ -45,6 +45,13 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
 
 ### Added
 
+- Ten `simulator_*` entries for the public simulator-input stores
+  (`simulator-inputs/` on the R2 bucket): CESM2-WACCM-MA (0.5K/1.0K/1.5K
+  SAI, baseline, historical) and MIROC-ES2H (G6-0.5K/1.5K SAI, baseline,
+  historical, ssp245). Grouped Zarr stores of 2D atmosphere fields
+  (`Mon/atmos_2d` default plus derived and tasminmax realm groups) with a
+  3-member ensemble, selected like the other public CESM/MIROC entries; no
+  credentials needed.
 - `catalog.get_source(name)` — string-keyed, typed access to any entry.
 - Typed exceptions: `CatalogError`, `SourceNotFoundError`,
   `DataNotFoundError`, `MissingCredentialsError` (names the missing

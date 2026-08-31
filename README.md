@@ -72,7 +72,7 @@ Missing credentials raise a `MissingCredentialsError` that names the missing con
 
 ## Available Sources
 
-All 17 sources come from the packaged catalog file (`src/reflective_data_catalog/data-catalog.yaml`). Entries marked *experimental* are still being populated or verified — see [docs/migration-matrix.md](./docs/migration-matrix.md) for the authoritative stability listing.
+All 27 sources come from the packaged catalog file (`src/reflective_data_catalog/data-catalog.yaml`). Entries marked *experimental* are still being populated or verified — see [docs/migration-matrix.md](./docs/migration-matrix.md) for the authoritative stability listing.
 
 | Source | Model | Experiment | Driver | Access | Stability |
 |--------|-------|------------|--------|--------|-----------|
@@ -93,6 +93,18 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 | `arise_15_cesm2_waccm_ssp245` | CESM2-WACCM | SSP2-4.5 (ARISE reference) | netcdf | Public | stable |
 | `ukesm1_arise_sai` | UKESM1.0 | ARISE-SAI-1.5 | netcdf | Public | stable |
 | `ukesm1_arise_cmip6` | UKESM1.0 | SSP2-4.5 (CMIP6 ScenarioMIP) | netcdf | Public | stable |
+| `simulator_cesm2_waccm_ma_0p5k_sai` | CESM2-WACCM-MA | 0.5K-SAI (simulator inputs) | zarr | Public | stable |
+| `simulator_cesm2_waccm_ma_1p0k_sai` | CESM2-WACCM-MA | 1.0K-SAI (simulator inputs) | zarr | Public | stable |
+| `simulator_cesm2_waccm_ma_1p5k_sai` | CESM2-WACCM-MA | 1.5K-SAI (simulator inputs) | zarr | Public | stable |
+| `simulator_cesm2_waccm_ma_baseline` | CESM2-WACCM-MA | baseline (simulator inputs) | zarr | Public | stable |
+| `simulator_cesm2_waccm_ma_historical` | CESM2-WACCM-MA | historical (simulator inputs) | zarr | Public | stable |
+| `simulator_miroc_es2h_g6_0p5k_sai` | MIROC-ES2H | G6-0.5K-SAI (simulator inputs) | zarr | Public | stable |
+| `simulator_miroc_es2h_g6_1p5k_sai` | MIROC-ES2H | G6-1.5K-SAI (simulator inputs) | zarr | Public | stable |
+| `simulator_miroc_es2h_baseline` | MIROC-ES2H | baseline (simulator inputs) | zarr | Public | stable |
+| `simulator_miroc_es2h_historical` | MIROC-ES2H | historical (simulator inputs) | zarr | Public | stable |
+| `simulator_miroc_es2h_ssp245` | MIROC-ES2H | SSP2-4.5 (simulator inputs) | zarr | Public | stable |
+
+The ten `simulator_*` entries are the public simulator-input stores (`simulator-inputs/` on the R2 bucket): grouped Zarr stores of monthly (CESM-MA also daily) 2D atmosphere fields with `table`/`realm` groups (`Mon/atmos_2d` default, plus `atmos_2d_derived` and `atmos_2d_tasminmax`) and a 3-member ensemble selected exactly like the other public CESM/MIROC entries.
 
 ## Usage
 

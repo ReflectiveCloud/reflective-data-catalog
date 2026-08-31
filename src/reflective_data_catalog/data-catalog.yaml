@@ -723,4 +723,379 @@ sources:
       hosted_on: "AWS, external - https://registry.opendata.aws/met-office-ukesm1-arise/"
       data_access: "public"
       tags: ["geoengineering", "SAI", "ARISE", "UKESM1.0", "multi-objective", "feedback-control", "public"]
-  
+
+  # ============================================================================
+  # Simulator inputs
+  # Public R2 Zarr stores under simulator-inputs/ (one store per
+  # model x experiment) feeding Reflective's SAI simulator.
+  # ============================================================================
+
+  simulator_cesm2_waccm_ma_0p5k_sai:
+    driver: zarr
+    description: "Simulator inputs: CESM2-WACCM-MA 0.5K-SAI (Zarr, public Cloudflare R2), 2035-2070. Monthly and daily 2D atmosphere fields; realm groups atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_0.5K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the day table has atmos_2d)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
+    metadata:
+      model: "CESM2-WACCM-MA"
+      experiment: "0.5K-SAI"
+      experiment_id: "0.5k-sai"
+      purpose: "simulator inputs"
+      years: "2035-2070"
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "CESM2-WACCM-MA", "0.5K-SAI", "public"]
+
+  simulator_cesm2_waccm_ma_1p0k_sai:
+    driver: zarr
+    description: "Simulator inputs: CESM2-WACCM-MA 1.0K-SAI (Zarr, public Cloudflare R2), 2035-2069. Monthly and daily 2D atmosphere fields; realm groups atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.0K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the day table has atmos_2d)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
+    metadata:
+      model: "CESM2-WACCM-MA"
+      experiment: "1.0K-SAI"
+      experiment_id: "1.0k-sai"
+      purpose: "simulator inputs"
+      years: "2035-2069"
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "CESM2-WACCM-MA", "1.0K-SAI", "public"]
+
+  simulator_cesm2_waccm_ma_1p5k_sai:
+    driver: zarr
+    description: "Simulator inputs: CESM2-WACCM-MA 1.5K-SAI (Zarr, public Cloudflare R2), 2035-2069. Monthly and daily 2D atmosphere fields; realm groups atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_1.5K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the day table has atmos_2d)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
+    metadata:
+      model: "CESM2-WACCM-MA"
+      experiment: "1.5K-SAI"
+      experiment_id: "1.5k-sai"
+      purpose: "simulator inputs"
+      years: "2035-2069"
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "CESM2-WACCM-MA", "1.5K-SAI", "public"]
+
+  simulator_cesm2_waccm_ma_baseline:
+    driver: zarr
+    description: "Simulator inputs: CESM2-WACCM-MA baseline (Zarr, public Cloudflare R2), 2015-2099. Monthly and daily 2D atmosphere fields; realm groups atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_baseline.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the day table has atmos_2d)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
+    metadata:
+      model: "CESM2-WACCM-MA"
+      experiment: "baseline"
+      experiment_id: "baseline"
+      purpose: "simulator inputs"
+      years: "2015-2099"
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "CESM2-WACCM-MA", "baseline", "public"]
+
+  simulator_cesm2_waccm_ma_historical:
+    driver: zarr
+    description: "Simulator inputs: CESM2-WACCM-MA historical (Zarr, public Cloudflare R2), 1850-2014. Monthly and daily 2D atmosphere fields; realm groups atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/CESM2-WACCM-MA_historical.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon, day)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax; the day table has atmos_2d)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r1, r2, r3), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r1"
+      ensemble_id:
+        description: "Member coordinate id (001-003); derived from ensemble via metadata.value_map"
+        type: str
+        default: "001"
+    metadata:
+      model: "CESM2-WACCM-MA"
+      experiment: "historical"
+      experiment_id: "historical"
+      purpose: "simulator inputs"
+      years: "1850-2014"
+      value_map:
+        ensemble_id:
+          from: ensemble
+          map: {r1: "001", r2: "002", r3: "003"}
+      select_map:
+        member: ensemble_id
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "CESM2-WACCM-MA", "historical", "public"]
+
+  simulator_miroc_es2h_g6_0p5k_sai:
+    driver: zarr
+    description: "Simulator inputs: MIROC-ES2H G6-0.5K-SAI (Zarr, public Cloudflare R2), 2035-2084. Monthly 2D atmosphere fields (TREFHT, PRECT, QFLX, ICEFRAC) with derived and tasminmax realm groups; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-0.5K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r01, r02, r03), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r01"
+    metadata:
+      model: "MIROC-ES2H"
+      experiment: "G6-0.5K-SAI"
+      experiment_id: "g6-0.5k-sai"
+      purpose: "simulator inputs"
+      years: "2035-2084"
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "MIROC-ES2H", "G6-0.5K-SAI", "public"]
+
+  simulator_miroc_es2h_g6_1p5k_sai:
+    driver: zarr
+    description: "Simulator inputs: MIROC-ES2H G6-1.5K-SAI (Zarr, public Cloudflare R2), 2035-2084. Monthly 2D atmosphere fields (TREFHT, PRECT, QFLX, ICEFRAC) with derived and tasminmax realm groups; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_G6-1.5K-SAI.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r01, r02, r03), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r01"
+    metadata:
+      model: "MIROC-ES2H"
+      experiment: "G6-1.5K-SAI"
+      experiment_id: "g6-1.5k-sai"
+      purpose: "simulator inputs"
+      years: "2035-2084"
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "MIROC-ES2H", "G6-1.5K-SAI", "public"]
+
+  simulator_miroc_es2h_baseline:
+    driver: zarr
+    description: "Simulator inputs: MIROC-ES2H baseline (Zarr, public Cloudflare R2), 2020-2084. Monthly 2D atmosphere fields (TREFHT, PRECT, QFLX, ICEFRAC) with derived and tasminmax realm groups; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_baseline.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r01, r02, r03), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r01"
+    metadata:
+      model: "MIROC-ES2H"
+      experiment: "baseline"
+      experiment_id: "baseline"
+      purpose: "simulator inputs"
+      years: "2020-2084"
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "MIROC-ES2H", "baseline", "public"]
+
+  simulator_miroc_es2h_historical:
+    driver: zarr
+    description: "Simulator inputs: MIROC-ES2H historical (Zarr, public Cloudflare R2), 1850-2014. Monthly 2D atmosphere fields (TREFHT, PRECT, QFLX, ICEFRAC) with derived and tasminmax realm groups; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_historical.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r01, r02, r03), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r01"
+    metadata:
+      model: "MIROC-ES2H"
+      experiment: "historical"
+      experiment_id: "historical"
+      purpose: "simulator inputs"
+      years: "1850-2014"
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "MIROC-ES2H", "historical", "public"]
+
+  simulator_miroc_es2h_ssp245:
+    driver: zarr
+    description: "Simulator inputs: MIROC-ES2H ssp245 (Zarr, public Cloudflare R2), 2015-2100. Monthly 2D atmosphere fields (TREFHT, PRECT, QFLX, ICEFRAC) with derived and tasminmax realm groups; the ensemble is a member dimension."
+    args:
+      urlpath: "https://pub-d127229e707d485c80965ab41706e316.r2.dev/simulator-inputs/MIROC-ES2H_ssp245.zarr"
+      group: "{{table}}/{{realm}}"
+      consolidated: true
+    parameters:
+      table:
+        description: "Output table group (Mon)"
+        type: str
+        default: "Mon"
+      realm:
+        description: "Realm subgroup (atmos_2d, atmos_2d_derived, atmos_2d_tasminmax)"
+        type: str
+        default: "atmos_2d"
+      ensemble:
+        description: "Ensemble member (r01, r02, r03), selected along the member dimension; pass 'all' for the full ensemble"
+        type: str
+        default: "r01"
+    metadata:
+      model: "MIROC-ES2H"
+      experiment: "ssp245"
+      experiment_id: "ssp245"
+      purpose: "simulator inputs"
+      years: "2015-2100"
+      select_map:
+        member: ensemble
+      data_access: "public"
+      hosted_on: "Cloudflare R2 (public)"
+      public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
+      tags: ["simulator", "MIROC-ES2H", "ssp245", "public"]
