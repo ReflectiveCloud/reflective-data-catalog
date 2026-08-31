@@ -104,11 +104,14 @@ sources:
       tags: ["geoengineering", "SAI", "high-latitude", "CESM2-WACCM", "G6-1.5K-HiLLA", "feedback-control", "public"]
   
   e3smv3_g6_1p5k_hilla:
-    driver: zarr
-    description: "E3SMv3 G6-1.5K-HiLLA (Zarr): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K"
+    driver: netcdf
+    description: "E3SMv3 G6-1.5K-HiLLA (NetCDF): SAI with 60°N/S injection at 15km to hold global mean temperature to 1.5K. NetCDF-only on the hub under variable/gn/<version>/ paths; the files are CDF-5, opened via netCDF4 with a temporary local download."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble}}/{{table}}/{{variable}}.zarr"
-      consolidated: true
+      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245.g6_hilla.sai.{{ensemble}}/{{table}}/{{variable}}/gn/*/*.nc"
+      combine: by_coords
+      concat_dim: time
+      xarray_kwargs:
+        engine: netcdf4
       storage_options:
         anon: false
     parameters:
@@ -121,7 +124,7 @@ sources:
         type: str
         default: "Amon"
       variable:
-        description: "Climate variable name (E3SM-native, e.g. T, TREFHT, PRECT — one Zarr store per variable; CMOR names like tas do not exist here)"
+        description: "Climate variable name (E3SM-native, e.g. T, TREFHT, PRECT — bucket-verified; CMOR names like tas do not exist here)"
         type: str
         default: "T"
     metadata:
@@ -224,11 +227,14 @@ sources:
       tags: ["geoengineering", "SAI", "UKESM1.1", "SSP2-4.5", "reference"]
 
   e3smv3_ssp245:
-    driver: zarr
-    description: "E3SMv3 SSP2-4.5 reference (control runs for for G6-1.5K-HiLLA)"
+    driver: netcdf
+    description: "E3SMv3 SSP2-4.5 reference (control runs for G6-1.5K-HiLLA). NetCDF-only on the hub under variable/gn/<version>/ paths; the files are CDF-5, opened via netCDF4 with a temporary local download."
     args:
-      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble}}/{{table}}/{{variable}}.zarr"
-      consolidated: true
+      urlpath: "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/v3.LR.ssp245_{{ensemble}}/{{table}}/{{variable}}/gn/*/*.nc"
+      combine: by_coords
+      concat_dim: time
+      xarray_kwargs:
+        engine: netcdf4
       storage_options:
         anon: false
     parameters:
@@ -241,7 +247,7 @@ sources:
         type: str
         default: "day"
       variable:
-        description: "Climate variable name (E3SM-native, e.g. TREFHT, PRECT, T — one Zarr store per variable; CMOR names like tas do not exist here)"
+        description: "Climate variable name (E3SM-native, e.g. TREFHT, PRECT, T — bucket-verified; CMOR names like tas do not exist here)"
         type: str
         default: "TREFHT"
     metadata:

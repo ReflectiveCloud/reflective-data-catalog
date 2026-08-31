@@ -277,6 +277,35 @@ def test_facet_regex_word_chars():
         src._assert_selection_purity(mixed_variant)
 
 
+def test_netcdf4_engine_opens_via_local_copies(tmp_path):
+    """CDF-5 sources (E3SM) open via netCDF4 on temporary local copies."""
+    pytest.importorskip("netCDF4")
+    import numpy as np
+    import xarray as xr
+
+    data_dir = tmp_path / "T"
+    data_dir.mkdir()
+    for i in range(2):
+        ds = xr.Dataset(
+            {"T": ("time", np.arange(3, dtype="f4"))},
+            coords={"time": np.arange(i * 3, i * 3 + 3)},
+        )
+        ds.to_netcdf(data_dir / f"T_{i}.nc", engine="netcdf4")
+    entry = {
+        "driver": "netcdf",
+        "args": {
+            "urlpath": f"file://{tmp_path}/{{{{variable}}}}/*.nc",
+            "combine": "by_coords",
+            "xarray_kwargs": {"engine": "netcdf4"},
+        },
+        "parameters": {"variable": {"type": "str", "default": "T"}},
+    }
+    src = CatalogSource("x", entry, FakeFS())
+    opened = src.to_dask()
+    assert opened.sizes["time"] == 6
+    assert "T" in opened.data_vars
+
+
 def test_select_map_member_selection():
     """Grouped public stores: the ensemble parameter selects along a dim."""
     import numpy as np

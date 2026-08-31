@@ -78,10 +78,10 @@ All 17 sources come from the packaged catalog file (`src/reflective_data_catalog
 |--------|-------|------------|--------|--------|-----------|
 | `ukesm1_g6_1p5k_hilla` | UKESM1.1 | G6-1.5K-HiLLA | netcdf | Hub | stable |
 | `cesm2_waccm_g6_1p5k_hilla` | CESM2-WACCM | G6-1.5K-HiLLA | zarr | Public | stable |
-| `e3smv3_g6_1p5k_hilla` | E3SMv3 | G6-1.5K-HiLLA | zarr | Hub | stable |
+| `e3smv3_g6_1p5k_hilla` | E3SMv3 | G6-1.5K-HiLLA | netcdf | Hub | stable |
 | `miroc_es2h_g6_1p5k_hilla` | MIROC-ES2H | G6-1.5K-HiLLA (`variant=`) | zarr | Public | stable |
 | `ukesm1_ssp245` | UKESM1.1 | SSP2-4.5 reference | netcdf | Hub | stable |
-| `e3smv3_ssp245` | E3SMv3 | SSP2-4.5 reference | zarr | Hub | stable |
+| `e3smv3_ssp245` | E3SMv3 | SSP2-4.5 reference | netcdf | Hub | stable |
 | `cesm2_waccm_historical` | CESM2-WACCM | Historical (POP ocean) | netcdf | Hub | stable |
 | `cesm2_waccm_ssp245` | CESM2-WACCM | SSP2-4.5 (POP ocean) | zarr | Public | stable |
 | `miroc_es2h_g6_1p5k_sai` | MIROC-ES2H | G6-1.5K-SAI (`variant=`) | zarr | Public | stable |
@@ -226,7 +226,7 @@ v1.0 replaces the pre-1.0 dual registration system (flexible source configs plus
 - **Typos now error.** Unknown keyword arguments raise `TypeError` listing the valid parameters. Previously they were silently ignored and the defaults loaded.
 - **MIROC uses `variant=`.** The old separate MIROC SSP2-4.5 sources were absorbed into the two MIROC entries as `variant='baseline'` (the default on the HiLLA entry).
 - **Both UKESM hub entries (`ukesm1_ssp245`, `ukesm1_g6_1p5k_hilla`) stay NetCDF** in their pre-1.0 stream/time layouts — UM stream `table=` values (`ap4`..`onm`), the `time=` parameter, and the old defaults all keep working unchanged.
-- **Parameter value vocabularies changed with the Zarr switches.** Old NetCDF values (e.g. `table='AMON'`, `variable='T'`, `ensemble='r1'` on CESM sources) no longer match the Zarr stores (`Aday`/`tas`/`r1i1p1f1`). Old values are never silently translated — they raise an error carrying the old→new mapping.
+- **Parameter value vocabularies changed with the Zarr switches (CESM/MIROC).** Old table values (e.g. `table='AMON'`) no longer match the Zarr groups (`Amon`), and variables are selected from the opened dataset instead of the path. Old values are never silently translated — they raise an error carrying the old→new mapping. The NetCDF-preserving entries (UKESM, E3SM, `cesm2_waccm_historical`) keep their old vocabularies; E3SM variables stay E3SM-native (`T`, `TREFHT` — there is no `tas`).
 - **Structured results and typed errors.** `list_sources()`/`list_tags()`/`search()` return records (printing behind `verbose=True`); `get_source_config()` is replaced by `get_source()` and `get_parameters()`; unknown sources raise `SourceNotFoundError`.
 
 The full old→new table — source by source, kwarg by kwarg, default by default — is in [docs/migration-matrix.md](./docs/migration-matrix.md), rendered from the machine-readable `migration_matrix.yaml` that ships inside the package.

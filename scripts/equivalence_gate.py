@@ -37,21 +37,14 @@ SWITCHED = {
     # never zarrified (the pre-1.0 NetCDF layout is intact; the earlier
     # ORIGINALS-GONE verdict was a member-pinned filename-glob artifact —
     # filenames carry r12i1p1f2 under the r12i1p1f1 directory).
+    # e3smv3_g6_1p5k_hilla is NOT here either: never zarrified (2026-08-31
+    # listing) — the entry stays NetCDF on the original CDF-5 tree.
     "cesm2_waccm_g6_1p5k_hilla": {
         "netcdf_glob": (
             "s3://reflective-persistent-prod-large/CESM2-WACCM/G6-1.5k-HiLLA/"
             "r1/AMON/b.e21.BW.f09_g17.SSP245-G6-1p5K-HiLLA.001.cam.*.T.*.nc"
         ),
         "old_default_variable": "T",
-    },
-    "e3smv3_g6_1p5k_hilla": {
-        "netcdf_glob": (
-            "s3://reflective-persistent-prod-large/E3SMv3/G6-1.5K-HiLLA/"
-            "v3.LR.ssp245.g6_hilla.sai.0101/Amon/T/gn/13112025/T_*.nc"
-        ),
-        "old_default_variable": "T",
-        # E3SM originals are CDF-5 (b'CDF\x05'), unreadable by h5netcdf.
-        "engine": "netcdf4",
     },
     "cesm2_waccm_ssp245": {
         "netcdf_glob": (

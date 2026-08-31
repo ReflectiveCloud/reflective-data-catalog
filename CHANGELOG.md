@@ -17,11 +17,13 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
   `reflective_data.py`, `FlexibleSourceConfig`). All sources are registered
   in `data-catalog.yaml` (schema v2) and loaded by a self-parsed loader;
   intake is no longer a runtime dependency.
-- The 8 documented source names are unchanged, but several switched backends
-  from NetCDF file sets to Zarr copies; parameter *values* changed with them
-  (e.g. CESM `AMON`/`T`/`r1` → CMOR-style `Aday`/`tas`/`r1i1p1f1`). Old
-  values raise a guidance error carrying the matrix mapping — never a silent
-  substitution.
+- The 8 documented source names are unchanged, but the CESM and MIROC
+  experiment sources switched backends from NetCDF file sets to public Zarr
+  stores; parameter *values* changed with them (e.g. CESM `table='AMON'` →
+  `'Amon'`, and variables are selected from the opened dataset instead of
+  the path). Old values raise a guidance error carrying the matrix mapping —
+  never a silent substitution. UKESM, E3SM, and `cesm2_waccm_historical`
+  stay NetCDF with their old vocabularies intact.
 - Unknown keyword arguments raise `TypeError` (typos were previously
   silently ignored and loaded default data).
 - Both UKESM hub entries (`ukesm1_ssp245`, `ukesm1_g6_1p5k_hilla`) stay
@@ -57,6 +59,9 @@ pin the final pre-migration release: `pip install "reflective-data-catalog<1"`.
   time axes are checked for monotonicity.
 - Per-entry anonymous access honored end-to-end (public ARISE sources work
   with no credentials); S3 bucket regions resolve automatically.
+- CDF-5 NetCDF sources (the E3SM entries) load via the netcdf4 engine with
+  a temporary local download — h5netcdf cannot read CDF-5, and netCDF4
+  cannot read remote file objects.
 - `scripts/bucket_audit.py` (rerunnable bucket inventory) and
   `scripts/equivalence_gate.py` (NetCDF→Zarr equivalence verification with
   partial-upload detection).

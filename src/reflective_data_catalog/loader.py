@@ -381,7 +381,20 @@ class CatalogSource:
             )
         self._assert_selection_purity(matched)
 
-        handles = [f.open() for f in open_files]
+        if engine == "netcdf4":
+            # netCDF4-python cannot read file-like objects; CDF-5 sources
+            # (E3SM) are unreadable by h5netcdf, so they download to a
+            # temporary local copy and open by path.
+            import tempfile
+
+            cache = Path(tempfile.mkdtemp(prefix="rdc-netcdf4-"))
+            handles = []
+            for i, f in enumerate(open_files):
+                local = cache / f"{i:03d}_{Path(f.path).name}"
+                f.fs.get_file(f.path, str(local))
+                handles.append(str(local))
+        else:
+            handles = [f.open() for f in open_files]
         if len(handles) == 1:
             ds = xr.open_dataset(handles[0], engine=engine, **xr_kwargs)
         else:
