@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from reflective_data_catalog.exceptions import MissingCredentialsError
 from reflective_data_catalog.storage import CloudFileSystem
 
 
@@ -259,7 +260,9 @@ class TestCloudflareR2:
     def test_get_r2_endpoint_missing_account_id(self):
         fs = CloudFileSystem()
         fs._r2_account_id = None  # ensure unset
-        with pytest.raises(ValueError, match="Cloudflare R2 account ID is required"):
+        with pytest.raises(
+            MissingCredentialsError, match="Cloudflare R2 account ID is required"
+        ):
             fs._get_r2_endpoint()
 
     @patch("reflective_data_catalog.storage.S3Store")

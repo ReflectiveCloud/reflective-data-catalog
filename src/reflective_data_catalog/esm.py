@@ -71,17 +71,17 @@ class ESMCatalog:
         if self._catalog is None:
             try:
                 import intake
-            except ImportError:
+            except ImportError as exc:
                 raise ImportError(
-                    "intake is required for ESM catalog access. "
-                    "Install with: pip install intake intake-esm"
-                )
+                    "intake-esm is required for ESM catalog access. "
+                    'Install with: pip install "reflective-data-catalog[esm]"'
+                ) from exc
             try:
                 self._catalog = intake.open_esm_datastore(self._catalog_url)
             except Exception as e:
                 raise RuntimeError(
                     f"Failed to open ESM catalog at {self._catalog_url}: {e}"
-                )
+                ) from e
         return self._catalog
 
     def search(
@@ -339,7 +339,11 @@ class GeoMIPCloudHelper:
         geomip.list_models()
     """
 
-    def __init__(self, catalog_url: str | None = None):
+    def __init__(
+        self,
+        catalog_url: str | None = None,
+        esm_catalog: ESMCatalog | None = None,
+    ):
         """
         Initialize the GeoMIP Cloud helper.
 
@@ -347,9 +351,17 @@ class GeoMIPCloudHelper:
         ----------
         catalog_url : str, optional
             URL to an intake-esm catalog. Defaults to the Google Cloud
-            CMIP6 catalog (quality-controlled).
+            CMIP6 catalog (quality-controlled). Ignored when
+            ``esm_catalog`` is provided.
+        esm_catalog : ESMCatalog, optional
+            An existing :class:`ESMCatalog` to share (avoids opening a
+            second connection to the same catalog). When omitted, a new
+            one is created.
         """
-        self._esm = ESMCatalog(catalog_url=catalog_url)
+        if esm_catalog is not None:
+            self._esm = esm_catalog
+        else:
+            self._esm = ESMCatalog(catalog_url=catalog_url)
 
     @property
     def catalog(self) -> ESMCatalog:

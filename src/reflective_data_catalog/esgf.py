@@ -13,11 +13,11 @@ class ESGFHelper:
                 from intake_esgf import ESGFCatalog
 
                 self._esgf_cat = ESGFCatalog()
-            except ImportError:
+            except ImportError as exc:
                 raise ImportError(
                     "intake-esgf is required for ESGF data access. "
-                    "Install with: pip install intake-esgf"
-                )
+                    'Install with: pip install "reflective-data-catalog[esgf]"'
+                ) from exc
         return self._esgf_cat
 
     def search(self, **kwargs):
@@ -197,8 +197,10 @@ class GeoMIPHelper:
             return self._parent._get_catalog()
         try:
             from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
+        except ImportError as exc:
+            raise ImportError(
+                'intake-esgf required: pip install "reflective-data-catalog[esgf]"'
+            ) from exc
         return ESGFCatalog()
 
     def g6sulfur(
@@ -318,8 +320,10 @@ class SSPHelper:
             return self._parent._get_catalog()
         try:
             from intake_esgf import ESGFCatalog
-        except ImportError:
-            raise ImportError("intake-esgf required: pip install intake-esgf")
+        except ImportError as exc:
+            raise ImportError(
+                'intake-esgf required: pip install "reflective-data-catalog[esgf]"'
+            ) from exc
         return ESGFCatalog()
 
     def ssp245(

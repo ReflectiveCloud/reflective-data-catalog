@@ -6,6 +6,7 @@ on:
     tags: ["*"]
   pull_request:
     branches: [main]
+  workflow_call:  # reused as the gate by build-and-push.yml
 
 jobs:
   test:
@@ -44,3 +45,35 @@ jobs:
         with:
           files: ./coverage.xml
           fail_ci_if_error: false
+
+  build-check:
+    name: Wheel builds and packages data files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # setuptools-scm needs history for the version
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Build and check the distribution
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Assert packaged data files ship in the wheel
+        run: |
+          python - <<'EOF'
+          import glob, sys, zipfile
+          wheel = glob.glob("dist/*.whl")[0]
+          names = zipfile.ZipFile(wheel).namelist()
+          required = [
+              "reflective_data_catalog/data-catalog.yaml",
+              "reflective_data_catalog/migration_matrix.yaml",
+              "reflective_data_catalog/py.typed",
+          ]
+          missing = [r for r in required if r not in names]
+          if missing:
+              sys.exit(f"wheel is missing packaged data files: {missing}")
+          print("wheel contains:", ", ".join(required))
+          EOF
