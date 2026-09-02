@@ -160,6 +160,10 @@ quote-style = "double"
 # Indent with spaces, rather than tabs
 indent-style = "space"
 
+# Keep Markdown code examples hand-formatted (ruff >= 0.16 formats
+# Python fences in .md files by default; docs snippets are prose).
+exclude = ["*.md"]
+
 # Respect magic trailing commas
 skip-magic-trailing-comma = false
 
