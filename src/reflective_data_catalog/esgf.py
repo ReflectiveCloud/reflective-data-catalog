@@ -16,7 +16,9 @@ class ESGFHelper:
             except ImportError as exc:
                 raise ImportError(
                     "intake-esgf is required for ESGF data access. "
-                    'Install with: pip install "reflective-data-catalog[esgf]"'
+                    'Install with: pip install "reflective-data-catalog[esgf]" '
+                    "(needs Python >= 3.12 — intake-esgf no longer supports "
+                    "3.11, so the extra installs nothing there)"
                 ) from exc
         return self._esgf_cat
 
@@ -199,7 +201,8 @@ class GeoMIPHelper:
             from intake_esgf import ESGFCatalog
         except ImportError as exc:
             raise ImportError(
-                'intake-esgf required: pip install "reflective-data-catalog[esgf]"'
+                'intake-esgf required: pip install "reflective-data-catalog[esgf]" '
+                "(needs Python >= 3.12)"
             ) from exc
         return ESGFCatalog()
 
@@ -322,7 +325,8 @@ class SSPHelper:
             from intake_esgf import ESGFCatalog
         except ImportError as exc:
             raise ImportError(
-                'intake-esgf required: pip install "reflective-data-catalog[esgf]"'
+                'intake-esgf required: pip install "reflective-data-catalog[esgf]" '
+                "(needs Python >= 3.12)"
             ) from exc
         return ESGFCatalog()
 

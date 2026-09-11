@@ -54,8 +54,10 @@ esm = [
 esgf = [
     # Floor verified against the live federation in a fresh env; 2026.9.4
     # cannot resolve file access for standard CMIP6 datasets (upstream
-    # regression), and <=2025.x cannot import with globus-sdk 4.
-    "intake-esgf>=2026.6.4,!=2026.9.4",
+    # regression), and the 2025.x line is broken with current globus-sdk
+    # and pandas. The maintained intake-esgf line requires Python >= 3.12,
+    # so on 3.11 this extra installs nothing and catalog.esgf explains.
+    'intake-esgf>=2026.6.4,!=2026.9.4; python_version >= "3.12"',
 ]
 dev = [
     "pytest>=7.0",
@@ -64,7 +66,7 @@ dev = [
     "pre-commit>=3.0",
     "intake>=2.0.0",
     "intake-esm>=2025.2.3",
-    "intake-esgf>=2026.6.4,!=2026.9.4",  # see the esgf extra
+    'intake-esgf>=2026.6.4,!=2026.9.4; python_version >= "3.12"',  # see the esgf extra
     # scripts/equivalence_gate.py only: the E3SM NetCDF originals are CDF-5,
     # unreadable by h5netcdf.
     "netCDF4>=1.6",

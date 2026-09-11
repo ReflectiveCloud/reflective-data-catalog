@@ -19,7 +19,7 @@ The public ARISE sources work with no credentials at all; sources on the private
 pip install reflective-data-catalog
 ```
 
-Optional extras add the Google Cloud CMIP6/GeoMIP catalog (via intake-esm) and ESGF access (via intake-esgf) — neither is required for the core catalog:
+Optional extras add the Google Cloud CMIP6/GeoMIP catalog (via intake-esm) and ESGF access (via intake-esgf; needs Python >= 3.12) — neither is required for the core catalog:
 
 ```bash
 pip install "reflective-data-catalog[esm]"    # catalog.esm / catalog.geomip_cloud
@@ -270,7 +270,7 @@ Tests use the real packaged catalog and mock storage I/O only — no network acc
 
 ## Requirements
 
-Python >= 3.11. Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
+Python >= 3.11 for the core catalog; the `[esgf]` extra needs Python >= 3.12 (intake-esgf dropped 3.11). Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
 
 ## License
 
