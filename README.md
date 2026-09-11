@@ -49,7 +49,9 @@ rdc = ReflectiveCatalog()
 ds = rdc.arise_sai_15(variable="TREFHT", time_frequency="month_1").to_dask()
 
 # Public Zarr stores on Cloudflare R2 — also no credentials. Tables and
-# realms are Zarr groups; variables are selected from the opened dataset.
+# realms are Zarr groups; variables are selected from the opened dataset —
+# list_variables() enumerates them (list_variables(table="day") aggregates
+# across the day/* groups; add realm= to pin one group).
 ds = rdc.cesm2_waccm_g6_1p5k_hilla(table="Amon", realm="atmos_3d", ensemble="r1").to_dask()
 temperature = ds["T"]
 

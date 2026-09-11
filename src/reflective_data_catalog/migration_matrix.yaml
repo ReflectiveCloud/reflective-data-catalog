@@ -100,7 +100,7 @@ sources:
 kwargs:
   ensemble: "canonical; aliases: ensemble_member, member_id"
   table: "canonical; aliases: table_id"
-  variable: "canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC) variables are selected from the opened dataset, not a path parameter"
+  variable: "canonical; aliases: variable_id. On the grouped public-R2 Zarr entries (CESM/MIROC/simulator) variables are selected from the opened dataset, not a path parameter; list_variables() enumerates them from the store metadata, aggregating across the groups the call does not pin (e.g. list_variables(table='day'))"
   variant: "kept as a per-entry parameter on the MIROC entries"
   time: "per-entry parameter on both UKESM hub entries (ukesm1_ssp245 and ukesm1_g6_1p5k_hilla), whose stream/time NetCDF layouts are unchanged"
   realm: "per-entry parameter on ARISE CESM entries"

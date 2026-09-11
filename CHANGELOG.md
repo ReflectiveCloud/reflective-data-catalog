@@ -3,7 +3,21 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — v1.0.0
+## [Unreleased] — v1.0.1
+
+### Fixed
+
+- `list_variables()` on the grouped public Zarr entries (CESM/MIROC/
+  simulator) returned `[]` silently — `variable` is not a declared
+  parameter there, and the scan bailed out before reading the store. It
+  now enumerates data variables from the store's consolidated metadata:
+  group parameters you pass pin their segment, unpinned segments
+  aggregate (`list_variables()` is the whole store,
+  `list_variables(table='day')` is everything under `day/*`), a new
+  `realm=` argument pins an exact group, and `variant=` reads the right
+  MIROC store. A value matching no group warns instead of staying silent.
+
+## [1.0.0] — 2026-09-02
 
 The v1.0 migration: one source-registration mechanism, a self-parsed loader,
 and a deliberately frozen public API. The full old→new mapping ships in the
