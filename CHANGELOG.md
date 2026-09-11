@@ -3,7 +3,33 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — v1.0.0
+## [Unreleased] — v1.0.1
+
+### Fixed
+
+- The `[esgf]` extra pins `intake-esgf>=2026.6.4,!=2026.9.4`. The 2026.9.4
+  release cannot resolve file access for standard CMIP6 datasets
+  (`DatasetLoadError` from e.g. `catalog.esgf.ssp.ssp245()` — an upstream
+  regression, reproduced independently of network/environment), and the
+  2025.x line is broken with current globus-sdk and pandas. Because the
+  maintained intake-esgf line requires Python >= 3.12, **the ESGF helpers
+  now need Python >= 3.12** — on 3.11 the extra installs nothing and
+  `catalog.esgf` raises an `ImportError` saying so (the core catalog is
+  unaffected). After a failure,
+  `print(catalog.esgf.ssp._get_catalog().session_log())` shows the
+  per-index/per-link detail.
+
+- `list_variables()` on the grouped public Zarr entries (CESM/MIROC/
+  simulator) returned `[]` silently — `variable` is not a declared
+  parameter there, and the scan bailed out before reading the store. It
+  now enumerates data variables from the store's consolidated metadata:
+  group parameters you pass pin their segment, unpinned segments
+  aggregate (`list_variables()` is the whole store,
+  `list_variables(table='day')` is everything under `day/*`), a new
+  `realm=` argument pins an exact group, and `variant=` reads the right
+  MIROC store. A value matching no group warns instead of staying silent.
+
+## [1.0.0] — 2026-09-02
 
 The v1.0 migration: one source-registration mechanism, a self-parsed loader,
 and a deliberately frozen public API. The full old→new mapping ships in the

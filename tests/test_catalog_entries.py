@@ -306,6 +306,56 @@ def test_netcdf4_engine_opens_via_local_copies(tmp_path):
     assert "T" in opened.data_vars
 
 
+def test_grouped_store_list_variables(monkeypatch):
+    """Grouped Zarr entries list variables from the consolidated metadata.
+
+    ``variable`` is not a declared parameter on these entries, so the scan
+    reads the store metadata: group segments the caller pins (table/realm)
+    filter the groups; unpinned segments aggregate across every group.
+    """
+    entry = {
+        "driver": "zarr",
+        "args": {
+            "urlpath": "https://example.invalid/store.zarr",
+            "group": "{{table}}/{{realm}}",
+        },
+        "parameters": {
+            "table": {"type": "str", "default": "Mon"},
+            "realm": {"type": "str", "default": "atmos_2d"},
+            "ensemble": {"type": "str", "default": "r01"},
+        },
+        "metadata": {"select_map": {"member": "ensemble"}},
+    }
+    meta = {
+        "Mon": {"node_type": "group"},
+        "Mon/atmos_2d": {"node_type": "group"},
+        "Mon/atmos_2d/TREFHT": {
+            "node_type": "array",
+            "dimension_names": ["member", "time", "lat", "lon"],
+        },
+        "Mon/atmos_2d/time": {"node_type": "array", "dimension_names": ["time"]},
+        "Mon/atmos_2d/member": {"node_type": "array", "dimension_names": ["member"]},
+        "day": {"node_type": "group"},
+        "day/atmos_2d": {"node_type": "group"},
+        "day/atmos_2d/PRECT": {
+            "node_type": "array",
+            "dimension_names": ["member", "time", "lat", "lon"],
+        },
+    }
+    monkeypatch.setattr(
+        CatalogSource, "_store_metadata", lambda self, store_url=None: meta
+    )
+    src = CatalogSource("x", entry, FakeFS())
+    assert src.list_variables() == ["PRECT", "TREFHT"]  # whole store
+    assert src.list_variables(table="day") == ["PRECT"]  # day/* aggregate
+    assert src.list_variables(table="Mon", realm="atmos_2d") == ["TREFHT"]
+    # Non-group parameters do not constrain the group match.
+    assert src.list_variables(ensemble="r02", table="day") == ["PRECT"]
+    # A pinned value matching no group warns and returns [] (plan R9).
+    with pytest.warns(UserWarning, match="no variables"):
+        assert src.list_variables(table="Amon", refresh=True) == []
+
+
 def test_select_map_member_selection():
     """Grouped public stores: the ensemble parameter selects along a dim."""
     import numpy as np

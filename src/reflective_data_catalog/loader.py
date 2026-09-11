@@ -484,6 +484,7 @@ class CatalogSource:
         ensemble: str | None = None,
         table: str | None = None,
         variant: str | None = None,
+        realm: str | None = None,
         refresh: bool = False,
     ) -> list:
         overrides = {}
@@ -493,6 +494,8 @@ class CatalogSource:
             overrides["table"] = table
         if variant is not None:
             overrides["variant"] = variant
+        if realm is not None:
+            overrides["realm"] = realm
         return self._scan("variable", overrides=overrides or None, refresh=refresh)
 
     def _scan(
@@ -506,11 +509,18 @@ class CatalogSource:
         Returns real observed values; an empty scan returns ``[]`` with a
         warning — never the parameter default (plan R9).
         """
-        if param not in self._declared_params():
-            return []
         cache_key = (param, tuple(sorted((overrides or {}).items())))
         if not refresh and cache_key in self._discovery_cache:
             return self._discovery_cache[cache_key]
+        if param == "variable" and param not in self._declared_params():
+            # Grouped stores do not declare ``variable`` — variables are
+            # members of the opened dataset, listed from store metadata.
+            found = self._scan_group_arrays(overrides)
+            if found is not None:
+                self._discovery_cache[cache_key] = found
+                return found
+        if param not in self._declared_params():
+            return []
 
         group_template = (self._entry.get("args") or {}).get("group") or ""
         if f"{{{{{param}}}}}" in group_template:
@@ -566,16 +576,17 @@ class CatalogSource:
         self._discovery_cache[cache_key] = found
         return found
 
-    def _store_metadata(self) -> dict:
+    def _store_metadata(self, store_url: str | None = None) -> dict:
         """Fetch and cache the store's consolidated zarr v3 metadata."""
-        cache_key = ("__store_metadata__", self._render(self._urlpaths()[0]))
+        rendered = store_url or self._render(self._urlpaths()[0])
+        cache_key = ("__store_metadata__", rendered)
         if cache_key in self._discovery_cache:
             return self._discovery_cache[cache_key]  # type: ignore[return-value]
         import json
 
         import fsspec
 
-        url = self._render(self._urlpaths()[0]).rstrip("/") + "/zarr.json"
+        url = rendered.rstrip("/") + "/zarr.json"
         fsspec_url, so = self._fsspec_target(url)
         try:
             with fsspec.open(fsspec_url, **so) as f:
@@ -604,7 +615,7 @@ class CatalogSource:
             for seg in segments[:depth]
         ]
         prefix = "/".join(s for s in prefix_segments if s)
-        consolidated = self._store_metadata()
+        consolidated = self._store_metadata(self._render(self._urlpaths()[0], values))
         found = set()
         for key, node in consolidated.items():
             if node.get("node_type") != "group":
@@ -619,6 +630,62 @@ class CatalogSource:
             warnings.warn(
                 f"{self._name}: no groups found for {param!r} in the store "
                 f"metadata; check the variant/table values",
+                stacklevel=3,
+            )
+        return result
+
+    def _scan_group_arrays(self, overrides: dict | None) -> list | None:
+        """Data variables of a grouped Zarr store, from consolidated metadata.
+
+        Grouped stores do not declare ``variable`` as a parameter —
+        variables are members of the opened dataset. Group-template
+        parameters the caller passed explicitly (e.g. ``table='day'``)
+        constrain which groups are read; unspecified segments match every
+        group, so a bare ``list_variables()`` returns the store's full
+        vocabulary. Dimension coordinates (arrays named after one of their
+        own dimensions) are excluded. Returns ``None`` when the entry is
+        not a grouped Zarr store.
+        """
+        args = self._entry.get("args") or {}
+        group_template = args.get("group")
+        if self._entry.get("driver") != "zarr" or not group_template:
+            return None
+        overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
+        seg_templates = group_template.split("/")
+
+        def seg_matches(seg_template: str, seg: str) -> bool:
+            names = _PLACEHOLDER.findall(seg_template)
+            if not names:
+                return seg_template == seg
+            if all(n in overrides for n in names):
+                rendered = _PLACEHOLDER.sub(
+                    lambda m: str(overrides[m.group(1)]), seg_template
+                )
+                return rendered == seg
+            return True  # wildcard: the caller did not pin this segment
+
+        store_url = self._render(self._urlpaths()[0], overrides)
+        found = set()
+        for key, node in self._store_metadata(store_url).items():
+            if node.get("node_type") != "array":
+                continue
+            group, _, name = key.rpartition("/")
+            parts = group.split("/") if group else []
+            if len(parts) != len(seg_templates):
+                continue
+            if not all(
+                seg_matches(t, s) for t, s in zip(seg_templates, parts, strict=True)
+            ):
+                continue
+            if name in (node.get("dimension_names") or ()):
+                continue
+            found.add(name)
+        result = sorted(found)
+        if not result:
+            warnings.warn(
+                f"{self._name}: no variables found for the requested group(s) "
+                f"in the store metadata; use list_tables() for available "
+                f"groups and check the parameter values",
                 stacklevel=3,
             )
         return result

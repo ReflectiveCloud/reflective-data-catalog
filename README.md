@@ -19,7 +19,7 @@ The public ARISE sources work with no credentials at all; sources on the private
 pip install reflective-data-catalog
 ```
 
-Optional extras add the Google Cloud CMIP6/GeoMIP catalog (via intake-esm) and ESGF access (via intake-esgf) — neither is required for the core catalog:
+Optional extras add the Google Cloud CMIP6/GeoMIP catalog (via intake-esm) and ESGF access (via intake-esgf; needs Python >= 3.12) — neither is required for the core catalog:
 
 ```bash
 pip install "reflective-data-catalog[esm]"    # catalog.esm / catalog.geomip_cloud
@@ -49,7 +49,9 @@ rdc = ReflectiveCatalog()
 ds = rdc.arise_sai_15(variable="TREFHT", time_frequency="month_1").to_dask()
 
 # Public Zarr stores on Cloudflare R2 — also no credentials. Tables and
-# realms are Zarr groups; variables are selected from the opened dataset.
+# realms are Zarr groups; variables are selected from the opened dataset —
+# list_variables() enumerates them (list_variables(table="day") aggregates
+# across the day/* groups; add realm= to pin one group).
 ds = rdc.cesm2_waccm_g6_1p5k_hilla(table="Amon", realm="atmos_3d", ensemble="r1").to_dask()
 temperature = ds["T"]
 
@@ -268,7 +270,7 @@ Tests use the real packaged catalog and mock storage I/O only — no network acc
 
 ## Requirements
 
-Python >= 3.11. Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
+Python >= 3.11 for the core catalog; the `[esgf]` extra needs Python >= 3.12 (intake-esgf dropped 3.11). Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
 
 ## License
 
