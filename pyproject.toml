@@ -52,7 +52,10 @@ esm = [
     "intake-esm>=2025.2.3",
 ]
 esgf = [
-    "intake-esgf>=2025.5.9",
+    # Floor verified against the live federation in a fresh env; 2026.9.4
+    # cannot resolve file access for standard CMIP6 datasets (upstream
+    # regression), and <=2025.x cannot import with globus-sdk 4.
+    "intake-esgf>=2026.6.4,!=2026.9.4",
 ]
 dev = [
     "pytest>=7.0",
@@ -61,7 +64,7 @@ dev = [
     "pre-commit>=3.0",
     "intake>=2.0.0",
     "intake-esm>=2025.2.3",
-    "intake-esgf>=2025.5.9",
+    "intake-esgf>=2026.6.4,!=2026.9.4",  # see the esgf extra
     # scripts/equivalence_gate.py only: the E3SM NetCDF originals are CDF-5,
     # unreadable by h5netcdf.
     "netCDF4>=1.6",

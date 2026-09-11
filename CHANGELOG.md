@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- The `[esgf]` extra pins `intake-esgf>=2026.6.4,!=2026.9.4`. The 2026.9.4
+  release cannot resolve file access for standard CMIP6 datasets
+  (`DatasetLoadError` from e.g. `catalog.esgf.ssp.ssp245()` — an upstream
+  regression, reproduced independently of network/environment), and
+  releases up to 2025.x cannot import against globus-sdk 4. After a
+  failure, `print(catalog.esgf.ssp._get_catalog().session_log())` shows
+  the per-index/per-link detail.
+
 - `list_variables()` on the grouped public Zarr entries (CESM/MIROC/
   simulator) returned `[]` silently — `variable` is not a declared
   parameter there, and the scan bailed out before reading the store. It
