@@ -586,3 +586,13 @@ def test_cesm_table_descriptions_omit_empty_groups(catalog):
         table = (entry.get("parameters") or {}).get("table") or {}
         description = table.get("description", "")
         assert "Lday" not in description and "Oyr" not in description, name
+
+
+def test_list_realms_lists_a_tables_subgroups(monkeypatch):
+    entry, _ = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS())
+    assert src.list_realms() == ["atmos_2d", "atmos_3d"]  # bound table: Amon
+    assert src.list_realms(table="Omon") == ["ocean_2d", "ocean_3d"]
+    assert src.list_realms(table="day") == ["atmos_2d"]
+    with pytest.warns(UserWarning, match="no groups"):
+        assert src.list_realms(table="Lday") == []

@@ -173,6 +173,7 @@ source = rdc.ukesm1_g6_1p5k_hilla()
 source.list_variables()   # observed variables (optionally per ensemble/table)
 source.list_ensembles()
 source.list_tables()
+source.list_realms(table="day")  # grouped Zarr entries: realms under a table
 
 source.discover()         # dict summary: url + ensembles + tables + variables
 ```
