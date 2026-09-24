@@ -43,6 +43,7 @@ DISCOVERING AVAILABLE DATA:
     # List what's available (scans cloud storage)
     source.list_ensembles()    # Available ensemble members
     source.list_tables()       # Available tables/frequencies
+    source.list_realms()       # Realm groups under a table (grouped Zarr)
     source.list_variables()    # Available variables
 
     # Full discovery summary

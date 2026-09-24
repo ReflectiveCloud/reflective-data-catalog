@@ -629,6 +629,11 @@ class CatalogSource:
         overrides = {"ensemble": ensemble} if ensemble else None
         return self._scan("table", overrides=overrides, refresh=refresh)
 
+    def list_realms(self, table: str | None = None, refresh: bool = False) -> list:
+        """Realm values under ``table`` (default: the bound table)."""
+        overrides = {"table": table} if table else None
+        return self._scan("realm", overrides=overrides, refresh=refresh)
+
     def list_variables(
         self,
         ensemble: str | None = None,

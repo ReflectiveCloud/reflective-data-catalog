@@ -45,6 +45,14 @@ All notable changes to this project are documented here. The format follows
 - The CESM `table` descriptions no longer offer `Lday`/`Oyr`, which are
   empty groups in the stores.
 
+### Added
+
+- `list_realms(table=)` lists the realm groups under a table on grouped
+  Zarr entries (`list_realms(table='Omon')` → `['ocean_2d', 'ocean_3d']`).
+- `Example.ipynb` walks the full workflow: list tables and realms, choose a
+  realm, pick one variable from the lazily opened store, subset and load a
+  20-year mean, and map it.
+
 ## [1.0.0] — 2026-09-02
 
 The v1.0 migration: one source-registration mechanism, a self-parsed loader,
