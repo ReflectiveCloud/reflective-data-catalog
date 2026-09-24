@@ -92,6 +92,19 @@ class TestCatalogIntegrity:
             if group:
                 assert "{{" not in src._render(group), f"{name}: group unrendered"
 
+    def test_every_defaults_by_value_renders(self, catalog):
+        """Each per-value default set yields a fully rendered url and group."""
+        for name, entry in catalog["sources"].items():
+            defaults_by = (entry.get("metadata") or {}).get("defaults_by") or {}
+            for selector, by_value in defaults_by.items():
+                for value, overrides in by_value.items():
+                    src = CatalogSource(name, entry, FakeFS(), **{selector: value})
+                    for param, default in overrides.items():
+                        assert src._params[param] == default, (name, value, param)
+                    urls = src.url
+                    urls = urls if isinstance(urls, list) else [urls]
+                    assert all("{{" not in u for u in urls), (name, value)
+
     def test_every_entry_renders_one_override(self, catalog):
         for name, entry in catalog["sources"].items():
             if name in DEFERRED_ENTRIES:
@@ -156,6 +169,32 @@ class TestCatalogIntegrity:
             "        endpoint_url: https://evil.example\n"
         )
         with pytest.raises(CatalogError, match="storage_options"):
+            load_catalog(bad)
+
+    @pytest.mark.parametrize(
+        ("defaults_by", "match"),
+        [
+            ("{nope: {a: {table: T}}}", "defaults_by selector 'nope'"),
+            ("{variant: {a: {nope: T}}}", "undeclared parameter"),
+            ("{variant: {a: {variant: b}}}", "cannot set its own selector"),
+            ("{variant: [a]}", "mapping"),
+        ],
+    )
+    def test_bad_defaults_by_fails_load(self, tmp_path, defaults_by, match):
+        bad = tmp_path / "bad.yaml"
+        bad.write_text(
+            "metadata:\n  reflective_schema_version: 2\n"
+            "sources:\n"
+            "  x:\n"
+            "    driver: zarr\n"
+            "    args:\n"
+            "      urlpath: s3://b/{{variant}}.zarr\n"
+            "    parameters:\n"
+            "      variant: {type: str, default: a}\n"
+            "      table: {type: str, default: T}\n"
+            f"    metadata:\n      defaults_by: {defaults_by}\n"
+        )
+        with pytest.raises(CatalogError, match=match):
             load_catalog(bad)
 
 
@@ -423,3 +462,127 @@ def test_value_map_chains_into_selection():
     src = CatalogSource("x", entry, FakeFS(), ensemble="r2")
     selected = src._apply_selection(ds)
     assert selected["T"].shape == (3,)
+
+
+def _grouped_open_fixture(monkeypatch):
+    """A CESM-shaped grouped store: realm subgroups differ per table."""
+    import numpy as np
+    import xarray as xr
+
+    entry = {
+        "driver": "zarr",
+        "args": {
+            "urlpath": "https://example.invalid/store.zarr",
+            "group": "{{table}}/{{realm}}",
+            "consolidated": True,
+        },
+        "parameters": {
+            "table": {"type": "str", "default": "Amon"},
+            "realm": {"type": "str", "default": "atmos_3d"},
+        },
+    }
+    groups = [
+        "Amon",
+        "Amon/atmos_2d",
+        "Amon/atmos_3d",
+        "day",
+        "day/atmos_2d",
+        "Omon",
+        "Omon/ocean_2d",
+        "Omon/ocean_3d",
+        "Lday",  # present but empty, as on the real store
+    ]
+    meta = {g: {"node_type": "group"} for g in groups}
+    monkeypatch.setattr(
+        CatalogSource, "_store_metadata", lambda self, store_url=None: meta
+    )
+    opened: list[str] = []
+
+    def fake_open_zarr(url, *, group=None, **kwargs):
+        if group not in meta:
+            raise KeyError(f"'{group}' not found in consolidated metadata.")
+        opened.append(group)
+        return xr.Dataset({"TREFHT": ("time", np.zeros(2))})
+
+    monkeypatch.setattr(xr, "open_zarr", fake_open_zarr)
+    return entry, opened
+
+
+def test_defaulted_realm_resolves_to_the_tables_only_subgroup(monkeypatch):
+    """table='day' with the atmos_3d default opens day's only realm."""
+    entry, opened = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="day")
+    src.to_dask()
+    assert opened == ["day/atmos_2d"]
+    assert src._params["realm"] == "atmos_2d"
+
+
+def test_existing_default_group_is_opened_unchanged(monkeypatch):
+    entry, opened = _grouped_open_fixture(monkeypatch)
+    CatalogSource("x", entry, FakeFS()).to_dask()
+    assert opened == ["Amon/atmos_3d"]
+
+
+def test_ambiguous_defaulted_realm_lists_the_choices(monkeypatch):
+    from reflective_data_catalog.exceptions import DataNotFoundError
+
+    entry, _ = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="Omon")
+    with pytest.raises(DataNotFoundError, match=r"realm=.*'ocean_2d', 'ocean_3d'"):
+        src.to_dask()
+
+
+def test_explicit_missing_realm_is_never_substituted(monkeypatch):
+    """An explicitly passed realm that does not exist errors with the options."""
+    from reflective_data_catalog.exceptions import DataNotFoundError
+
+    entry, opened = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="day", realm="atmos_3d")
+    with pytest.raises(DataNotFoundError, match=r"under 'day'.*\['atmos_2d'\]"):
+        src.to_dask()
+    assert opened == []
+
+
+def test_missing_table_lists_the_tables(monkeypatch):
+    from reflective_data_catalog.exceptions import DataNotFoundError
+
+    entry, _ = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="daily")
+    with pytest.raises(DataNotFoundError, match=r"table=.*'Amon', 'Lday'"):
+        src.to_dask()
+
+
+def test_empty_table_group_says_so(monkeypatch):
+    from reflective_data_catalog.exceptions import DataNotFoundError
+
+    entry, _ = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="Lday")
+    with pytest.raises(DataNotFoundError, match="'Lday' contains no realm groups"):
+        src.to_dask()
+
+
+def test_variant_defaults_select_the_variant_stores_groups(catalog):
+    """The HiLLA experiment store has no Mon/atmos_2d; its variant defaults
+    point at the ten-member surface group instead."""
+    entry = catalog["sources"]["miroc_es2h_g6_1p5k_hilla"]
+    baseline = CatalogSource("m", entry, FakeFS())
+    assert (baseline._params["table"], baseline._params["realm"]) == (
+        "Mon",
+        "atmos_2d",
+    )
+    hilla = CatalogSource("m", entry, FakeFS(), variant="G6-1.5K-HiLLA")
+    assert hilla._render("{{table}}/{{realm}}") == "Amon/atmos_2d_r10"
+    # Explicit values still win over the variant's defaults.
+    explicit = CatalogSource("m", entry, FakeFS(), variant="G6-1.5K-HiLLA", table="day")
+    assert explicit._params["table"] == "day"
+    assert explicit._params["realm"] == "atmos_2d_r10"
+    # Variant defaults are defaults: the missing-group resolver may rebind them.
+    assert "realm" not in explicit._explicit_params
+
+
+def test_cesm_table_descriptions_omit_empty_groups(catalog):
+    """Lday/Oyr exist but are empty in the CESM stores; they are not offered."""
+    for name, entry in catalog["sources"].items():
+        table = (entry.get("parameters") or {}).get("table") or {}
+        description = table.get("description", "")
+        assert "Lday" not in description and "Oyr" not in description, name

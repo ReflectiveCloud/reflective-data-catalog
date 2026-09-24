@@ -109,6 +109,52 @@ def _validate_entry(name: str, entry: dict, path: Path) -> None:
         )
     if not args.get("urlpath"):
         raise CatalogError(f"entry {name!r} has no urlpath")
+    _validate_defaults_by(name, entry)
+
+
+def _validate_defaults_by(name: str, entry: dict) -> None:
+    """``metadata.defaults_by``: {selector: {value: {param: default}}}.
+
+    Lets one parameter's value supply different defaults for others — e.g.
+    a ``variant`` whose store has a different group layout. Every name must
+    be a declared, non-derived parameter.
+    """
+    defaults_by = (entry.get("metadata") or {}).get("defaults_by")
+    if defaults_by is None:
+        return
+    declared = set(entry.get("parameters") or {})
+    derived = set(((entry.get("metadata") or {}).get("value_map")) or {})
+    settable = declared - derived
+    if not isinstance(defaults_by, dict):
+        raise CatalogError(f"entry {name!r}: defaults_by must be a mapping")
+    for selector, by_value in defaults_by.items():
+        if selector not in settable:
+            raise CatalogError(
+                f"entry {name!r}: defaults_by selector {selector!r} is not a "
+                f"declared parameter"
+            )
+        if not isinstance(by_value, dict):
+            raise CatalogError(
+                f"entry {name!r}: defaults_by.{selector} must be a mapping of "
+                f"value -> {{parameter: default}}"
+            )
+        for value, overrides in by_value.items():
+            if not isinstance(overrides, dict):
+                raise CatalogError(
+                    f"entry {name!r}: defaults_by.{selector}.{value} must be a "
+                    f"mapping of parameter -> default"
+                )
+            if selector in overrides:
+                raise CatalogError(
+                    f"entry {name!r}: defaults_by.{selector}.{value} cannot set "
+                    f"its own selector"
+                )
+            unknown = set(overrides) - settable
+            if unknown:
+                raise CatalogError(
+                    f"entry {name!r}: defaults_by.{selector}.{value} names "
+                    f"undeclared parameter(s) {sorted(unknown)}"
+                )
 
 
 class CatalogSource:
@@ -172,6 +218,8 @@ class CatalogSource:
                     f"{canonical!r} (given via an alias as well)"
                 )
             normalized[canonical] = value
+        #: Parameters the caller set; only defaulted ones may be re-resolved.
+        self._explicit_params = frozenset(normalized)
 
         derived = self._derived_params()
         unknown = set(normalized) - set(declared)
@@ -191,6 +239,13 @@ class CatalogSource:
             if hints:
                 message += ". Migration note — " + "; ".join(hints)
             raise TypeError(message)
+
+        # Per-value defaults (metadata.defaults_by), e.g. a variant store
+        # with its own group layout. Explicit kwargs still win below.
+        defaults_by = ((self._entry.get("metadata") or {}).get("defaults_by")) or {}
+        for selector, by_value in defaults_by.items():
+            chosen = normalized.get(selector, values.get(selector))
+            values.update(by_value.get(chosen) or {})
 
         for key, value in normalized.items():
             if key in derived:
@@ -312,21 +367,116 @@ class CatalogSource:
         group_template = args.get("group")
         if group_template:
             kwargs["group"] = self._render(group_template)
-        try:
-            ds = xr.open_zarr(
+
+        def open_zarr():
+            return xr.open_zarr(
                 fsspec_url,
                 storage_options=so,
                 consolidated=consolidated,
                 **kwargs,
             )
+
+        try:
+            ds = open_zarr()
         except (FileNotFoundError, KeyError) as exc:
-            detail = f" (group {kwargs['group']!r})" if "group" in kwargs else ""
-            raise DataNotFoundError(
-                f"{self._name}: could not open {fsspec_url}{detail}. Use "
-                f"list_tables()/list_variables() for available groups, or "
-                f"see the migration guide (docs/migration-matrix.md)"
-            ) from exc
+            resolved, reason = (
+                self._resolve_missing_group(group_template, url)
+                if group_template
+                else (None, None)
+            )
+            if resolved is None:
+                detail = f" (group {kwargs['group']!r})" if "group" in kwargs else ""
+                raise DataNotFoundError(
+                    f"{self._name}: could not open {fsspec_url}{detail}. "
+                    + (
+                        reason
+                        or "Use list_tables()/list_variables() for available "
+                        "groups, or see the migration guide "
+                        "(docs/migration-matrix.md)"
+                    )
+                ) from exc
+            kwargs["group"] = resolved
+            ds = open_zarr()
         return self._apply_selection(ds)
+
+    def _resolve_missing_group(
+        self, group_template: str, store_url: str
+    ) -> tuple[str | None, str | None]:
+        """Recover from a group that is absent from the store's metadata.
+
+        Finds the first group-path segment that does not exist. If every
+        parameter from that segment on was defaulted (not passed by the
+        caller) and exactly one group matches the rest, returns
+        ``(group, None)`` and rebinds those parameters — e.g. ``table='day'``
+        with the ``realm='atmos_3d'`` default resolves to ``day/atmos_2d``.
+        An explicitly passed value is never substituted. Otherwise returns
+        ``(None, reason)`` naming the values that do exist at that segment;
+        ``(None, None)`` when the store metadata is unavailable.
+        """
+        groups = {
+            key
+            for key, node in self._store_metadata(store_url).items()
+            if node.get("node_type") == "group"
+        }
+        if not groups:
+            return None, None
+        seg_templates = group_template.split("/")
+        rendered = [self._render(t) for t in seg_templates]
+        missing = next(
+            (
+                i
+                for i in range(len(rendered))
+                if "/".join(rendered[: i + 1]) not in groups
+            ),
+            None,
+        )
+        if missing is None:
+            return None, None  # the group exists; the failure is elsewhere
+
+        def lone_param(template: str) -> str | None:
+            match = _PLACEHOLDER.fullmatch(template)
+            return match.group(1) if match else None
+
+        prefix = rendered[:missing]
+        free = {
+            j: lone_param(seg_templates[j])
+            for j in range(missing, len(seg_templates))
+            if lone_param(seg_templates[j]) not in self._explicit_params
+        }
+        if missing in free and all(free.values()):
+            candidates = [
+                parts
+                for parts in (g.split("/") for g in groups)
+                if len(parts) == len(rendered)
+                and parts[:missing] == prefix
+                and all(
+                    j in free or parts[j] == rendered[j]
+                    for j in range(missing, len(rendered))
+                )
+            ]
+            if len(candidates) == 1:
+                for j, param in free.items():
+                    self._params[param] = candidates[0][j]
+                return "/".join(candidates[0]), None
+
+        param = lone_param(seg_templates[missing])
+        label = param or "group"
+        parent = "/".join(prefix)
+        depth = missing + 1
+        available = sorted(
+            g.rsplit("/", 1)[-1]
+            for g in groups
+            if g.count("/") + 1 == depth and (not parent or g.startswith(parent + "/"))
+        )
+        where = f"under {parent!r}" if parent else "in the store"
+        if not available:
+            return None, (
+                f"{parent!r} contains no {label} groups (it is empty in the store)"
+            )
+        how = f"pass {param}= one of" if param else "available:"
+        return None, (
+            f"{label} {rendered[missing]!r} does not exist {where}; {how} {available}"
+        )
 
     def _apply_selection(self, ds):
         """Select coordinate values per metadata.select_map (plan R12 parity).

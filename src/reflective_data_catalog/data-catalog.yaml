@@ -66,7 +66,7 @@ sources:
       consolidated: true
     parameters:
       table:
-        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
+        description: "Output table group (Amon, Lmon, Omon, SIday, SImon, day)"
         type: str
         default: "Amon"
       realm:
@@ -156,11 +156,11 @@ sources:
         type: str
         default: "baseline"
       table:
-        description: "Output table group (baseline/SAI stores: Mon, day, MAM3; the G6-1.5K-HiLLA store: Amon, Omon, day)"
+        description: "Output table group (baseline/SAI stores: Mon, day, MAM3; the G6-1.5K-HiLLA store: Amon, Omon, day). Default Mon; Amon when variant='G6-1.5K-HiLLA'"
         type: str
         default: "Mon"
       realm:
-        description: "Realm subgroup (e.g. atmos_2d, ocean_2d; the G6-1.5K-HiLLA store uses member-suffixed groups such as atmos_2d_r03 — use list_tables()/discover())"
+        description: "Realm subgroup (e.g. atmos_2d, ocean_2d; the G6-1.5K-HiLLA store uses member-suffixed groups such as atmos_2d_r03 — use list_tables()/discover()). Default atmos_2d; atmos_2d_r10 (tas, all ten members) when variant='G6-1.5K-HiLLA'"
         type: str
         default: "atmos_2d"
       ensemble:
@@ -177,6 +177,11 @@ sources:
       temperature_target: "1.5K"
       select_map:
         member: ensemble
+      # The experiment store has no Mon/atmos_2d: it keeps Amon/Omon/day with
+      # member-suffixed realms. atmos_2d_r10 carries tas for all ten members.
+      defaults_by:
+        variant:
+          G6-1.5K-HiLLA: {table: "Amon", realm: "atmos_2d_r10"}
       data_access: "public"
       hosted_on: "Cloudflare R2 (public)"
       public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
@@ -315,7 +320,7 @@ sources:
       consolidated: true
     parameters:
       table:
-        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
+        description: "Output table group (Amon, Lmon, Omon, SIday, SImon, day)"
         type: str
         default: "Omon"
       realm:
@@ -397,7 +402,7 @@ sources:
       consolidated: true
     parameters:
       table:
-        description: "Output table group (Amon, Lmon, Omon, Oyr, SIday, SImon, day, Lday)"
+        description: "Output table group (Amon, Lmon, Omon, SIday, SImon, day)"
         type: str
         default: "Amon"
       realm:

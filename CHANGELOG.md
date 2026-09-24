@@ -29,6 +29,22 @@ All notable changes to this project are documented here. The format follows
   `realm=` argument pins an exact group, and `variant=` reads the right
   MIROC store. A value matching no group warns instead of staying silent.
 
+- Opening a grouped Zarr entry with only `table=` failed when the default
+  `realm` did not exist under that table (e.g.
+  `cesm2_waccm_g6_1p5k_hilla(table='day')` tried `day/atmos_3d`). A
+  defaulted realm now resolves to the table's only subgroup (`day` →
+  `atmos_2d`); an explicitly passed value is never substituted. When the
+  group still cannot be resolved, the error names the values that exist at
+  the missing segment (`realm 'atmos_3d' does not exist under 'Omon'; pass
+  realm= one of ['ocean_2d', 'ocean_3d']`), or says the table is empty.
+- `miroc_es2h_g6_1p5k_hilla(variant='G6-1.5K-HiLLA')` failed with its
+  defaults: that store has no `Mon/atmos_2d`. It now defaults to
+  `Amon/atmos_2d_r10` (`tas`, all ten members) via the new
+  `metadata.defaults_by` catalog field, which lets one parameter's value
+  supply other defaults (validated at catalog load; explicit kwargs win).
+- The CESM `table` descriptions no longer offer `Lday`/`Oyr`, which are
+  empty groups in the stores.
+
 ## [1.0.0] — 2026-09-02
 
 The v1.0 migration: one source-registration mechanism, a self-parsed loader,
