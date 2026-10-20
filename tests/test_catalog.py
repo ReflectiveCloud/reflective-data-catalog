@@ -245,7 +245,7 @@ class TestListSources:
                 "description",
             }
             assert record["kind"] == "entry"
-            assert record["driver"] in {"zarr", "netcdf"}
+            assert record["driver"] in {"zarr", "netcdf", "icechunk"}
 
     def test_stability_comes_from_matrix(self, real_catalog):
         by_name = {r["name"]: r for r in real_catalog.list_sources(verbose=False)}

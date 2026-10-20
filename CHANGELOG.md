@@ -3,7 +3,34 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased] — v1.0.1
+## [Unreleased]
+
+### Added
+
+- Four public entries for [CarbonPlan's SAI downscaling dataset](https://source.coop/carbonplan/srm-downscaling):
+  `carbonplan_cesm2_waccm_downscaled` and `carbonplan_ukesm1_downscaled`
+  (daily, 0.25° ERA5 grid) plus `carbonplan_cesm2_waccm_debiased_coarse`
+  and `carbonplan_ukesm1_debiased_coarse` (bias-corrected on the GCM
+  grid, with `dtr`). Parameters are `method` (bcsd/qdmsd), `scenario`
+  (historical/ssp245/g6_1p5k, plus g6_1p5k_end on CESM), `variable`,
+  `ensemble` (its default follows the scenario) and `version`, the
+  dataset release (default `v1.0.0`).
+- A new `icechunk` driver: opens a versioned Icechunk repository at a branch
+  or tag (`args.ref`) and reads one group. Discovery, missing-group
+  recovery and the guidance errors work the same way as on grouped Zarr
+  entries. `icechunk>=2` is now a dependency on Python >= 3.12; on 3.11
+  these entries raise an `ImportError` explaining this.
+- `scripts/bucket_audit.py` audits Icechunk entries, and its new `--only
+  ENTRY ...` flag merges just those entries into the committed fixture.
+
+### Fixed
+
+- S3 region resolution for dotted bucket names (e.g.
+  `us-west-2.opendata.source.coop`) used the virtual-hosted endpoint,
+  which fails TLS for such names, so the region silently came back
+  `None`. It now uses path-style for those buckets.
+
+## [1.0.1]
 
 ### Fixed
 

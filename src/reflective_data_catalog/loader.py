@@ -1,9 +1,10 @@
 """Self-parsed loader for the packaged YAML catalog (plan KTD11).
 
 Parses ``data-catalog.yaml`` with ``yaml.safe_load`` only, validates the
-schema (plan R21, KTD8), and exposes each entry as a :class:`CatalogSource`
-with the shared source surface: ``to_dask``, ``read``, ``url``,
-``list_ensembles``, ``list_tables``, ``list_variables``, ``discover``.
+schema (plan R21, KTD8) — drivers ``zarr``, ``netcdf`` and ``icechunk`` —
+and exposes each entry as a :class:`CatalogSource` with the shared source
+surface: ``to_dask``, ``read``, ``url``, ``list_ensembles``,
+``list_tables``, ``list_variables``, ``discover``.
 
 Import direction (KTD11): ``exceptions <- storage <- loader <- main``.
 ``CatalogSource`` is constructor-injected with the shared
@@ -45,7 +46,12 @@ ALLOWED_ARGS = {
     "xarray_kwargs",
     "storage_options",
     "consolidated",
+    "ref",
 }
+
+#: Supported drivers. ``icechunk`` opens a versioned Icechunk repository
+#: (``urlpath``) at a branch or tag (``ref``) and reads one group from it.
+DRIVERS = ("zarr", "netcdf", "icechunk")
 
 #: Closed storage-options allowlist (plan KTD7): endpoint selection stays
 #: code-owned, derived from the URL scheme — never entry-supplied.
@@ -89,7 +95,7 @@ def _validate_entry(name: str, entry: dict, path: Path) -> None:
             f"entry name {name!r} is not a valid Python identifier ({path})"
         )
     driver = entry.get("driver")
-    if driver not in ("zarr", "netcdf"):
+    if driver not in DRIVERS:
         raise CatalogError(f"entry {name!r} has unsupported driver {driver!r}")
     args = entry.get("args") or {}
     unknown_args = set(args) - ALLOWED_ARGS
@@ -98,8 +104,10 @@ def _validate_entry(name: str, entry: dict, path: Path) -> None:
             f"entry {name!r} has unsupported args keys {sorted(unknown_args)}; "
             f"the governed schema allows {sorted(ALLOWED_ARGS)}"
         )
-    if driver == "netcdf" and "consolidated" in args:
+    if driver != "zarr" and "consolidated" in args:
         raise CatalogError(f"entry {name!r}: 'consolidated' is a zarr-only argument")
+    if driver != "icechunk" and "ref" in args:
+        raise CatalogError(f"entry {name!r}: 'ref' is an icechunk-only argument")
     unknown_opts = set(args.get("storage_options") or {}) - ALLOWED_STORAGE_OPTIONS
     if unknown_opts:
         raise CatalogError(
@@ -186,6 +194,7 @@ class CatalogSource:
         #: a guidance error naming the new vocabulary, never a silent load.
         self._value_hints = value_hints or {}
         self._discovery_cache: dict[tuple, list[str]] = {}
+        self._icechunk_session_cache = None
         self._params = self._resolve_params(kwargs)
 
     # -- parameters ---------------------------------------------------------
@@ -350,31 +359,34 @@ class CatalogSource:
 
     def _open(self):
         driver = self._entry.get("driver")
-        if driver == "zarr":
+        if driver in ("zarr", "icechunk"):
             return self._open_zarr()
         return self._open_netcdf()
 
     def _open_zarr(self):
+        """Open a zarr store or Icechunk repository, with group recovery."""
         import xarray as xr
 
         url = self.url
         if isinstance(url, list):
             raise CatalogError(f"{self._name}: zarr entries take one urlpath")
-        fsspec_url, so = self._fsspec_target(url)
         args = self._entry.get("args") or {}
-        consolidated = args.get("consolidated")
         kwargs = dict(args.get("xarray_kwargs") or {})
+        if self._entry.get("driver") == "icechunk":
+            fsspec_url = url
+            target = self._icechunk_session().store
+            kwargs["consolidated"] = False  # Icechunk keeps its own metadata
+        else:
+            fsspec_url, so = self._fsspec_target(url)
+            target = fsspec_url
+            kwargs["storage_options"] = so
+            kwargs["consolidated"] = args.get("consolidated")
         group_template = args.get("group")
         if group_template:
             kwargs["group"] = self._render(group_template)
 
         def open_zarr():
-            return xr.open_zarr(
-                fsspec_url,
-                storage_options=so,
-                consolidated=consolidated,
-                **kwargs,
-            )
+            return xr.open_zarr(target, **kwargs)
 
         try:
             ds = open_zarr()
@@ -398,6 +410,59 @@ class CatalogSource:
             kwargs["group"] = resolved
             ds = open_zarr()
         return self._apply_selection(ds)
+
+    def _icechunk_session(self):
+        """Read-only session on the entry's repository at its ``ref``.
+
+        ``ref`` names a branch or a tag (CarbonPlan publishes releases as
+        branches, e.g. ``v1.0.0``). A ref that does not exist raises
+        :class:`DataNotFoundError` listing the refs that do.
+        """
+        if self._icechunk_session_cache is not None:
+            return self._icechunk_session_cache
+        url = self.url
+        # The storage handoff raises the explanatory ImportError (Python 3.11).
+        storage = self._fs.icechunk_storage(url, self._storage_options())
+        import icechunk
+
+        try:
+            repo = icechunk.Repository.open(storage)
+        except icechunk.IcechunkError as exc:
+            raise DataNotFoundError(
+                f"{self._name}: no Icechunk repository at {url}"
+            ) from exc
+        ref_template = (self._entry.get("args") or {}).get("ref") or "main"
+        ref = self._render(ref_template)
+        branches = set(repo.list_branches())
+        tags = set(repo.list_tags())
+        if ref in branches:
+            session = repo.readonly_session(branch=ref)
+        elif ref in tags:
+            session = repo.readonly_session(tag=ref)
+        else:
+            raise DataNotFoundError(
+                f"{self._name}: {ref!r} is not a branch or tag of {url}; "
+                f"available: {sorted(branches | tags)}"
+            )
+        self._icechunk_session_cache = session
+        return session
+
+    def _icechunk_metadata(self) -> dict:
+        """Node metadata of an Icechunk repository, shaped like the
+        consolidated zarr v3 metadata :meth:`_store_metadata` returns."""
+        import zarr
+
+        root = zarr.open_group(self._icechunk_session().store, mode="r")
+        nodes: dict[str, dict] = {}
+        for path, node in root.members(max_depth=None):
+            if isinstance(node, zarr.Array):
+                nodes[path] = {
+                    "node_type": "array",
+                    "dimension_names": list(node.metadata.dimension_names or ()),
+                }
+            else:
+                nodes[path] = {"node_type": "group"}
+        return nodes
 
     def _resolve_missing_group(
         self, group_template: str, store_url: str
@@ -737,6 +802,15 @@ class CatalogSource:
         cache_key = ("__store_metadata__", rendered)
         if cache_key in self._discovery_cache:
             return self._discovery_cache[cache_key]  # type: ignore[return-value]
+        if self._entry.get("driver") == "icechunk":
+            try:
+                nodes = self._icechunk_metadata()
+            except (ImportError, DataNotFoundError):
+                raise  # a missing package or bad ref is not an empty scan
+            except Exception:  # scan failures degrade to empty
+                nodes = {}
+            self._discovery_cache[cache_key] = nodes  # type: ignore[assignment]
+            return nodes
         import json
 
         import fsspec
@@ -803,7 +877,7 @@ class CatalogSource:
         """
         args = self._entry.get("args") or {}
         group_template = args.get("group")
-        if self._entry.get("driver") != "zarr" or not group_template:
+        if self._entry.get("driver") not in ("zarr", "icechunk") or not group_template:
             return None
         overrides = {k: v for k, v in (overrides or {}).items() if v is not None}
         seg_templates = group_template.split("/")

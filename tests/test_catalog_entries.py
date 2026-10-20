@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from reflective_data_catalog.exceptions import CatalogError
+from reflective_data_catalog.exceptions import CatalogError, DataNotFoundError
 from reflective_data_catalog.loader import (
     ALLOWED_STORAGE_OPTIONS,
     CANONICAL_ALIASES,
@@ -596,3 +596,135 @@ def test_list_realms_lists_a_tables_subgroups(monkeypatch):
     assert src.list_realms(table="day") == ["atmos_2d"]
     with pytest.warns(UserWarning, match="no groups"):
         assert src.list_realms(table="Lday") == []
+
+
+# -- icechunk driver ---------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("driver", "extra", "match"),
+    [
+        ("zarr", "      ref: v1\n", "'ref' is an icechunk-only"),
+        ("icechunk", "      consolidated: true\n", "'consolidated' is a zarr-only"),
+    ],
+)
+def test_driver_specific_args_fail_load(tmp_path, driver, extra, match):
+    bad = tmp_path / "bad.yaml"
+    bad.write_text(
+        "metadata:\n  reflective_schema_version: 2\n"
+        "sources:\n"
+        "  x:\n"
+        f"    driver: {driver}\n"
+        "    args:\n"
+        "      urlpath: s3://b/p\n" + extra
+    )
+    with pytest.raises(CatalogError, match=match):
+        load_catalog(bad)
+
+
+def test_carbonplan_ensemble_defaults_follow_scenario(catalog):
+    entry = catalog["sources"]["carbonplan_cesm2_waccm_downscaled"]
+    src = CatalogSource("c", entry, FakeFS(), scenario="historical")
+    assert src._render(entry["args"]["group"]) == "bcsd/historical/tas/r1i1p1f1"
+    assert src._render(entry["args"]["ref"]) == "v1.0.0"
+    explicit = CatalogSource(
+        "c", entry, FakeFS(), scenario="historical", ensemble="001"
+    )
+    assert explicit._params["ensemble"] == "001"
+
+
+@pytest.fixture
+def icechunk_entry(tmp_path):
+    """A local Icechunk repo laid out like the CarbonPlan stores.
+
+    ``main`` holds g6/tas/{001,002} and hist/tasmax/001; the ``v1`` branch
+    is cut before hist/tasmax was added.
+    """
+    icechunk = pytest.importorskip("icechunk")
+    import numpy as np
+    import xarray as xr
+
+    repo = icechunk.Repository.create(icechunk.local_filesystem_storage(str(tmp_path)))
+
+    def write(group, var, value):
+        session = repo.writable_session("main")
+        ds = xr.Dataset(
+            {var: ("time", np.full(3, value, dtype="f4"))},
+            coords={"time": np.arange(3)},
+        )
+        ds.to_zarr(session.store, group=group, mode="w", consolidated=False)
+        return session.commit(f"add {group}")
+
+    write("bcsd/g6/tas/001", "tas", 1.0)
+    snapshot = write("bcsd/g6/tas/002", "tas", 2.0)
+    repo.create_branch("v1", snapshot_id=snapshot)
+    write("bcsd/hist/tasmax/001", "tasmax", 3.0)
+    return {
+        "driver": "icechunk",
+        "args": {
+            "urlpath": f"file://{tmp_path}",
+            "ref": "{{version}}",
+            "group": "{{method}}/{{scenario}}/{{variable}}/{{ensemble}}",
+        },
+        "parameters": {
+            "method": {"type": "str", "default": "bcsd"},
+            "scenario": {"type": "str", "default": "g6"},
+            "variable": {"type": "str", "default": "tas"},
+            "ensemble": {"type": "str", "default": "001"},
+            "version": {"type": "str", "default": "main"},
+        },
+        "metadata": {"defaults_by": {"scenario": {"hist": {"ensemble": "r1"}}}},
+    }
+
+
+def test_icechunk_opens_group_at_ref(icechunk_entry):
+    from reflective_data_catalog.storage import CloudFileSystem
+
+    src = CatalogSource("x", icechunk_entry, CloudFileSystem(), ensemble="002")
+    assert float(src.read()["tas"][0]) == 2.0
+    assert src.list_ensembles() == ["001", "002"]
+    hist = CatalogSource("x", icechunk_entry, CloudFileSystem(), scenario="hist")
+    assert hist.list_variables() == ["tasmax"]
+    pinned = CatalogSource("x", icechunk_entry, CloudFileSystem(), version="v1")
+    assert float(pinned.read()["tas"][0]) == 1.0
+    old_hist = CatalogSource(
+        "x", icechunk_entry, CloudFileSystem(), version="v1", scenario="hist"
+    )
+    with pytest.warns(UserWarning, match="no groups"):
+        assert old_hist.list_variables() == []
+
+
+def test_icechunk_recovers_defaulted_group(icechunk_entry):
+    """A defaulted ensemble that is absent rebinds to the lone candidate."""
+    from reflective_data_catalog.storage import CloudFileSystem
+
+    src = CatalogSource(
+        "x", icechunk_entry, CloudFileSystem(), scenario="hist", variable="tasmax"
+    )
+    assert float(src.read()["tasmax"][0]) == 3.0
+    assert src._params["ensemble"] == "001"
+
+
+def test_icechunk_errors_name_what_exists(icechunk_entry):
+    from reflective_data_catalog.storage import CloudFileSystem
+
+    fs = CloudFileSystem()
+    with pytest.raises(DataNotFoundError, match=r"one of \['001', '002'\]"):
+        CatalogSource("x", icechunk_entry, fs, ensemble="009").to_dask()
+    with pytest.raises(DataNotFoundError, match=r"available: \['main', 'v1'\]"):
+        CatalogSource("x", icechunk_entry, fs, version="v9").to_dask()
+
+
+def test_icechunk_entry_without_package_explains(catalog, monkeypatch):
+    """On Python 3.11 (no icechunk) the entry says why, not just 'No module'."""
+    import sys
+
+    from reflective_data_catalog.storage import CloudFileSystem
+
+    monkeypatch.setitem(sys.modules, "icechunk", None)
+    entry = catalog["sources"]["carbonplan_ukesm1_downscaled"]
+    src = CatalogSource("c", entry, CloudFileSystem())
+    with pytest.raises(ImportError, match=r"Python >= 3\.12"):
+        src.to_dask()
+    with pytest.raises(ImportError, match=r"Python >= 3\.12"):
+        src.list_ensembles()

@@ -374,3 +374,56 @@ class TestCloudflareR2:
             fs._get_store("r2://bucket/path")
 
         mock_from_url.assert_not_called()
+
+
+class TestIcechunkStorage:
+    """CloudFileSystem.icechunk_storage: the Icechunk handoff."""
+
+    def test_missing_package_explains(self, monkeypatch):
+        import sys
+
+        monkeypatch.setitem(sys.modules, "icechunk", None)
+        with pytest.raises(ImportError, match=r"Python >= 3\.12"):
+            CloudFileSystem().icechunk_storage("s3://b/repo.icechunk")
+
+    def test_unsupported_scheme(self):
+        pytest.importorskip("icechunk")
+        with pytest.raises(ValueError, match="s3:// only"):
+            CloudFileSystem().icechunk_storage("gs://b/repo.icechunk")
+
+    def test_s3_resolves_region_and_anon(self):
+        icechunk = pytest.importorskip("icechunk")
+        fs = CloudFileSystem()
+        with (
+            patch.object(fs, "_resolve_s3_region", return_value="us-west-2") as region,
+            patch.object(icechunk, "s3_storage") as s3_storage,
+        ):
+            fs.icechunk_storage("s3://a.b.c/x/repo.icechunk", {"anon": True})
+        region.assert_called_once_with("a.b.c")
+        s3_storage.assert_called_once_with(
+            bucket="a.b.c",
+            prefix="x/repo.icechunk",
+            region="us-west-2",
+            anonymous=True,
+            from_env=None,
+        )
+
+
+class TestS3RegionResolution:
+    @pytest.mark.parametrize(
+        ("bucket", "url"),
+        [
+            ("plain-bucket", "https://plain-bucket.s3.amazonaws.com"),
+            # Dotted names fail TLS on the virtual-hosted endpoint.
+            (
+                "us-west-2.opendata.source.coop",
+                "https://s3.amazonaws.com/us-west-2.opendata.source.coop",
+            ),
+        ],
+    )
+    def test_head_url(self, bucket, url):
+        response = MagicMock()
+        response.__enter__.return_value.headers = {"x-amz-bucket-region": "r"}
+        with patch("urllib.request.urlopen", return_value=response) as urlopen:
+            assert CloudFileSystem()._resolve_s3_region(bucket) == "r"
+        assert urlopen.call_args[0][0].full_url == url

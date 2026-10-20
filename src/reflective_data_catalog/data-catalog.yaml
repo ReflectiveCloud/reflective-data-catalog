@@ -1104,3 +1104,218 @@ sources:
       hosted_on: "Cloudflare R2 (public)"
       public_url: "https://pub-d127229e707d485c80965ab41706e316.r2.dev"
       tags: ["simulator", "MIROC-ES2H", "ssp245", "public"]
+
+  # ============================================================================
+  # CarbonPlan SAI downscaling (external, public)
+  # Daily ERA5-grid downscaled projections (BCSD and QDMSD) for CESM2-WACCM6
+  # and UKESM1-1-LL, published on Source Cooperative as one Icechunk
+  # repository per GCM. Groups are {method}/{scenario}/{variable}/{ensemble};
+  # the debiased_coarse product (bias-corrected on the GCM grid, plus dtr)
+  # sits under {method}/debiased_coarse/. Ensemble labels differ by scenario
+  # (historical runs keep their own ids), so the ensemble default follows
+  # the scenario via defaults_by. Needs icechunk >= 2 (Python >= 3.12).
+  # ============================================================================
+
+  carbonplan_cesm2_waccm_downscaled:
+    driver: icechunk
+    description: "CarbonPlan SAI downscaling: CESM2-WACCM6 daily projections downscaled to the 0.25° ERA5 grid (Icechunk, public Source Cooperative). BCSD or QDMSD; historical (1978-2014), ssp245 (2015-2099), g6_1p5k (G6-1.5K-SAI, 2035-2084) and g6_1p5k_end (termination, 2085-2100)."
+    args:
+      urlpath: "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk"
+      ref: "{{version}}"
+      group: "{{method}}/{{scenario}}/{{variable}}/{{ensemble}}"
+      storage_options:
+        anon: true
+    parameters:
+      method:
+        description: "Downscaling method (bcsd, qdmsd)"
+        type: str
+        default: "bcsd"
+      scenario:
+        description: "Scenario (historical, ssp245, g6_1p5k, g6_1p5k_end)"
+        type: str
+        default: "g6_1p5k"
+      variable:
+        description: "Daily variable (pr, rsds, tas, tasmax, tasmin)"
+        type: str
+        default: "tas"
+      ensemble:
+        description: "Ensemble member: 001-003 (g6_1p5k), 002 (g6_1p5k_end), 001-010 (ssp245; tasmax/tasmin 006-010), r1i1p1f1-r3i1p1f1 (historical; tasmax/tasmin 001). Defaults follow the scenario"
+        type: str
+        default: "001"
+      version:
+        description: "Dataset release — a branch or tag of the Icechunk repository (v1.0.0 is the current production release)"
+        type: str
+        default: "v1.0.0"
+    metadata:
+      model: "CESM2-WACCM6"
+      gcm_description: "CESM2.1.5-WACCM6 (TSMLT)"
+      experiment: "G6-1.5K-SAI (downscaled)"
+      provider: "CarbonPlan"
+      resolution: "0.25° ERA5 grid (721 x 1440), daily"
+      observations: "ERA5 (training period 1978-2014)"
+      defaults_by:
+        scenario:
+          historical: {ensemble: "r1i1p1f1"}
+          ssp245: {ensemble: "001"}
+          g6_1p5k: {ensemble: "001"}
+          g6_1p5k_end: {ensemble: "002"}
+      license: "CC BY 4.0"
+      terms_of_data_access: "https://sai-downscaling.readthedocs.io/en/latest/access-data/terms-of-data-access.html"
+      doi: "https://doi.org/10.5281/zenodo.22932138"
+      documentation: "https://sai-downscaling.readthedocs.io"
+      landing_page: "https://source.coop/carbonplan/srm-downscaling"
+      data_access: "public"
+      hosted_on: "AWS, external - Source Cooperative (us-west-2)"
+      tags: ["geoengineering", "SAI", "downscaled", "CarbonPlan", "CESM2-WACCM6", "G6-1.5K", "ERA5", "daily", "public"]
+
+  carbonplan_ukesm1_downscaled:
+    driver: icechunk
+    description: "CarbonPlan SAI downscaling: UKESM1-1-LL daily projections downscaled to the 0.25° ERA5 grid (Icechunk, public Source Cooperative). BCSD or QDMSD; historical (1978-2014), ssp245 (2015-2099) and g6_1p5k (G6-1.5K-SAI, 2035-2084)."
+    args:
+      urlpath: "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk"
+      ref: "{{version}}"
+      group: "{{method}}/{{scenario}}/{{variable}}/{{ensemble}}"
+      storage_options:
+        anon: true
+    parameters:
+      method:
+        description: "Downscaling method (bcsd, qdmsd)"
+        type: str
+        default: "bcsd"
+      scenario:
+        description: "Scenario (historical, ssp245, g6_1p5k)"
+        type: str
+        default: "g6_1p5k"
+      variable:
+        description: "Daily variable (pr, rsds, tas, tasmax, tasmin)"
+        type: str
+        default: "tas"
+      ensemble:
+        description: "Ensemble member: r12i1p1f2, r2i1p1f2, r3i1p1f2 (ssp245, g6_1p5k), u-by791 (historical). Defaults follow the scenario"
+        type: str
+        default: "r12i1p1f2"
+      version:
+        description: "Dataset release — a branch or tag of the Icechunk repository (v1.0.0 is the current production release)"
+        type: str
+        default: "v1.0.0"
+    metadata:
+      model: "UKESM1-1-LL"
+      experiment: "G6-1.5K-SAI (downscaled)"
+      provider: "CarbonPlan"
+      resolution: "0.25° ERA5 grid (721 x 1440), daily"
+      observations: "ERA5 (training period 1978-2014)"
+      defaults_by:
+        scenario:
+          historical: {ensemble: "u-by791"}
+          ssp245: {ensemble: "r12i1p1f2"}
+          g6_1p5k: {ensemble: "r12i1p1f2"}
+      license: "CC BY 4.0"
+      terms_of_data_access: "https://sai-downscaling.readthedocs.io/en/latest/access-data/terms-of-data-access.html"
+      doi: "https://doi.org/10.5281/zenodo.22932138"
+      documentation: "https://sai-downscaling.readthedocs.io"
+      landing_page: "https://source.coop/carbonplan/srm-downscaling"
+      data_access: "public"
+      hosted_on: "AWS, external - Source Cooperative (us-west-2)"
+      tags: ["geoengineering", "SAI", "downscaled", "CarbonPlan", "UKESM1-1-LL", "G6-1.5K", "ERA5", "daily", "public"]
+
+  carbonplan_cesm2_waccm_debiased_coarse:
+    driver: icechunk
+    description: "CarbonPlan SAI downscaling, intermediate product: CESM2-WACCM6 daily output bias-corrected against ERA5 on the native GCM grid (192 x 288) before spatial disaggregation (Icechunk, public Source Cooperative). Same scenarios as carbonplan_cesm2_waccm_downscaled, plus diurnal temperature range (dtr)."
+    args:
+      urlpath: "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk"
+      ref: "{{version}}"
+      group: "{{method}}/debiased_coarse/{{scenario}}/{{variable}}/{{ensemble}}"
+      storage_options:
+        anon: true
+    parameters:
+      method:
+        description: "Bias-correction method (bcsd, qdmsd)"
+        type: str
+        default: "bcsd"
+      scenario:
+        description: "Scenario (historical, ssp245, g6_1p5k, g6_1p5k_end)"
+        type: str
+        default: "g6_1p5k"
+      variable:
+        description: "Daily variable (dtr, pr, rsds, tas, tasmax, tasmin)"
+        type: str
+        default: "tas"
+      ensemble:
+        description: "Ensemble member: 001-003 (g6_1p5k), 002 (g6_1p5k_end), 001-010 (ssp245; dtr/tasmax/tasmin 006-010), r1i1p1f1-r3i1p1f1 (historical; dtr/tasmax/tasmin 001). Defaults follow the scenario"
+        type: str
+        default: "001"
+      version:
+        description: "Dataset release — a branch or tag of the Icechunk repository (v1.0.0 is the current production release)"
+        type: str
+        default: "v1.0.0"
+    metadata:
+      model: "CESM2-WACCM6"
+      gcm_description: "CESM2.1.5-WACCM6 (TSMLT)"
+      experiment: "G6-1.5K-SAI (bias-corrected, GCM grid)"
+      provider: "CarbonPlan"
+      resolution: "native GCM grid (192 x 288), daily"
+      observations: "ERA5 (training period 1978-2014)"
+      defaults_by:
+        scenario:
+          historical: {ensemble: "r1i1p1f1"}
+          ssp245: {ensemble: "001"}
+          g6_1p5k: {ensemble: "001"}
+          g6_1p5k_end: {ensemble: "002"}
+      license: "CC BY 4.0"
+      terms_of_data_access: "https://sai-downscaling.readthedocs.io/en/latest/access-data/terms-of-data-access.html"
+      doi: "https://doi.org/10.5281/zenodo.22932138"
+      documentation: "https://sai-downscaling.readthedocs.io"
+      landing_page: "https://source.coop/carbonplan/srm-downscaling"
+      data_access: "public"
+      hosted_on: "AWS, external - Source Cooperative (us-west-2)"
+      tags: ["geoengineering", "SAI", "bias-corrected", "CarbonPlan", "CESM2-WACCM6", "G6-1.5K", "ERA5", "daily", "public"]
+
+  carbonplan_ukesm1_debiased_coarse:
+    driver: icechunk
+    description: "CarbonPlan SAI downscaling, intermediate product: UKESM1-1-LL daily output bias-corrected against ERA5 on the native GCM grid (144 x 192) before spatial disaggregation (Icechunk, public Source Cooperative). Same scenarios as carbonplan_ukesm1_downscaled, plus diurnal temperature range (dtr)."
+    args:
+      urlpath: "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk"
+      ref: "{{version}}"
+      group: "{{method}}/debiased_coarse/{{scenario}}/{{variable}}/{{ensemble}}"
+      storage_options:
+        anon: true
+    parameters:
+      method:
+        description: "Bias-correction method (bcsd, qdmsd)"
+        type: str
+        default: "bcsd"
+      scenario:
+        description: "Scenario (historical, ssp245, g6_1p5k)"
+        type: str
+        default: "g6_1p5k"
+      variable:
+        description: "Daily variable (dtr, pr, rsds, tas, tasmax, tasmin)"
+        type: str
+        default: "tas"
+      ensemble:
+        description: "Ensemble member: r12i1p1f2, r2i1p1f2, r3i1p1f2 (ssp245, g6_1p5k), u-by791 (historical). Defaults follow the scenario"
+        type: str
+        default: "r12i1p1f2"
+      version:
+        description: "Dataset release — a branch or tag of the Icechunk repository (v1.0.0 is the current production release)"
+        type: str
+        default: "v1.0.0"
+    metadata:
+      model: "UKESM1-1-LL"
+      experiment: "G6-1.5K-SAI (bias-corrected, GCM grid)"
+      provider: "CarbonPlan"
+      resolution: "native GCM grid (144 x 192), daily"
+      observations: "ERA5 (training period 1978-2014)"
+      defaults_by:
+        scenario:
+          historical: {ensemble: "u-by791"}
+          ssp245: {ensemble: "r12i1p1f2"}
+          g6_1p5k: {ensemble: "r12i1p1f2"}
+      license: "CC BY 4.0"
+      terms_of_data_access: "https://sai-downscaling.readthedocs.io/en/latest/access-data/terms-of-data-access.html"
+      doi: "https://doi.org/10.5281/zenodo.22932138"
+      documentation: "https://sai-downscaling.readthedocs.io"
+      landing_page: "https://source.coop/carbonplan/srm-downscaling"
+      data_access: "public"
+      hosted_on: "AWS, external - Source Cooperative (us-west-2)"
+      tags: ["geoengineering", "SAI", "bias-corrected", "CarbonPlan", "UKESM1-1-LL", "G6-1.5K", "ERA5", "daily", "public"]

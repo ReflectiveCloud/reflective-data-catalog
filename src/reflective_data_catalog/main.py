@@ -287,7 +287,8 @@ class ReflectiveCatalog:
         tag : str, optional
             Keep only entries carrying this tag (exact match).
         driver : str, optional
-            Keep only entries with this driver ('zarr' or 'netcdf').
+            Keep only entries with this driver ('zarr', 'netcdf' or
+            'icechunk').
         verbose : bool
             Print a human-readable listing. Records are always returned.
 

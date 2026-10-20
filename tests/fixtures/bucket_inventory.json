@@ -252,6 +252,134 @@
         }
       ]
     },
+    "carbonplan_cesm2_waccm_debiased_coarse": {
+      "anon": true,
+      "audited_at": "2026-10-20T22:13:20+00:00",
+      "driver": "icechunk",
+      "urls": [
+        {
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "bcsd",
+              "bcsd/debiased_coarse",
+              "bcsd/g6_1p5k",
+              "bcsd/g6_1p5k_end",
+              "bcsd/historical",
+              "bcsd/ssp245",
+              "qdmsd",
+              "qdmsd/debiased_coarse",
+              "qdmsd/g6_1p5k",
+              "qdmsd/g6_1p5k_end",
+              "qdmsd/historical",
+              "qdmsd/ssp245"
+            ]
+          },
+          "group_count": 412,
+          "ref": "v1.0.0",
+          "rendered_default": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk",
+          "status": "verified",
+          "template": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "carbonplan_cesm2_waccm_downscaled": {
+      "anon": true,
+      "audited_at": "2026-10-20T22:13:20+00:00",
+      "driver": "icechunk",
+      "urls": [
+        {
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "bcsd",
+              "bcsd/debiased_coarse",
+              "bcsd/g6_1p5k",
+              "bcsd/g6_1p5k_end",
+              "bcsd/historical",
+              "bcsd/ssp245",
+              "qdmsd",
+              "qdmsd/debiased_coarse",
+              "qdmsd/g6_1p5k",
+              "qdmsd/g6_1p5k_end",
+              "qdmsd/historical",
+              "qdmsd/ssp245"
+            ]
+          },
+          "group_count": 412,
+          "ref": "v1.0.0",
+          "rendered_default": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk",
+          "status": "verified",
+          "template": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/CESM2-WACCM6-ERA5-global.icechunk",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "carbonplan_ukesm1_debiased_coarse": {
+      "anon": true,
+      "audited_at": "2026-10-20T22:13:20+00:00",
+      "driver": "icechunk",
+      "urls": [
+        {
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "bcsd",
+              "bcsd/debiased_coarse",
+              "bcsd/g6_1p5k",
+              "bcsd/historical",
+              "bcsd/ssp245",
+              "qdmsd",
+              "qdmsd/debiased_coarse",
+              "qdmsd/g6_1p5k",
+              "qdmsd/historical",
+              "qdmsd/ssp245"
+            ]
+          },
+          "group_count": 236,
+          "ref": "v1.0.0",
+          "rendered_default": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk",
+          "status": "verified",
+          "template": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk",
+          "zarr_format": 3
+        }
+      ]
+    },
+    "carbonplan_ukesm1_downscaled": {
+      "anon": true,
+      "audited_at": "2026-10-20T22:13:20+00:00",
+      "driver": "icechunk",
+      "urls": [
+        {
+          "default_group_exists": true,
+          "exists": true,
+          "facets": {
+            "group": [
+              "bcsd",
+              "bcsd/debiased_coarse",
+              "bcsd/g6_1p5k",
+              "bcsd/historical",
+              "bcsd/ssp245",
+              "qdmsd",
+              "qdmsd/debiased_coarse",
+              "qdmsd/g6_1p5k",
+              "qdmsd/historical",
+              "qdmsd/ssp245"
+            ]
+          },
+          "group_count": 236,
+          "ref": "v1.0.0",
+          "rendered_default": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk",
+          "status": "verified",
+          "template": "s3://us-west-2.opendata.source.coop/carbonplan/srm-downscaling/output/production/UKESM1-1-LL-ERA5-global.icechunk",
+          "zarr_format": 3
+        }
+      ]
+    },
     "cesm2_waccm6_gauss_historical": {
       "anon": false,
       "driver": "zarr",
