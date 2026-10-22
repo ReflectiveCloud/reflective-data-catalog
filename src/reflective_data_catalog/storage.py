@@ -182,9 +182,14 @@ class CloudFileSystem:
         import urllib.request
 
         region: str | None = None
-        request = urllib.request.Request(
-            f"https://{bucket}.s3.amazonaws.com", method="HEAD"
+        # Dotted bucket names (us-west-2.opendata.source.coop) fail TLS on
+        # the virtual-hosted endpoint; path-style returns the same header.
+        host = (
+            f"https://s3.amazonaws.com/{bucket}"
+            if "." in bucket
+            else f"https://{bucket}.s3.amazonaws.com"
         )
+        request = urllib.request.Request(host, method="HEAD")
         try:
             with urllib.request.urlopen(request, timeout=10) as response:
                 region = response.headers.get("x-amz-bucket-region")
@@ -420,6 +425,48 @@ class CloudFileSystem:
             fsspec_url = f"{scheme}://{bucket}/{rel_path}"
 
         return fsspec_url, storage_options
+
+    def icechunk_storage(self, url: str, storage_options: dict | None = None):
+        """
+        Build an ``icechunk.Storage`` for an Icechunk repository URL.
+
+        The Icechunk counterpart of :meth:`fsspec_info`: the one handoff
+        from catalog URLs to Icechunk. ``s3://`` repositories get their
+        bucket region resolved here (Icechunk needs it up front); ``anon``
+        maps to ``anonymous=True``, otherwise credentials come from the
+        environment. ``file://`` serves local repositories (tests).
+
+        Raises
+        ------
+        ImportError
+            If ``icechunk`` (>= 2, Python >= 3.12) is not installed.
+        ValueError
+            For URL schemes other than ``s3://`` and ``file://``.
+        """
+        try:
+            import icechunk
+        except ImportError as exc:
+            raise ImportError(
+                "Icechunk sources need the 'icechunk' package (>= 2.0), which "
+                "requires Python >= 3.12 — it is installed automatically with "
+                "reflective-data-catalog on 3.12+"
+            ) from exc
+
+        parsed = urlparse(url)
+        if parsed.scheme == "file":
+            return icechunk.local_filesystem_storage(parsed.path)
+        if parsed.scheme != "s3":
+            raise ValueError(
+                f"Icechunk repositories are supported on s3:// only, got {url!r}"
+            )
+        anon = bool((storage_options or {}).get("anon"))
+        return icechunk.s3_storage(
+            bucket=parsed.netloc,
+            prefix=parsed.path.strip("/"),
+            region=self._resolve_s3_region(parsed.netloc),
+            anonymous=anon,
+            from_env=None if anon else True,
+        )
 
     def open(
         self,

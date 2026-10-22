@@ -15,10 +15,13 @@ Usage:
     python scripts/bucket_audit.py --diff          # audit, diff vs fixture
     python scripts/bucket_audit.py --deep          # + chunk-completeness
     python scripts/bucket_audit.py --render        # render docs from matrix
+    python scripts/bucket_audit.py --only NAME ... # audit some, merge into fixture
 
 Credentials: AWS via the default credential chain (env or ~/.aws);
 Cloudflare R2 via CLOUDFLARE_R2_ACCOUNT_ID (+ R2 keys) when r2:// URLs
 appear in the catalog. Least-privilege read/list-only credentials suffice.
+Icechunk entries are audited through the package's own loader (needs
+icechunk >= 2, Python >= 3.12).
 """
 
 from __future__ import annotations
@@ -192,6 +195,36 @@ def audit_https_zarr(rendered: str, entry: dict, defaults: dict) -> dict:
     return result
 
 
+def audit_icechunk(name: str, entry: dict) -> dict:
+    """Audit an Icechunk repository at the entry's default ref.
+
+    Icechunk keeps its own manifests, so existence and the group vocabulary
+    come from the package's metadata walk (the same path discovery uses).
+    """
+    from reflective_data_catalog.loader import CatalogSource
+    from reflective_data_catalog.storage import CloudFileSystem
+
+    src = CatalogSource(name, entry, CloudFileSystem())
+    args = entry.get("args") or {}
+    result: dict = {"ref": src._render(args.get("ref") or "main")}
+    try:
+        nodes = src._icechunk_metadata()
+    except Exception as exc:
+        result["exists"] = False
+        result["status"] = f"unverified:{type(exc).__name__}"
+        return result
+    result["exists"] = True
+    result["zarr_format"] = 3
+    groups = sorted(k for k, v in nodes.items() if v.get("node_type") == "group")
+    result["group_count"] = len(groups)
+    result["facets"] = {"group": [g for g in groups if g.count("/") < 2][:50]}
+    group_template = args.get("group")
+    exists = not group_template or src._render(group_template) in nodes
+    result["default_group_exists"] = exists
+    result["status"] = "verified" if exists else "unverified:default_group_missing"
+    return result
+
+
 def audit_entry(name: str, entry: dict, deep: bool) -> dict:
     args = entry.get("args") or {}
     urlpaths = args.get("urlpath")
@@ -211,6 +244,10 @@ def audit_entry(name: str, entry: dict, deep: bool) -> dict:
         rendered = render(template, defaults)
         url_rec: dict = {"template": template, "rendered_default": rendered}
         opts = dict(storage_options)
+        if entry.get("driver") == "icechunk":
+            url_rec.update(audit_icechunk(name, entry))
+            record["urls"].append(url_rec)
+            continue
         if scheme in ("http", "https"):
             url_rec.update(audit_https_zarr(rendered, entry, defaults))
             record["urls"].append(url_rec)
@@ -242,16 +279,31 @@ def audit_entry(name: str, entry: dict, deep: bool) -> dict:
     return record
 
 
-def run_audit(deep: bool) -> dict:
+def run_audit(deep: bool, only: list[str] | None = None) -> dict:
+    """Audit every entry, or with ``only`` just those entries merged into
+    the committed fixture (each merged record carries its own audited_at)."""
     catalog = load_catalog()
-    inventory = {
-        "audited_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "catalog_version": (catalog.get("metadata") or {}).get("version"),
-        "entries": {},
-    }
-    for name, entry in (catalog.get("sources") or {}).items():
+    sources = catalog.get("sources") or {}
+    now = datetime.now(UTC).isoformat(timespec="seconds")
+    if only:
+        unknown = sorted(set(only) - set(sources))
+        if unknown:
+            raise SystemExit(f"unknown entries: {unknown}")
+        inventory = json.loads(INVENTORY.read_text())
+    else:
+        inventory = {
+            "audited_at": now,
+            "catalog_version": (catalog.get("metadata") or {}).get("version"),
+            "entries": {},
+        }
+    for name, entry in sources.items():
+        if only and name not in only:
+            continue
         print(f"auditing {name} ...", file=sys.stderr)
-        inventory["entries"][name] = audit_entry(name, entry, deep)
+        record = audit_entry(name, entry, deep)
+        if only:
+            record["audited_at"] = now
+        inventory["entries"][name] = record
     return inventory
 
 
@@ -294,13 +346,19 @@ def main() -> int:
     parser.add_argument("--deep", action="store_true", help="chunk-count zarr stores")
     parser.add_argument("--diff", action="store_true", help="diff against fixture")
     parser.add_argument("--render", action="store_true", help="render matrix docs")
+    parser.add_argument(
+        "--only",
+        nargs="+",
+        metavar="ENTRY",
+        help="audit only these entries, merged into the committed fixture",
+    )
     args = parser.parse_args()
 
     if args.render:
         render_docs()
         return 0
 
-    inventory = run_audit(args.deep)
+    inventory = run_audit(args.deep, args.only)
     if args.diff:
         if not INVENTORY.exists():
             print("no committed fixture to diff against", file=sys.stderr)

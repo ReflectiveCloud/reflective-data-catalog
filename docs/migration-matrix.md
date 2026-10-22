@@ -46,6 +46,10 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `simulator_miroc_es2h_baseline` | stable |
 | `simulator_miroc_es2h_historical` | stable |
 | `simulator_miroc_es2h_ssp245` | stable |
+| `carbonplan_cesm2_waccm_downscaled` | stable |
+| `carbonplan_ukesm1_downscaled` | stable |
+| `carbonplan_cesm2_waccm_debiased_coarse` | stable |
+| `carbonplan_ukesm1_debiased_coarse` | stable |
 
 ## Kwarg dispositions
 
@@ -58,7 +62,9 @@ Rendered from `src/reflective_data_catalog/migration_matrix.yaml` (schema v1). D
 | `time` | per-entry parameter on both UKESM hub entries (ukesm1_ssp245 and ukesm1_g6_1p5k_hilla), whose stream/time NetCDF layouts are unchanged |
 | `realm` | per-entry parameter on ARISE CESM entries |
 | `time_frequency` | per-entry parameter on ARISE CESM entries |
-| `version` | per-entry parameter on ukesm1_arise_cmip6 |
+| `version` | per-entry parameter on ukesm1_arise_cmip6, and the dataset release (Icechunk branch or tag, default v1.0.0) on the carbonplan_* entries |
+| `method` | per-entry parameter on the carbonplan_* entries (bcsd, qdmsd) |
+| `scenario` | per-entry parameter on the carbonplan_* entries (historical, ssp245, g6_1p5k, g6_1p5k_end); selects the ensemble default |
 
 ## API changes
 

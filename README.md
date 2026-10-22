@@ -74,7 +74,7 @@ Missing credentials raise a `MissingCredentialsError` that names the missing con
 
 ## Available Sources
 
-All 27 sources come from the packaged catalog file (`src/reflective_data_catalog/data-catalog.yaml`). Entries marked *experimental* are still being populated or verified — see [docs/migration-matrix.md](./docs/migration-matrix.md) for the authoritative stability listing.
+All 31 sources come from the packaged catalog file (`src/reflective_data_catalog/data-catalog.yaml`). Entries marked *experimental* are still being populated or verified — see [docs/migration-matrix.md](./docs/migration-matrix.md) for the authoritative stability listing.
 
 | Source | Model | Experiment | Driver | Access | Stability |
 |--------|-------|------------|--------|--------|-----------|
@@ -106,7 +106,24 @@ All 27 sources come from the packaged catalog file (`src/reflective_data_catalog
 | `simulator_miroc_es2h_historical` | MIROC-ES2H | historical (simulator inputs) | zarr | Public | stable |
 | `simulator_miroc_es2h_ssp245` | MIROC-ES2H | SSP2-4.5 (simulator inputs) | zarr | Public | stable |
 
+| `carbonplan_cesm2_waccm_downscaled` | CESM2-WACCM6 | historical / SSP2-4.5 / G6-1.5K / G6-1.5K-end, downscaled 0.25° daily (CarbonPlan) | icechunk | Public | stable |
+| `carbonplan_ukesm1_downscaled` | UKESM1-1-LL | historical / SSP2-4.5 / G6-1.5K, downscaled 0.25° daily (CarbonPlan) | icechunk | Public | stable |
+| `carbonplan_cesm2_waccm_debiased_coarse` | CESM2-WACCM6 | as above, bias-corrected on the GCM grid (CarbonPlan) | icechunk | Public | stable |
+| `carbonplan_ukesm1_debiased_coarse` | UKESM1-1-LL | as above, bias-corrected on the GCM grid (CarbonPlan) | icechunk | Public | stable |
+
 The ten `simulator_*` entries are the public simulator-input stores (`simulator-inputs/` on the R2 bucket): grouped Zarr stores of monthly (CESM-MA also daily) 2D atmosphere fields with `table`/`realm` groups (`Mon/atmos_2d` default, plus `atmos_2d_derived` and `atmos_2d_tasminmax`) and a 3-member ensemble selected exactly like the other public CESM/MIROC entries.
+
+The four `carbonplan_*` entries are [CarbonPlan's SAI downscaling dataset](https://source.coop/carbonplan/srm-downscaling) on Source Cooperative (CC BY 4.0, subject to CarbonPlan's [terms of data access](https://sai-downscaling.readthedocs.io/en/latest/access-data/terms-of-data-access.html)): daily `pr`, `rsds`, `tas`, `tasmax`, `tasmin` (plus `dtr` on the `debiased_coarse` entries), downscaled against ERA5 by BCSD or QDMSD. They are public Icechunk repositories, so they need Python >= 3.12 (`icechunk` 2.x is installed automatically there). Each call opens one group, chosen by `method`, `scenario`, `variable` and `ensemble`; the ensemble default follows the scenario, because historical runs carry their own member ids. `version` pins the dataset release (default `v1.0.0`):
+
+```python
+ds = rdc.carbonplan_cesm2_waccm_downscaled(
+    method="qdmsd", scenario="g6_1p5k", variable="tasmax", ensemble="002"
+).to_dask()
+
+src = rdc.carbonplan_ukesm1_downscaled(scenario="historical")
+src.list_ensembles()   # ['u-by791']
+src.list_variables()   # ['pr', 'rsds', 'tas', 'tasmax', 'tasmin']
+```
 
 ## Usage
 
@@ -271,7 +288,7 @@ Tests use the real packaged catalog and mock storage I/O only — no network acc
 
 ## Requirements
 
-Python >= 3.11 for the core catalog; the `[esgf]` extra needs Python >= 3.12 (intake-esgf dropped 3.11). Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
+Python >= 3.11 for the core catalog; the `carbonplan_*` Icechunk entries and the `[esgf]` extra need Python >= 3.12 (icechunk 2.x and intake-esgf dropped 3.11). Runtime dependencies (and the `esm`, `esgf`, and `dev` extras) are declared in [`pyproject.toml`](./pyproject.toml) — that file is the single source of truth for versions.
 
 ## License
 
