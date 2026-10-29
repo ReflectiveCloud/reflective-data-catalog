@@ -59,6 +59,68 @@ ALLOWED_STORAGE_OPTIONS = {"anon"}
 
 _PLACEHOLDER = re.compile(r"\{\{\s*(\w+)\s*\}\}")
 
+#: S3 buckets readable only from inside the Reflective cloud hub.
+HUB_BUCKET_PREFIX = "reflective-"
+
+#: Exception type names (anywhere in the cause/context chain) that mean the
+#: caller could not authenticate or is not authorized — botocore/s3fs,
+#: obstore and the builtin PermissionError s3fs maps 403s onto.
+_ACCESS_ERROR_TYPES = {
+    "PermissionError",
+    "NoCredentialsError",
+    "PartialCredentialsError",
+    "CredentialRetrievalError",
+    "PermissionDeniedError",
+    "UnauthenticatedError",
+}
+
+#: Message fragments for access failures surfaced as generic errors (obstore
+#: wraps 403s and failed instance-metadata credential lookups in GenericError).
+_ACCESS_ERROR_TEXT = (
+    "403 Forbidden",
+    "AccessDenied",
+    "Access Denied",
+    "InvalidAccessKeyId",
+    "SignatureDoesNotMatch",
+    "ExpiredToken",
+    "Unable to locate credentials",
+    "169.254.169.254",  # instance-metadata lookup: no credentials configured
+)
+
+
+#: The subset of access failures that mean no credentials were configured at
+#: all (as opposed to credentials that were rejected).
+_NO_CREDENTIALS_TYPES = {"NoCredentialsError", "PartialCredentialsError"}
+_NO_CREDENTIALS_TEXT = ("Unable to locate credentials", "169.254.169.254")
+
+
+def _exception_chain(exc: BaseException):
+    """Yield ``exc`` and everything it chains from (cause, then context)."""
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        yield current
+        current = current.__cause__ or current.__context__
+
+
+def _is_access_error(exc: BaseException) -> bool:
+    """True when ``exc`` (or anything it chains from) is an auth failure."""
+    return any(
+        type(e).__name__ in _ACCESS_ERROR_TYPES
+        or any(fragment in str(e) for fragment in _ACCESS_ERROR_TEXT)
+        for e in _exception_chain(exc)
+    )
+
+
+def _is_missing_credentials(exc: BaseException) -> bool:
+    """True when the auth failure is "no credentials", not "rejected"."""
+    return any(
+        type(e).__name__ in _NO_CREDENTIALS_TYPES
+        or any(fragment in str(e) for fragment in _NO_CREDENTIALS_TEXT)
+        for e in _exception_chain(exc)
+    )
+
 
 def load_catalog(path: str | Path) -> dict:
     """Parse and validate the catalog file. Raises CatalogError on any defect."""
@@ -347,6 +409,39 @@ class CatalogSource:
         merged.update(self._storage_options())
         return fsspec_url, merged
 
+    def _hub_bucket(self) -> str | None:
+        """The entry's S3 bucket when it is a cloud-hub-only bucket."""
+        for template in self._urlpaths():
+            if template.startswith("s3://"):
+                bucket = template[len("s3://") :].split("/", 1)[0]
+                if bucket.startswith(HUB_BUCKET_PREFIX):
+                    return bucket
+        return None
+
+    def _hub_access_error(self, exc: BaseException) -> MissingCredentialsError | None:
+        """Explain an access failure on a hub-only bucket, else ``None``.
+
+        Outside the hub these reads fail with provider errors ("Unable to
+        locate credentials", 403 Forbidden, a timed-out instance-metadata
+        lookup) that do not say *why*; this names the real cause.
+        """
+        bucket = self._hub_bucket()
+        if bucket is None or not _is_access_error(exc):
+            return None
+        reason = (
+            "no AWS credentials were found"
+            if _is_missing_credentials(exc)
+            else "the AWS credentials found are not authorized for it"
+        )
+        return MissingCredentialsError(
+            f"{self._name}: s3://{bucket} is only accessible from the Reflective "
+            f"cloud hub, and {reason}. "
+            f"This usually means you are running outside the hub (e.g. on a "
+            f"laptop or another cloud account). Run this from a cloud hub "
+            f"session, or use an entry with public data instead "
+            f"(catalog.list_sources() lists every entry)."
+        )
+
     # -- loading ------------------------------------------------------------
 
     def to_dask(self):
@@ -359,9 +454,17 @@ class CatalogSource:
 
     def _open(self):
         driver = self._entry.get("driver")
-        if driver in ("zarr", "icechunk"):
-            return self._open_zarr()
-        return self._open_netcdf()
+        try:
+            if driver in ("zarr", "icechunk"):
+                return self._open_zarr()
+            return self._open_netcdf()
+        except CatalogError:
+            raise
+        except Exception as exc:
+            hub_error = self._hub_access_error(exc)
+            if hub_error is not None:
+                raise hub_error from exc
+            raise
 
     def _open_zarr(self):
         """Open a zarr store or Icechunk repository, with group recovery."""
@@ -775,7 +878,10 @@ class CatalogSource:
                     storage_options=self._storage_options(),
                 )
             ]
-        except Exception:
+        except Exception as exc:
+            hub_error = self._hub_access_error(exc)
+            if hub_error is not None:
+                raise hub_error from exc  # no access is not an empty scan
             names = []
 
         pre, _, post = segment.partition(marker)
@@ -807,7 +913,10 @@ class CatalogSource:
                 nodes = self._icechunk_metadata()
             except (ImportError, DataNotFoundError):
                 raise  # a missing package or bad ref is not an empty scan
-            except Exception:  # scan failures degrade to empty
+            except Exception as exc:  # scan failures degrade to empty
+                hub_error = self._hub_access_error(exc)
+                if hub_error is not None:
+                    raise hub_error from exc
                 nodes = {}
             self._discovery_cache[cache_key] = nodes  # type: ignore[assignment]
             return nodes
@@ -820,7 +929,10 @@ class CatalogSource:
         try:
             with fsspec.open(fsspec_url, **so) as f:
                 meta = json.load(f)
-        except Exception:  # scan failures degrade to empty
+        except Exception as exc:  # scan failures degrade to empty
+            hub_error = self._hub_access_error(exc)
+            if hub_error is not None:
+                raise hub_error from exc
             meta = {}
         consolidated = (meta.get("consolidated_metadata") or {}).get("metadata") or {}
         self._discovery_cache[cache_key] = consolidated  # type: ignore[assignment]
@@ -938,6 +1050,10 @@ class CatalogSource:
             if param == select_param:
                 try:
                     ds = self._open()
+                except MissingCredentialsError:
+                    if self._hub_bucket() is not None:
+                        raise
+                    return []
                 except Exception:  # degrade to empty
                     return []
                 if dim in ds.coords:
