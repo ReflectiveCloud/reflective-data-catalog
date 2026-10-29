@@ -70,7 +70,7 @@ Three access classes cover every source in the catalog:
 | **Reflective hub** (private S3 bucket) | AWS credentials via environment variables (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) or `~/.aws`; provided automatically on the Reflective Cloud Hub | UKESM1.1, E3SMv3, `cesm2_waccm_historical`, and GAUSS entries |
 | **Cloudflare R2 S3 API** (`r2://` URLs) | `CLOUDFLARE_R2_ACCOUNT_ID` (or `CLOUDFLARE_ACCOUNT_ID`) environment variable, plus R2 access keys | No shipped entry needs this — the public R2 stores are served over plain HTTPS; support is built in for future private R2 entries |
 
-Missing credentials raise a `MissingCredentialsError` that names the missing configuration (for example the `CLOUDFLARE_R2_ACCOUNT_ID` environment variable) rather than a provider stack trace.
+Missing credentials raise a `MissingCredentialsError` that names the missing configuration (for example the `CLOUDFLARE_R2_ACCOUNT_ID` environment variable) rather than a provider stack trace. Hub entries opened outside the Reflective Cloud Hub (for example on a laptop) raise a `MissingCredentialsError` explaining that the bucket is hub-only, both when loading data and when listing ensembles/tables/variables.
 
 ## Available Sources
 
