@@ -23,7 +23,9 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: "3.x"
+        # Newest version the package is tested on (tests.yml matrix). "3.x"
+        # floated to 3.15, which h5py has no wheels for yet.
+        python-version: "3.13"
 
     - name: Install pypa/build
       run: >-

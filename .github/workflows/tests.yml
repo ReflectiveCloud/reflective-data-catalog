@@ -55,7 +55,7 @@ jobs:
           fetch-depth: 0  # setuptools-scm needs history for the version
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.13"  # newest tested version; see build-and-push.yml
       - name: Build and check the distribution
         run: |
           python -m pip install --upgrade pip build twine
