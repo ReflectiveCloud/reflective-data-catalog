@@ -243,6 +243,17 @@ With `pip install "reflective-data-catalog[esgf]"`, the catalog also provides ac
 ds = rdc.esgf.geomip.g6sulfur(model="UKESM1-0-LL", variable="tas")
 ```
 
+Files downloaded from ESGF are kept in a shared S3 cache, `s3://reflective-persistent-prod-large/esgf-cache/`, instead of your home directory. The first person to load a dataset downloads it from ESGF and uploads it there. After that, everyone on the hub opens it straight from S3, and no copy is left on local disk. If the bucket can't be reached (for example off the hub, or without AWS credentials), you get a warning and intake-esgf's usual local cache (`~/.esgf/`) is used instead.
+
+To use another location, or to turn the S3 cache off:
+
+```bash
+export REFLECTIVE_ESGF_CACHE=s3://my-bucket/esgf-cache/   # another location
+export REFLECTIVE_ESGF_CACHE=off                          # local cache only
+```
+
+Or in code: `rdc.esgf.set_cache("off")`. `rdc.esgf.cache_url` shows the location in use.
+
 ## Migrating from 0.x
 
 **Mid-analysis and need the old behavior right now?** Pin below 1.0:

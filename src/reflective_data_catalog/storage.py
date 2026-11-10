@@ -10,6 +10,7 @@ from __future__ import annotations
 import io
 import os
 import re
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -388,6 +389,28 @@ class CloudFileSystem:
         prefix = rel_path if rel_path.endswith("/") else rel_path + "/"
         result = obstore.list_with_delimiter(store, prefix=prefix)
         return bool(result["objects"] or result["common_prefixes"])
+
+    def put(
+        self,
+        path: str,
+        data: bytes | os.PathLike,
+        storage_options: dict | None = None,
+    ) -> None:
+        """
+        Write one object.
+
+        Parameters
+        ----------
+        path : str
+            Destination (full URL or bare path).
+        data : bytes or path-like
+            The object's bytes, or a local file to upload (large files are
+            sent in multipart chunks).
+        """
+        store, _store_key, rel_path = self._get_store(path, storage_options)
+        if isinstance(data, (str, os.PathLike)):
+            data = Path(data)
+        obstore.put(store, rel_path, data)
 
     def fsspec_info(self, url: str) -> tuple[str, dict[str, Any]]:
         """
