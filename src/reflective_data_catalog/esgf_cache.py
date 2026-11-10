@@ -270,7 +270,7 @@ def _build_class(base: type) -> type:
             globus_endpoint: str | None = None,
             globus_path: Path = Path("/"),
             minimal_keys: bool = True,
-            ignore_facets: None | str | list[str] = None,
+            ignore_facets: str | list[str] | None = None,
             separator: str = ".",
             quiet: bool = False,
         ) -> dict[str, list[str | Path]]:
