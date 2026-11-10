@@ -25,6 +25,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- Reading a hub-only entry (any `s3://reflective-*` bucket) from outside
+  the Reflective cloud hub now raises a `MissingCredentialsError` that says
+  the bucket is hub-only and whether no AWS credentials were found or the
+  ones found were not authorized, instead of a raw botocore/obstore error.
+  Discovery (`list_ensembles()` etc.) on those entries raises the same error
+  rather than returning `[]` with a "found nothing" warning.
 - S3 region resolution for dotted bucket names (e.g.
   `us-west-2.opendata.source.coop`) used the virtual-hosted endpoint,
   which fails TLS for such names, so the region silently came back
