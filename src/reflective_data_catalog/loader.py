@@ -16,7 +16,10 @@ from __future__ import annotations
 
 import re
 import warnings
+from collections.abc import Mapping
+from enum import StrEnum
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 import yaml
@@ -227,6 +230,25 @@ def _validate_defaults_by(name: str, entry: dict) -> None:
                 )
 
 
+class ParamOrigin(StrEnum):
+    """How a :class:`CatalogSource` parameter got its current value.
+
+    A parameter is bound once, at construction, as ``EXPLICIT`` (the caller
+    passed it, directly or via an alias), ``DEFAULT`` (the declared default,
+    or a ``metadata.defaults_by`` default), or ``DERIVED`` (computed from
+    another parameter via ``metadata.value_map``). The only later
+    transition is ``DEFAULT -> RECOVERED``: when a defaulted group segment
+    does not exist in the store and exactly one group matches, opening the
+    source rebinds it (see ``CatalogSource._rebind``). Explicit and derived
+    values never change. Members compare equal to their string values.
+    """
+
+    EXPLICIT = "explicit"
+    DEFAULT = "default"
+    DERIVED = "derived"
+    RECOVERED = "recovered"
+
+
 class CatalogSource:
     """One catalog entry bound to resolved parameters and a shared filesystem.
 
@@ -257,6 +279,8 @@ class CatalogSource:
         self._value_hints = value_hints or {}
         self._discovery_cache: dict[tuple, list[str]] = {}
         self._icechunk_session_cache = None
+        #: Per-parameter binding state; see :class:`ParamOrigin`.
+        self._origins: dict[str, ParamOrigin] = {}
         self._params = self._resolve_params(kwargs)
 
     # -- parameters ---------------------------------------------------------
@@ -269,6 +293,51 @@ class CatalogSource:
     def config(self) -> dict:
         """The underlying catalog entry (read-only by convention)."""
         return self._entry
+
+    @property
+    def params(self) -> Mapping[str, Any]:
+        """Resolved parameter values (read-only view).
+
+        Values can change once, when opening recovers a defaulted group
+        segment; :attr:`param_origins` records which ones did.
+        """
+        return MappingProxyType(self._params)
+
+    @property
+    def param_origins(self) -> dict[str, ParamOrigin]:
+        """How each parameter in :attr:`params` was bound (a copy)."""
+        return dict(self._origins)
+
+    @property
+    def _explicit_params(self) -> frozenset[str]:
+        """Parameters the caller set; only defaulted ones may be rebound."""
+        return frozenset(
+            p for p, o in self._origins.items() if o is ParamOrigin.EXPLICIT
+        )
+
+    def _rebind(self, updates: dict[str, Any]) -> None:
+        """The one post-construction transition: ``DEFAULT -> RECOVERED``.
+
+        Discovery results were computed against the old bindings, so the
+        per-source discovery cache is cleared.
+        """
+        refused = {
+            p: self._origins.get(p)
+            for p in updates
+            if self._origins.get(p) not in (ParamOrigin.DEFAULT, ParamOrigin.RECOVERED)
+        }
+        if refused:
+            raise RuntimeError(
+                f"{self._name}: only defaulted parameters can be rebound; "
+                f"refused {refused}"
+            )
+        changed = {p: v for p, v in updates.items() if self._params.get(p) != v}
+        if not changed:
+            return
+        for param, value in changed.items():
+            self._params[param] = value
+            self._origins[param] = ParamOrigin.RECOVERED
+        self._discovery_cache.clear()
 
     def _declared_params(self) -> dict:
         return self._entry.get("parameters") or {}
@@ -289,8 +358,6 @@ class CatalogSource:
                     f"{canonical!r} (given via an alias as well)"
                 )
             normalized[canonical] = value
-        #: Parameters the caller set; only defaulted ones may be re-resolved.
-        self._explicit_params = frozenset(normalized)
 
         derived = self._derived_params()
         unknown = set(normalized) - set(declared)
@@ -334,6 +401,11 @@ class CatalogSource:
                 )
             values[key] = value
 
+        self._origins = {
+            p: ParamOrigin.EXPLICIT if p in normalized else ParamOrigin.DEFAULT
+            for p in values
+        }
+
         # Derive mapped parameters (e.g. ensemble -> ensemble_id, plan R4).
         for target, spec in derived.items():
             source_param = spec.get("from")
@@ -341,6 +413,7 @@ class CatalogSource:
             source_value = values.get(source_param)
             if source_value in mapping:
                 values[target] = mapping[source_value]
+                self._origins[target] = ParamOrigin.DERIVED
             elif source_value is not None and values.get(target) is None:
                 raise DataNotFoundError(
                     f"{self._name}: no {target!r} mapping for "
@@ -623,8 +696,7 @@ class CatalogSource:
                 )
             ]
             if len(candidates) == 1:
-                for j, param in free.items():
-                    self._params[param] = candidates[0][j]
+                self._rebind({param: candidates[0][j] for j, param in free.items()})
                 return "/".join(candidates[0]), None
 
         param = lone_param(seg_templates[missing])
@@ -1072,7 +1144,12 @@ class CatalogSource:
         }
 
     def __repr__(self) -> str:
+        recovered = sorted(
+            p for p, o in self._origins.items() if o is ParamOrigin.RECOVERED
+        )
         return (
             f"<CatalogSource {self._name!r} driver={self._entry.get('driver')!r}"
-            f" params={self._params!r}>"
+            f" params={self._params!r}"
+            + (f" recovered={recovered!r}" if recovered else "")
+            + ">"
         )

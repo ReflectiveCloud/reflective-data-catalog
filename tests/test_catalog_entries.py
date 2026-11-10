@@ -728,3 +728,57 @@ def test_icechunk_entry_without_package_explains(catalog, monkeypatch):
         src.to_dask()
     with pytest.raises(ImportError, match=r"Python >= 3\.12"):
         src.list_ensembles()
+
+
+# -- parameter binding state (explicit origins) ------------------------------
+
+
+def test_param_origins_name_how_each_value_was_bound(catalog):
+    from reflective_data_catalog.loader import ParamOrigin
+
+    entry = catalog["sources"]["cesm2_waccm_ssp245"]
+    src = CatalogSource("c", entry, FakeFS(), ensemble_member="r2")
+    origins = src.param_origins
+    assert origins["ensemble"] == ParamOrigin.EXPLICIT == "explicit"  # via alias
+    assert origins["ensemble_id"] == ParamOrigin.DERIVED
+    assert all(
+        origins[p] == ParamOrigin.DEFAULT
+        for p in entry["parameters"]
+        if p not in ("ensemble", "ensemble_id")
+    )
+    assert set(origins) == set(src.params)
+
+
+def test_params_is_a_read_only_view(catalog):
+    entry = catalog["sources"]["cesm2_waccm_ssp245"]
+    src = CatalogSource("c", entry, FakeFS())
+    with pytest.raises(TypeError):
+        src.params["ensemble"] = "r9"  # type: ignore[index]
+    assert src.params == src._params
+
+
+def test_recovered_defaults_are_visible_and_reset_discovery(monkeypatch):
+    """Group recovery is a named transition: default -> recovered."""
+    from reflective_data_catalog.loader import ParamOrigin
+
+    entry, opened = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="day")
+    assert src.param_origins["realm"] == ParamOrigin.DEFAULT
+    assert "recovered" not in repr(src)
+    src._discovery_cache[("stale", ())] = ["cached-before-rebind"]
+    src.to_dask()
+    assert src.params["realm"] == "atmos_2d"
+    assert src.param_origins["realm"] == ParamOrigin.RECOVERED
+    assert src.param_origins["table"] == ParamOrigin.EXPLICIT
+    assert "recovered=['realm']" in repr(src)
+    assert ("stale", ()) not in src._discovery_cache
+    src.to_dask()  # the recovered value now opens directly
+    assert opened == ["day/atmos_2d", "day/atmos_2d"]
+
+
+def test_only_defaulted_params_may_be_rebound(monkeypatch):
+    entry, _ = _grouped_open_fixture(monkeypatch)
+    src = CatalogSource("x", entry, FakeFS(), table="day")
+    with pytest.raises(RuntimeError, match="explicit"):
+        src._rebind({"table": "Amon"})
+    assert src.params["table"] == "day"

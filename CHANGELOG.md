@@ -33,6 +33,13 @@ All notable changes to this project are documented here. The format follows
   these entries raise an `ImportError` explaining this.
 - `scripts/bucket_audit.py` audits Icechunk entries, and its new `--only
   ENTRY ...` flag merges just those entries into the committed fixture.
+- `CatalogSource.params` (a read-only view of the resolved values) and
+  `CatalogSource.param_origins`, which says how each value was bound:
+  `explicit`, `default`, `derived` (from `value_map`) or `recovered`.
+  `recovered` marks a defaulted group segment that opening replaced with
+  the store's only matching group (e.g. `table='day'` turns the
+  `atmos_3d` realm default into `atmos_2d`); the source's repr now lists
+  those parameters instead of changing them silently.
 
 ### Changed
 
@@ -47,6 +54,8 @@ All notable changes to this project are documented here. The format follows
 - The core dependency is now `h5netcdf[h5py]`. h5netcdf 1.8 stopped
   installing h5py by default, so on a fresh install every h5netcdf-based
   NetCDF open failed with "No module named 'h5py'".
+- Recovering a defaulted group segment now clears the source's cached
+  discovery results, which were computed against the old values.
 - Reading a hub-only entry (any `s3://reflective-*` bucket) from outside
   the Reflective cloud hub now raises a `MissingCredentialsError` that says
   the bucket is hub-only and whether no AWS credentials were found or the
