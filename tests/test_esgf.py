@@ -28,20 +28,37 @@ class TestESGFHelper:
         assert isinstance(helper.ssp, SSPHelper)
 
     def test_get_catalog_lazy(self):
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}):
-            import sys
+        mock_cat = MagicMock()
+        with patch(
+            "reflective_data_catalog.esgf._new_catalog", return_value=mock_cat
+        ) as new:
+            helper = ESGFHelper(cache_url="s3://b/c")
+            assert helper._get_catalog() is mock_cat
+            assert helper._get_catalog() is mock_cat  # cached
+            new.assert_called_once_with("s3://b/c")
 
-            mock_mod = sys.modules["intake_esgf"]
-            mock_cat = MagicMock()
-            mock_mod.ESGFCatalog.return_value = mock_cat
+    def test_new_catalog_attaches_s3_cache(self, monkeypatch):
+        from reflective_data_catalog import esgf as esgf_mod
 
-            helper = ESGFHelper()
-            cat = helper._get_catalog()
-            assert cat is mock_cat
-            # Second call should return cached
-            cat2 = helper._get_catalog()
-            assert cat2 is mock_cat
-            assert mock_mod.ESGFCatalog.call_count == 1
+        class FakeCatalog:
+            pass
+
+        monkeypatch.setattr(esgf_mod, "cached_catalog_class", lambda: FakeCatalog)
+        monkeypatch.delenv("REFLECTIVE_ESGF_CACHE", raising=False)
+        cat = esgf_mod._new_catalog()
+        assert cat.s3_cache.url == "s3://reflective-persistent-prod-large/esgf-cache"
+        assert esgf_mod._new_catalog("off").s3_cache is None
+        monkeypatch.setenv("REFLECTIVE_ESGF_CACHE", "off")
+        assert esgf_mod._new_catalog().s3_cache is None
+
+    def test_set_cache_resets_catalog(self, monkeypatch):
+        monkeypatch.delenv("REFLECTIVE_ESGF_CACHE", raising=False)
+        helper = ESGFHelper()
+        assert helper.cache_url.startswith("s3://reflective-persistent-prod-large")
+        helper._esgf_cat = MagicMock()
+        helper.set_cache("off")
+        assert helper._esgf_cat is None
+        assert helper.cache_url is None
 
     def test_get_catalog_import_error(self):
         helper = ESGFHelper()
@@ -147,10 +164,7 @@ class TestGeoMIPHelper:
     def test_g6sulfur(self):
         mock_cat = _make_mock_esgf_cat({"G6sulfur.UKESM": MagicMock()})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = GeoMIPHelper()
             ds = helper.g6sulfur(model="UKESM1-0-LL", variable="tas")
             assert ds is not None
@@ -158,10 +172,7 @@ class TestGeoMIPHelper:
     def test_g6solar(self):
         mock_cat = _make_mock_esgf_cat({"G6solar.UKESM": MagicMock()})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = GeoMIPHelper()
             ds = helper.g6solar(model="UKESM1-0-LL", variable="pr")
             assert ds is not None
@@ -169,10 +180,7 @@ class TestGeoMIPHelper:
     def test_g6sulfur_no_data_raises(self):
         mock_cat = _make_mock_esgf_cat({})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = GeoMIPHelper()
             with pytest.raises(ValueError, match="No data found"):
                 helper.g6sulfur(model="NOMODEL", variable="tas")
@@ -183,11 +191,7 @@ class TestGeoMIPHelper:
         mock_results.df = pd.DataFrame({"variable_id": ["tas", "pr", "huss"]})
         mock_cat.search.return_value = mock_results
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
-
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = GeoMIPHelper()
             variables = helper.list_variables(experiment="G6sulfur")
             assert variables == ["huss", "pr", "tas"]
@@ -204,10 +208,7 @@ class TestSSPHelper:
     def test_ssp245(self):
         mock_cat = _make_mock_esgf_cat({"ssp245.UKESM": MagicMock()})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = SSPHelper()
             ds = helper.ssp245(model="UKESM1-0-LL", variable="tas")
             assert ds is not None
@@ -215,10 +216,7 @@ class TestSSPHelper:
     def test_ssp585(self):
         mock_cat = _make_mock_esgf_cat({"ssp585.UKESM": MagicMock()})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = SSPHelper()
             ds = helper.ssp585(model="UKESM1-0-LL", variable="tas")
             assert ds is not None
@@ -226,10 +224,7 @@ class TestSSPHelper:
     def test_ssp126(self):
         mock_cat = _make_mock_esgf_cat({"ssp126.UKESM": MagicMock()})
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = SSPHelper()
             ds = helper.ssp126(model="UKESM1-0-LL", variable="tas")
             assert ds is not None
@@ -240,11 +235,7 @@ class TestSSPHelper:
         mock_results.df = pd.DataFrame({"variable_id": ["tas", "pr"]})
         mock_cat.search.return_value = mock_results
 
-        with patch.dict("sys.modules", {"intake_esgf": MagicMock()}) as _:
-            import sys
-
-            sys.modules["intake_esgf"].ESGFCatalog.return_value = mock_cat
-
+        with patch("reflective_data_catalog.esgf._new_catalog", return_value=mock_cat):
             helper = SSPHelper()
             variables = helper.list_variables(experiment="ssp245")
             assert variables == ["pr", "tas"]

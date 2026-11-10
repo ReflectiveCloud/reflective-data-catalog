@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- `catalog.esgf` keeps downloaded ESGF files in a shared S3 cache,
+  `s3://reflective-persistent-prod-large/esgf-cache/`, instead of the local
+  `~/.esgf/` directory, which fills the small home volumes on the hub. Each
+  dataset version goes under its DRS path, with a manifest uploaded after
+  the last file. Cached datasets open straight from S3; others are
+  downloaded through intake-esgf, uploaded, and their local copies deleted.
+  If the bucket can't be reached or an upload fails, a warning is shown
+  and the local cache is used. Set `REFLECTIVE_ESGF_CACHE` (a URL, or
+  `off`) or call `catalog.esgf.set_cache(...)` to change it.
+- `CloudFileSystem.put()` writes one object (bytes, or a local file sent
+  in multipart chunks).
 - Four public entries for [CarbonPlan's SAI downscaling dataset](https://source.coop/carbonplan/srm-downscaling):
   `carbonplan_cesm2_waccm_downscaled` and `carbonplan_ukesm1_downscaled`
   (daily, 0.25° ERA5 grid) plus `carbonplan_cesm2_waccm_debiased_coarse`
@@ -23,8 +34,19 @@ All notable changes to this project are documented here. The format follows
 - `scripts/bucket_audit.py` audits Icechunk entries, and its new `--only
   ENTRY ...` flag merges just those entries into the committed fixture.
 
+### Changed
+
+- The `[esgf]` extra now requires `intake-esgf>=2026.11.28` (was
+  `>=2026.6.4,!=2026.9.4`). 2026.11.28 fixes the CMIP6 file-access
+  regression in 2026.9.4 and was checked against the live federation
+  (`catalog.esgf.ssp.ssp245()` and `catalog.esgf.geomip.g6sulfur()` both
+  load). The untested 2026.9.28 is no longer allowed.
+
 ### Fixed
 
+- The core dependency is now `h5netcdf[h5py]`. h5netcdf 1.8 stopped
+  installing h5py by default, so on a fresh install every h5netcdf-based
+  NetCDF open failed with "No module named 'h5py'".
 - S3 region resolution for dotted bucket names (e.g.
   `us-west-2.opendata.source.coop`) used the virtual-hosted endpoint,
   which fails TLS for such names, so the region silently came back

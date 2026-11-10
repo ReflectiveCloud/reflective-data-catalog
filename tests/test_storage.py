@@ -140,6 +140,24 @@ class TestCloudFileSystem:
 
     @patch("reflective_data_catalog.storage.obstore")
     @patch("reflective_data_catalog.storage.from_url")
+    def test_put_bytes_and_local_file(self, mock_from_url, mock_obstore, tmp_path):
+        from pathlib import Path
+
+        mock_store = MagicMock()
+        mock_from_url.return_value = mock_store
+        local = tmp_path / "f.nc"
+        local.write_bytes(b"x")
+
+        fs = CloudFileSystem()
+        fs.put("gs://bucket/a/manifest.json", b"{}")
+        fs.put("gs://bucket/a/f.nc", str(local))
+
+        first, second = mock_obstore.put.call_args_list
+        assert first.args == (mock_store, "a/manifest.json", b"{}")
+        assert second.args == (mock_store, "a/f.nc", Path(local))
+
+    @patch("reflective_data_catalog.storage.obstore")
+    @patch("reflective_data_catalog.storage.from_url")
     def test_exists_file(self, mock_from_url, mock_obstore):
         mock_store = MagicMock()
         mock_from_url.return_value = mock_store

@@ -1,25 +1,59 @@
-class ESGFHelper:
-    """Helper for ESGF data access"""
+from .esgf_cache import S3DatasetCache, cached_catalog_class, resolve_cache_url
 
-    def __init__(self):
+
+def _new_catalog(cache_url=None):
+    """Create an ESGFCatalog that keeps downloads in the shared S3 cache.
+
+    ``cache_url`` follows :func:`resolve_cache_url`: ``None`` means the
+    ``REFLECTIVE_ESGF_CACHE`` environment variable or the hub default, and
+    ``False`` or ``"off"`` turns the S3 cache off (intake-esgf's local cache
+    only).
+    """
+    try:
+        cls = cached_catalog_class()
+    except ImportError as exc:
+        raise ImportError(
+            "intake-esgf is required for ESGF data access. "
+            'Install with: pip install "reflective-data-catalog[esgf]" '
+            "(needs Python >= 3.12 — intake-esgf no longer supports "
+            "3.11, so the extra installs nothing there)"
+        ) from exc
+    cat = cls()
+    url = resolve_cache_url(cache_url)
+    cat.s3_cache = S3DatasetCache(url) if url else None
+    return cat
+
+
+class ESGFHelper:
+    """Helper for ESGF data access.
+
+    Downloaded ESGF files are kept in a shared S3 cache
+    (``s3://reflective-persistent-prod-large/esgf-cache/`` by default) rather
+    than on local disk. Pass ``cache_url`` (or set ``REFLECTIVE_ESGF_CACHE``)
+    to use another location, or ``"off"`` to use only intake-esgf's local
+    cache.
+    """
+
+    def __init__(self, cache_url=None):
         self._esgf_cat = None
+        self._cache_url = cache_url
         self.geomip = GeoMIPHelper(parent=self)
         self.ssp = SSPHelper(parent=self)
+
+    @property
+    def cache_url(self):
+        """The S3 cache location in use, or ``None`` when it is off."""
+        return resolve_cache_url(self._cache_url)
+
+    def set_cache(self, cache_url):
+        """Change the S3 cache location (``"off"`` disables it)."""
+        self._cache_url = cache_url
+        self._esgf_cat = None
 
     def _get_catalog(self):
         """Lazy initialization of ESGF catalog"""
         if self._esgf_cat is None:
-            try:
-                from intake_esgf import ESGFCatalog
-
-                self._esgf_cat = ESGFCatalog()
-            except ImportError as exc:
-                raise ImportError(
-                    "intake-esgf is required for ESGF data access. "
-                    'Install with: pip install "reflective-data-catalog[esgf]" '
-                    "(needs Python >= 3.12 — intake-esgf no longer supports "
-                    "3.11, so the extra installs nothing there)"
-                ) from exc
+            self._esgf_cat = _new_catalog(self._cache_url)
         return self._esgf_cat
 
     def search(self, **kwargs):
@@ -197,14 +231,7 @@ class GeoMIPHelper:
         """Get or create an ESGFCatalog instance."""
         if self._parent is not None:
             return self._parent._get_catalog()
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError as exc:
-            raise ImportError(
-                'intake-esgf required: pip install "reflective-data-catalog[esgf]" '
-                "(needs Python >= 3.12)"
-            ) from exc
-        return ESGFCatalog()
+        return _new_catalog()
 
     def g6sulfur(
         self, model="UKESM1-0-LL", variable="tas", table="day", member="r4i1p1f2"
@@ -321,14 +348,7 @@ class SSPHelper:
         """Get or create an ESGFCatalog instance."""
         if self._parent is not None:
             return self._parent._get_catalog()
-        try:
-            from intake_esgf import ESGFCatalog
-        except ImportError as exc:
-            raise ImportError(
-                'intake-esgf required: pip install "reflective-data-catalog[esgf]" '
-                "(needs Python >= 3.12)"
-            ) from exc
-        return ESGFCatalog()
+        return _new_catalog()
 
     def ssp245(
         self, model="UKESM1-0-LL", variable="tas", table="Amon", member="r1i1p1f2"
