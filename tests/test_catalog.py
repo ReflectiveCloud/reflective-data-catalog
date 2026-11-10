@@ -16,6 +16,7 @@ import yaml
 from reflective_data_catalog import ReflectiveCatalog
 from reflective_data_catalog.exceptions import (
     CatalogError,
+    MissingCredentialsError,
     SourceNotFoundError,
 )
 from reflective_data_catalog.loader import CatalogSource
@@ -464,3 +465,90 @@ class TestValueGuidance:
         src = real_catalog.cesm2_waccm_g6_1p5k_hilla(table="Amon")
         group = src._render(src.config["args"]["group"])
         assert group.startswith("Amon/")
+
+
+# =========================================================================
+# Cloud-hub-only buckets
+# =========================================================================
+
+
+class NoCredentialsError(Exception):
+    """Stand-in for botocore's NoCredentialsError (matched by type name)."""
+
+
+class TestHubAccessErrors:
+    """Access failures on s3://reflective-* name the cloud hub."""
+
+    @pytest.fixture()
+    def failing_open(self, monkeypatch):
+        import fsspec
+
+        def install(exc):
+            def raise_exc(*args, **kwargs):
+                raise exc
+
+            monkeypatch.setattr(fsspec, "open_files", raise_exc)
+
+        return install
+
+    def test_no_credentials_on_open_names_the_hub(
+        self, real_catalog, mock_fs, failing_open
+    ):
+        real_catalog._fs = mock_fs
+        failing_open(NoCredentialsError("Unable to locate credentials"))
+        src = real_catalog.ukesm1_ssp245()
+        with pytest.raises(MissingCredentialsError) as info:
+            src.to_dask()
+        message = str(info.value)
+        assert "s3://reflective-persistent-prod-large" in message
+        assert "cloud hub" in message
+        assert "no AWS credentials were found" in message
+        assert isinstance(info.value.__cause__, NoCredentialsError)
+
+    def test_rejected_credentials_on_open_names_the_hub(
+        self, real_catalog, mock_fs, failing_open
+    ):
+        real_catalog._fs = mock_fs
+        failing_open(PermissionError("Access Denied"))
+        with pytest.raises(MissingCredentialsError, match="not authorized"):
+            real_catalog.ukesm1_ssp245().to_dask()
+
+    def test_forbidden_listing_raises_instead_of_empty_scan(
+        self, real_catalog, mock_fs
+    ):
+        mock_fs.ls.side_effect = Exception(
+            "Generic S3 error: Server returned non-2xx status code: 403 Forbidden"
+        )
+        real_catalog._fs = mock_fs
+        with pytest.raises(MissingCredentialsError, match="cloud hub"):
+            real_catalog.ukesm1_ssp245().list_ensembles()
+
+    def test_metadata_lookup_timeout_means_no_credentials(self, real_catalog, mock_fs):
+        mock_fs.ls.side_effect = Exception(
+            "Generic S3 error: Error performing PUT "
+            "http://169.254.169.254/latest/api/token after 10 retries"
+        )
+        real_catalog._fs = mock_fs
+        with pytest.raises(MissingCredentialsError, match="no AWS credentials"):
+            real_catalog.ukesm1_ssp245().list_ensembles()
+
+    def test_non_access_error_on_hub_entry_is_unchanged(
+        self, real_catalog, mock_fs, failing_open
+    ):
+        real_catalog._fs = mock_fs
+        failing_open(ValueError("corrupt file"))
+        with pytest.raises(ValueError, match="corrupt file"):
+            real_catalog.ukesm1_ssp245().to_dask()
+
+    def test_access_error_on_public_bucket_is_unchanged(
+        self, real_catalog, mock_fs, failing_open
+    ):
+        real_catalog._fs = mock_fs
+        failing_open(PermissionError("Access Denied"))
+        with pytest.raises(PermissionError):
+            real_catalog.ukesm1_arise_sai().to_dask()
+
+    def test_empty_hub_scan_still_warns(self, real_catalog, mock_fs):
+        real_catalog._fs = mock_fs
+        with pytest.warns(UserWarning, match="found nothing"):
+            assert real_catalog.ukesm1_ssp245().list_ensembles() == []
